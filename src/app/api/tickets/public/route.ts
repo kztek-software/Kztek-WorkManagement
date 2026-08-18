@@ -15,6 +15,17 @@ const publicTicketSchema = z.object({
   customerPhone: z.string().max(30).optional().nullable(),
   customerCompany: z.string().max(150).optional().nullable(),
   environment: z.string().max(500).optional().nullable(),
+  attachments: z
+    .array(
+      z.object({
+        fileName: z.string(),
+        fileUrl: z.string(),
+        fileType: z.string().optional(),
+        fileSize: z.number().optional().nullable(),
+        mimeType: z.string().optional().nullable(),
+      })
+    )
+    .optional(),
 });
 
 // GET /api/tickets/public -> Lấy danh sách dự án công khai để khách hàng lựa chọn
@@ -92,6 +103,7 @@ export async function POST(req: NextRequest) {
       customerPhone: d.customerPhone,
       customerCompany: d.customerCompany,
       environment: d.environment,
+      attachments: d.attachments,
     });
 
     return NextResponse.json(

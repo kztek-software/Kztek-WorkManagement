@@ -17,8 +17,12 @@ import {
   Plus,
   Loader2,
   Check,
+  LifeBuoy,
+  ExternalLink,
 } from "lucide-react";
 import { STATUSES, PRIORITIES, TASK_TYPES } from "@/lib/constants";
+import { TaskAttachmentGallery } from "./task-attachment-gallery";
+import { MentionCommentInput, RenderCommentContent } from "./mention-comment-input";
 import type {
   TaskDto,
   MemberDto,
@@ -121,18 +125,16 @@ export function TaskDialog({
     onChanged();
   }
 
-  async function addComment(e: React.FormEvent) {
-    e.preventDefault();
-    if (!commentBody.trim()) return;
+  async function handleAddComment(data: { body: string; mentionedUserIds: string[] }) {
     const res = await fetch(`/api/projects/${projectId}/tasks/${taskId}/comments`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ body: commentBody.trim() }),
+      body: JSON.stringify(data),
     });
     if (res.ok) {
-      const data = await res.json();
-      setComments((prev) => [...prev, data.comment]);
-      setCommentBody("");
+      const resData = await res.json();
+      setComments((prev) => [...prev, resData.comment]);
+      onChanged();
     }
   }
 
@@ -157,6 +159,16 @@ export function TaskDialog({
       body: JSON.stringify({ done: !done }),
     });
     onChanged();
+  }
+
+  async function handleDeleteAttachment(attachmentId: string) {
+    if (!confirm("Bạn có chắc chắn muốn xóa tệp đính kèm này?")) return;
+    try {
+      const res = await fetch(`/api/attachments/${attachmentId}`, { method: "DELETE" });
+      if (res.ok) onChanged();
+    } catch (err) {
+      console.error("Lỗi xóa attachment:", err);
+    }
   }
 
   return (
@@ -187,6 +199,25 @@ export function TaskDialog({
         <div className="grid grid-cols-[1fr_260px] divide-x divide-line max-h-[80vh] overflow-hidden">
           {/* Left Column: Title, Description, Subtasks, Comments */}
           <div className="p-6 space-y-5 overflow-y-auto min-w-0">
+            {/* Customer Ticket Origin Banner */}
+            {(task.title.startsWith("[TK-") || task.description?.includes("🎫 Nguồn: Báo lỗi từ khách hàng")) && (
+              <div className="p-3 rounded-xl border border-accent/40 bg-accent/10 flex items-center justify-between gap-2 text-xs text-accent">
+                <div className="flex items-center gap-2">
+                  <LifeBuoy className="w-4 h-4 text-accent shrink-0" />
+                  <span className="font-semibold text-foreground">
+                    Công việc này được tạo từ <strong>Ticket Báo lỗi Khách hàng</strong>
+                  </span>
+                </div>
+                <a
+                  href={`/projects/${projectId}/tickets`}
+                  className="text-xs font-bold text-accent hover:underline flex items-center gap-1 shrink-0"
+                >
+                  <span>Mở Hộp Thư Ticket</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+            )}
+
             {/* Title Input */}
             <div className="space-y-1">
               <Input
@@ -217,6 +248,14 @@ export function TaskDialog({
                 className="text-xs bg-surface-2/60 border-line leading-relaxed focus:border-accent"
               />
             </div>
+
+            {/* Media Gallery, Attachments, Bug Videos & Files */}
+            <TaskAttachmentGallery
+              projectId={projectId}
+              taskId={taskId}
+              attachments={task.attachments || []}
+              onAttachmentChanged={onChanged}
+            />
 
             {/* Subtasks / Checklist */}
             <div className="space-y-2.5 rounded-xl border border-line bg-surface-2/30 p-3.5">
@@ -310,24 +349,19 @@ export function TaskDialog({
                             {formatDistanceToNow(new Date(c.createdAt), { locale: vi, addSuffix: true })}
                           </span>
                         </div>
-                        <p className="whitespace-pre-wrap text-xs text-muted-light leading-relaxed">
-                          {c.body}
-                        </p>
+                        <RenderCommentContent body={c.body} members={members} />
                       </div>
                     </div>
                   ))}
 
-                  <form onSubmit={addComment} className="flex gap-2 pt-1">
-                    <Input
-                      placeholder="Nhập nội dung bình luận..."
-                      value={commentBody}
-                      onChange={(e) => setCommentBody(e.target.value)}
-                      className="text-xs bg-surface-2 h-9"
+                  {/* Mention Autocomplete Input */}
+                  <div className="pt-2">
+                    <MentionCommentInput
+                      members={members}
+                      onSubmit={handleAddComment}
+                      placeholder="Viết bình luận... Gõ '@' để gắn thẻ thành viên dự án"
                     />
-                    <Button type="submit" size="sm" className="h-9 px-4 text-xs font-bold bg-accent hover:bg-accent/90 text-white">
-                      <Send className="h-3.5 w-3.5 mr-1" /> Gửi
-                    </Button>
-                  </form>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-2">

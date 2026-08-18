@@ -29,8 +29,10 @@ export type ProjectMinAggregateOutputType = {
   name: string | null
   key: string | null
   description: string | null
+  status: string | null
   ownerId: string | null
   createdAt: Date | null
+  updatedAt: Date | null
 }
 
 export type ProjectMaxAggregateOutputType = {
@@ -38,8 +40,10 @@ export type ProjectMaxAggregateOutputType = {
   name: string | null
   key: string | null
   description: string | null
+  status: string | null
   ownerId: string | null
   createdAt: Date | null
+  updatedAt: Date | null
 }
 
 export type ProjectCountAggregateOutputType = {
@@ -47,8 +51,10 @@ export type ProjectCountAggregateOutputType = {
   name: number
   key: number
   description: number
+  status: number
   ownerId: number
   createdAt: number
+  updatedAt: number
   _all: number
 }
 
@@ -58,8 +64,10 @@ export type ProjectMinAggregateInputType = {
   name?: true
   key?: true
   description?: true
+  status?: true
   ownerId?: true
   createdAt?: true
+  updatedAt?: true
 }
 
 export type ProjectMaxAggregateInputType = {
@@ -67,8 +75,10 @@ export type ProjectMaxAggregateInputType = {
   name?: true
   key?: true
   description?: true
+  status?: true
   ownerId?: true
   createdAt?: true
+  updatedAt?: true
 }
 
 export type ProjectCountAggregateInputType = {
@@ -76,8 +86,10 @@ export type ProjectCountAggregateInputType = {
   name?: true
   key?: true
   description?: true
+  status?: true
   ownerId?: true
   createdAt?: true
+  updatedAt?: true
   _all?: true
 }
 
@@ -158,8 +170,10 @@ export type ProjectGroupByOutputType = {
   name: string
   key: string
   description: string | null
+  status: string
   ownerId: string
   createdAt: Date
+  updatedAt: Date
   _count: ProjectCountAggregateOutputType | null
   _min: ProjectMinAggregateOutputType | null
   _max: ProjectMaxAggregateOutputType | null
@@ -188,13 +202,16 @@ export type ProjectWhereInput = {
   name?: Prisma.StringFilter<"Project"> | string
   key?: Prisma.StringFilter<"Project"> | string
   description?: Prisma.StringNullableFilter<"Project"> | string | null
+  status?: Prisma.StringFilter<"Project"> | string
   ownerId?: Prisma.StringFilter<"Project"> | string
   createdAt?: Prisma.DateTimeFilter<"Project"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"Project"> | Date | string
   owner?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   members?: Prisma.ProjectMemberListRelationFilter
   sprints?: Prisma.SprintListRelationFilter
   tasks?: Prisma.TaskListRelationFilter
   labels?: Prisma.LabelListRelationFilter
+  customerTickets?: Prisma.CustomerTicketListRelationFilter
 }
 
 export type ProjectOrderByWithRelationInput = {
@@ -202,13 +219,16 @@ export type ProjectOrderByWithRelationInput = {
   name?: Prisma.SortOrder
   key?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
+  status?: Prisma.SortOrder
   ownerId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
   owner?: Prisma.UserOrderByWithRelationInput
   members?: Prisma.ProjectMemberOrderByRelationAggregateInput
   sprints?: Prisma.SprintOrderByRelationAggregateInput
   tasks?: Prisma.TaskOrderByRelationAggregateInput
   labels?: Prisma.LabelOrderByRelationAggregateInput
+  customerTickets?: Prisma.CustomerTicketOrderByRelationAggregateInput
 }
 
 export type ProjectWhereUniqueInput = Prisma.AtLeast<{
@@ -219,13 +239,16 @@ export type ProjectWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.ProjectWhereInput | Prisma.ProjectWhereInput[]
   name?: Prisma.StringFilter<"Project"> | string
   description?: Prisma.StringNullableFilter<"Project"> | string | null
+  status?: Prisma.StringFilter<"Project"> | string
   ownerId?: Prisma.StringFilter<"Project"> | string
   createdAt?: Prisma.DateTimeFilter<"Project"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"Project"> | Date | string
   owner?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   members?: Prisma.ProjectMemberListRelationFilter
   sprints?: Prisma.SprintListRelationFilter
   tasks?: Prisma.TaskListRelationFilter
   labels?: Prisma.LabelListRelationFilter
+  customerTickets?: Prisma.CustomerTicketListRelationFilter
 }, "id" | "key">
 
 export type ProjectOrderByWithAggregationInput = {
@@ -233,8 +256,10 @@ export type ProjectOrderByWithAggregationInput = {
   name?: Prisma.SortOrder
   key?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
+  status?: Prisma.SortOrder
   ownerId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
   _count?: Prisma.ProjectCountOrderByAggregateInput
   _max?: Prisma.ProjectMaxOrderByAggregateInput
   _min?: Prisma.ProjectMinOrderByAggregateInput
@@ -248,8 +273,10 @@ export type ProjectScalarWhereWithAggregatesInput = {
   name?: Prisma.StringWithAggregatesFilter<"Project"> | string
   key?: Prisma.StringWithAggregatesFilter<"Project"> | string
   description?: Prisma.StringNullableWithAggregatesFilter<"Project"> | string | null
+  status?: Prisma.StringWithAggregatesFilter<"Project"> | string
   ownerId?: Prisma.StringWithAggregatesFilter<"Project"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Project"> | Date | string
+  updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Project"> | Date | string
 }
 
 export type ProjectCreateInput = {
@@ -257,12 +284,15 @@ export type ProjectCreateInput = {
   name: string
   key: string
   description?: string | null
+  status?: string
   createdAt?: Date | string
+  updatedAt?: Date | string
   owner: Prisma.UserCreateNestedOneWithoutOwnedProjectsInput
   members?: Prisma.ProjectMemberCreateNestedManyWithoutProjectInput
   sprints?: Prisma.SprintCreateNestedManyWithoutProjectInput
   tasks?: Prisma.TaskCreateNestedManyWithoutProjectInput
   labels?: Prisma.LabelCreateNestedManyWithoutProjectInput
+  customerTickets?: Prisma.CustomerTicketCreateNestedManyWithoutProjectInput
 }
 
 export type ProjectUncheckedCreateInput = {
@@ -270,12 +300,15 @@ export type ProjectUncheckedCreateInput = {
   name: string
   key: string
   description?: string | null
+  status?: string
   ownerId: string
   createdAt?: Date | string
+  updatedAt?: Date | string
   members?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutProjectInput
   sprints?: Prisma.SprintUncheckedCreateNestedManyWithoutProjectInput
   tasks?: Prisma.TaskUncheckedCreateNestedManyWithoutProjectInput
   labels?: Prisma.LabelUncheckedCreateNestedManyWithoutProjectInput
+  customerTickets?: Prisma.CustomerTicketUncheckedCreateNestedManyWithoutProjectInput
 }
 
 export type ProjectUpdateInput = {
@@ -283,12 +316,15 @@ export type ProjectUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   key?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner?: Prisma.UserUpdateOneRequiredWithoutOwnedProjectsNestedInput
   members?: Prisma.ProjectMemberUpdateManyWithoutProjectNestedInput
   sprints?: Prisma.SprintUpdateManyWithoutProjectNestedInput
   tasks?: Prisma.TaskUpdateManyWithoutProjectNestedInput
   labels?: Prisma.LabelUpdateManyWithoutProjectNestedInput
+  customerTickets?: Prisma.CustomerTicketUpdateManyWithoutProjectNestedInput
 }
 
 export type ProjectUncheckedUpdateInput = {
@@ -296,12 +332,15 @@ export type ProjectUncheckedUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   key?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.ProjectMemberUncheckedUpdateManyWithoutProjectNestedInput
   sprints?: Prisma.SprintUncheckedUpdateManyWithoutProjectNestedInput
   tasks?: Prisma.TaskUncheckedUpdateManyWithoutProjectNestedInput
   labels?: Prisma.LabelUncheckedUpdateManyWithoutProjectNestedInput
+  customerTickets?: Prisma.CustomerTicketUncheckedUpdateManyWithoutProjectNestedInput
 }
 
 export type ProjectCreateManyInput = {
@@ -309,8 +348,10 @@ export type ProjectCreateManyInput = {
   name: string
   key: string
   description?: string | null
+  status?: string
   ownerId: string
   createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type ProjectUpdateManyMutationInput = {
@@ -318,7 +359,9 @@ export type ProjectUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   key?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ProjectUncheckedUpdateManyInput = {
@@ -326,8 +369,10 @@ export type ProjectUncheckedUpdateManyInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   key?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ProjectListRelationFilter = {
@@ -345,8 +390,10 @@ export type ProjectCountOrderByAggregateInput = {
   name?: Prisma.SortOrder
   key?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  status?: Prisma.SortOrder
   ownerId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
 }
 
 export type ProjectMaxOrderByAggregateInput = {
@@ -354,8 +401,10 @@ export type ProjectMaxOrderByAggregateInput = {
   name?: Prisma.SortOrder
   key?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  status?: Prisma.SortOrder
   ownerId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
 }
 
 export type ProjectMinOrderByAggregateInput = {
@@ -363,8 +412,10 @@ export type ProjectMinOrderByAggregateInput = {
   name?: Prisma.SortOrder
   key?: Prisma.SortOrder
   description?: Prisma.SortOrder
+  status?: Prisma.SortOrder
   ownerId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  updatedAt?: Prisma.SortOrder
 }
 
 export type ProjectScalarRelationFilter = {
@@ -470,16 +521,33 @@ export type ProjectUpdateOneRequiredWithoutLabelsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ProjectUpdateToOneWithWhereWithoutLabelsInput, Prisma.ProjectUpdateWithoutLabelsInput>, Prisma.ProjectUncheckedUpdateWithoutLabelsInput>
 }
 
+export type ProjectCreateNestedOneWithoutCustomerTicketsInput = {
+  create?: Prisma.XOR<Prisma.ProjectCreateWithoutCustomerTicketsInput, Prisma.ProjectUncheckedCreateWithoutCustomerTicketsInput>
+  connectOrCreate?: Prisma.ProjectCreateOrConnectWithoutCustomerTicketsInput
+  connect?: Prisma.ProjectWhereUniqueInput
+}
+
+export type ProjectUpdateOneRequiredWithoutCustomerTicketsNestedInput = {
+  create?: Prisma.XOR<Prisma.ProjectCreateWithoutCustomerTicketsInput, Prisma.ProjectUncheckedCreateWithoutCustomerTicketsInput>
+  connectOrCreate?: Prisma.ProjectCreateOrConnectWithoutCustomerTicketsInput
+  upsert?: Prisma.ProjectUpsertWithoutCustomerTicketsInput
+  connect?: Prisma.ProjectWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ProjectUpdateToOneWithWhereWithoutCustomerTicketsInput, Prisma.ProjectUpdateWithoutCustomerTicketsInput>, Prisma.ProjectUncheckedUpdateWithoutCustomerTicketsInput>
+}
+
 export type ProjectCreateWithoutOwnerInput = {
   id?: string
   name: string
   key: string
   description?: string | null
+  status?: string
   createdAt?: Date | string
+  updatedAt?: Date | string
   members?: Prisma.ProjectMemberCreateNestedManyWithoutProjectInput
   sprints?: Prisma.SprintCreateNestedManyWithoutProjectInput
   tasks?: Prisma.TaskCreateNestedManyWithoutProjectInput
   labels?: Prisma.LabelCreateNestedManyWithoutProjectInput
+  customerTickets?: Prisma.CustomerTicketCreateNestedManyWithoutProjectInput
 }
 
 export type ProjectUncheckedCreateWithoutOwnerInput = {
@@ -487,11 +555,14 @@ export type ProjectUncheckedCreateWithoutOwnerInput = {
   name: string
   key: string
   description?: string | null
+  status?: string
   createdAt?: Date | string
+  updatedAt?: Date | string
   members?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutProjectInput
   sprints?: Prisma.SprintUncheckedCreateNestedManyWithoutProjectInput
   tasks?: Prisma.TaskUncheckedCreateNestedManyWithoutProjectInput
   labels?: Prisma.LabelUncheckedCreateNestedManyWithoutProjectInput
+  customerTickets?: Prisma.CustomerTicketUncheckedCreateNestedManyWithoutProjectInput
 }
 
 export type ProjectCreateOrConnectWithoutOwnerInput = {
@@ -527,8 +598,10 @@ export type ProjectScalarWhereInput = {
   name?: Prisma.StringFilter<"Project"> | string
   key?: Prisma.StringFilter<"Project"> | string
   description?: Prisma.StringNullableFilter<"Project"> | string | null
+  status?: Prisma.StringFilter<"Project"> | string
   ownerId?: Prisma.StringFilter<"Project"> | string
   createdAt?: Prisma.DateTimeFilter<"Project"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"Project"> | Date | string
 }
 
 export type ProjectCreateWithoutMembersInput = {
@@ -536,11 +609,14 @@ export type ProjectCreateWithoutMembersInput = {
   name: string
   key: string
   description?: string | null
+  status?: string
   createdAt?: Date | string
+  updatedAt?: Date | string
   owner: Prisma.UserCreateNestedOneWithoutOwnedProjectsInput
   sprints?: Prisma.SprintCreateNestedManyWithoutProjectInput
   tasks?: Prisma.TaskCreateNestedManyWithoutProjectInput
   labels?: Prisma.LabelCreateNestedManyWithoutProjectInput
+  customerTickets?: Prisma.CustomerTicketCreateNestedManyWithoutProjectInput
 }
 
 export type ProjectUncheckedCreateWithoutMembersInput = {
@@ -548,11 +624,14 @@ export type ProjectUncheckedCreateWithoutMembersInput = {
   name: string
   key: string
   description?: string | null
+  status?: string
   ownerId: string
   createdAt?: Date | string
+  updatedAt?: Date | string
   sprints?: Prisma.SprintUncheckedCreateNestedManyWithoutProjectInput
   tasks?: Prisma.TaskUncheckedCreateNestedManyWithoutProjectInput
   labels?: Prisma.LabelUncheckedCreateNestedManyWithoutProjectInput
+  customerTickets?: Prisma.CustomerTicketUncheckedCreateNestedManyWithoutProjectInput
 }
 
 export type ProjectCreateOrConnectWithoutMembersInput = {
@@ -576,11 +655,14 @@ export type ProjectUpdateWithoutMembersInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   key?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner?: Prisma.UserUpdateOneRequiredWithoutOwnedProjectsNestedInput
   sprints?: Prisma.SprintUpdateManyWithoutProjectNestedInput
   tasks?: Prisma.TaskUpdateManyWithoutProjectNestedInput
   labels?: Prisma.LabelUpdateManyWithoutProjectNestedInput
+  customerTickets?: Prisma.CustomerTicketUpdateManyWithoutProjectNestedInput
 }
 
 export type ProjectUncheckedUpdateWithoutMembersInput = {
@@ -588,11 +670,14 @@ export type ProjectUncheckedUpdateWithoutMembersInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   key?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sprints?: Prisma.SprintUncheckedUpdateManyWithoutProjectNestedInput
   tasks?: Prisma.TaskUncheckedUpdateManyWithoutProjectNestedInput
   labels?: Prisma.LabelUncheckedUpdateManyWithoutProjectNestedInput
+  customerTickets?: Prisma.CustomerTicketUncheckedUpdateManyWithoutProjectNestedInput
 }
 
 export type ProjectCreateWithoutSprintsInput = {
@@ -600,11 +685,14 @@ export type ProjectCreateWithoutSprintsInput = {
   name: string
   key: string
   description?: string | null
+  status?: string
   createdAt?: Date | string
+  updatedAt?: Date | string
   owner: Prisma.UserCreateNestedOneWithoutOwnedProjectsInput
   members?: Prisma.ProjectMemberCreateNestedManyWithoutProjectInput
   tasks?: Prisma.TaskCreateNestedManyWithoutProjectInput
   labels?: Prisma.LabelCreateNestedManyWithoutProjectInput
+  customerTickets?: Prisma.CustomerTicketCreateNestedManyWithoutProjectInput
 }
 
 export type ProjectUncheckedCreateWithoutSprintsInput = {
@@ -612,11 +700,14 @@ export type ProjectUncheckedCreateWithoutSprintsInput = {
   name: string
   key: string
   description?: string | null
+  status?: string
   ownerId: string
   createdAt?: Date | string
+  updatedAt?: Date | string
   members?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutProjectInput
   tasks?: Prisma.TaskUncheckedCreateNestedManyWithoutProjectInput
   labels?: Prisma.LabelUncheckedCreateNestedManyWithoutProjectInput
+  customerTickets?: Prisma.CustomerTicketUncheckedCreateNestedManyWithoutProjectInput
 }
 
 export type ProjectCreateOrConnectWithoutSprintsInput = {
@@ -640,11 +731,14 @@ export type ProjectUpdateWithoutSprintsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   key?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner?: Prisma.UserUpdateOneRequiredWithoutOwnedProjectsNestedInput
   members?: Prisma.ProjectMemberUpdateManyWithoutProjectNestedInput
   tasks?: Prisma.TaskUpdateManyWithoutProjectNestedInput
   labels?: Prisma.LabelUpdateManyWithoutProjectNestedInput
+  customerTickets?: Prisma.CustomerTicketUpdateManyWithoutProjectNestedInput
 }
 
 export type ProjectUncheckedUpdateWithoutSprintsInput = {
@@ -652,11 +746,14 @@ export type ProjectUncheckedUpdateWithoutSprintsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   key?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.ProjectMemberUncheckedUpdateManyWithoutProjectNestedInput
   tasks?: Prisma.TaskUncheckedUpdateManyWithoutProjectNestedInput
   labels?: Prisma.LabelUncheckedUpdateManyWithoutProjectNestedInput
+  customerTickets?: Prisma.CustomerTicketUncheckedUpdateManyWithoutProjectNestedInput
 }
 
 export type ProjectCreateWithoutTasksInput = {
@@ -664,11 +761,14 @@ export type ProjectCreateWithoutTasksInput = {
   name: string
   key: string
   description?: string | null
+  status?: string
   createdAt?: Date | string
+  updatedAt?: Date | string
   owner: Prisma.UserCreateNestedOneWithoutOwnedProjectsInput
   members?: Prisma.ProjectMemberCreateNestedManyWithoutProjectInput
   sprints?: Prisma.SprintCreateNestedManyWithoutProjectInput
   labels?: Prisma.LabelCreateNestedManyWithoutProjectInput
+  customerTickets?: Prisma.CustomerTicketCreateNestedManyWithoutProjectInput
 }
 
 export type ProjectUncheckedCreateWithoutTasksInput = {
@@ -676,11 +776,14 @@ export type ProjectUncheckedCreateWithoutTasksInput = {
   name: string
   key: string
   description?: string | null
+  status?: string
   ownerId: string
   createdAt?: Date | string
+  updatedAt?: Date | string
   members?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutProjectInput
   sprints?: Prisma.SprintUncheckedCreateNestedManyWithoutProjectInput
   labels?: Prisma.LabelUncheckedCreateNestedManyWithoutProjectInput
+  customerTickets?: Prisma.CustomerTicketUncheckedCreateNestedManyWithoutProjectInput
 }
 
 export type ProjectCreateOrConnectWithoutTasksInput = {
@@ -704,11 +807,14 @@ export type ProjectUpdateWithoutTasksInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   key?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner?: Prisma.UserUpdateOneRequiredWithoutOwnedProjectsNestedInput
   members?: Prisma.ProjectMemberUpdateManyWithoutProjectNestedInput
   sprints?: Prisma.SprintUpdateManyWithoutProjectNestedInput
   labels?: Prisma.LabelUpdateManyWithoutProjectNestedInput
+  customerTickets?: Prisma.CustomerTicketUpdateManyWithoutProjectNestedInput
 }
 
 export type ProjectUncheckedUpdateWithoutTasksInput = {
@@ -716,11 +822,14 @@ export type ProjectUncheckedUpdateWithoutTasksInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   key?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.ProjectMemberUncheckedUpdateManyWithoutProjectNestedInput
   sprints?: Prisma.SprintUncheckedUpdateManyWithoutProjectNestedInput
   labels?: Prisma.LabelUncheckedUpdateManyWithoutProjectNestedInput
+  customerTickets?: Prisma.CustomerTicketUncheckedUpdateManyWithoutProjectNestedInput
 }
 
 export type ProjectCreateWithoutLabelsInput = {
@@ -728,11 +837,14 @@ export type ProjectCreateWithoutLabelsInput = {
   name: string
   key: string
   description?: string | null
+  status?: string
   createdAt?: Date | string
+  updatedAt?: Date | string
   owner: Prisma.UserCreateNestedOneWithoutOwnedProjectsInput
   members?: Prisma.ProjectMemberCreateNestedManyWithoutProjectInput
   sprints?: Prisma.SprintCreateNestedManyWithoutProjectInput
   tasks?: Prisma.TaskCreateNestedManyWithoutProjectInput
+  customerTickets?: Prisma.CustomerTicketCreateNestedManyWithoutProjectInput
 }
 
 export type ProjectUncheckedCreateWithoutLabelsInput = {
@@ -740,11 +852,14 @@ export type ProjectUncheckedCreateWithoutLabelsInput = {
   name: string
   key: string
   description?: string | null
+  status?: string
   ownerId: string
   createdAt?: Date | string
+  updatedAt?: Date | string
   members?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutProjectInput
   sprints?: Prisma.SprintUncheckedCreateNestedManyWithoutProjectInput
   tasks?: Prisma.TaskUncheckedCreateNestedManyWithoutProjectInput
+  customerTickets?: Prisma.CustomerTicketUncheckedCreateNestedManyWithoutProjectInput
 }
 
 export type ProjectCreateOrConnectWithoutLabelsInput = {
@@ -768,11 +883,14 @@ export type ProjectUpdateWithoutLabelsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   key?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner?: Prisma.UserUpdateOneRequiredWithoutOwnedProjectsNestedInput
   members?: Prisma.ProjectMemberUpdateManyWithoutProjectNestedInput
   sprints?: Prisma.SprintUpdateManyWithoutProjectNestedInput
   tasks?: Prisma.TaskUpdateManyWithoutProjectNestedInput
+  customerTickets?: Prisma.CustomerTicketUpdateManyWithoutProjectNestedInput
 }
 
 export type ProjectUncheckedUpdateWithoutLabelsInput = {
@@ -780,11 +898,90 @@ export type ProjectUncheckedUpdateWithoutLabelsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   key?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   ownerId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.ProjectMemberUncheckedUpdateManyWithoutProjectNestedInput
   sprints?: Prisma.SprintUncheckedUpdateManyWithoutProjectNestedInput
   tasks?: Prisma.TaskUncheckedUpdateManyWithoutProjectNestedInput
+  customerTickets?: Prisma.CustomerTicketUncheckedUpdateManyWithoutProjectNestedInput
+}
+
+export type ProjectCreateWithoutCustomerTicketsInput = {
+  id?: string
+  name: string
+  key: string
+  description?: string | null
+  status?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  owner: Prisma.UserCreateNestedOneWithoutOwnedProjectsInput
+  members?: Prisma.ProjectMemberCreateNestedManyWithoutProjectInput
+  sprints?: Prisma.SprintCreateNestedManyWithoutProjectInput
+  tasks?: Prisma.TaskCreateNestedManyWithoutProjectInput
+  labels?: Prisma.LabelCreateNestedManyWithoutProjectInput
+}
+
+export type ProjectUncheckedCreateWithoutCustomerTicketsInput = {
+  id?: string
+  name: string
+  key: string
+  description?: string | null
+  status?: string
+  ownerId: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  members?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutProjectInput
+  sprints?: Prisma.SprintUncheckedCreateNestedManyWithoutProjectInput
+  tasks?: Prisma.TaskUncheckedCreateNestedManyWithoutProjectInput
+  labels?: Prisma.LabelUncheckedCreateNestedManyWithoutProjectInput
+}
+
+export type ProjectCreateOrConnectWithoutCustomerTicketsInput = {
+  where: Prisma.ProjectWhereUniqueInput
+  create: Prisma.XOR<Prisma.ProjectCreateWithoutCustomerTicketsInput, Prisma.ProjectUncheckedCreateWithoutCustomerTicketsInput>
+}
+
+export type ProjectUpsertWithoutCustomerTicketsInput = {
+  update: Prisma.XOR<Prisma.ProjectUpdateWithoutCustomerTicketsInput, Prisma.ProjectUncheckedUpdateWithoutCustomerTicketsInput>
+  create: Prisma.XOR<Prisma.ProjectCreateWithoutCustomerTicketsInput, Prisma.ProjectUncheckedCreateWithoutCustomerTicketsInput>
+  where?: Prisma.ProjectWhereInput
+}
+
+export type ProjectUpdateToOneWithWhereWithoutCustomerTicketsInput = {
+  where?: Prisma.ProjectWhereInput
+  data: Prisma.XOR<Prisma.ProjectUpdateWithoutCustomerTicketsInput, Prisma.ProjectUncheckedUpdateWithoutCustomerTicketsInput>
+}
+
+export type ProjectUpdateWithoutCustomerTicketsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  key?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  owner?: Prisma.UserUpdateOneRequiredWithoutOwnedProjectsNestedInput
+  members?: Prisma.ProjectMemberUpdateManyWithoutProjectNestedInput
+  sprints?: Prisma.SprintUpdateManyWithoutProjectNestedInput
+  tasks?: Prisma.TaskUpdateManyWithoutProjectNestedInput
+  labels?: Prisma.LabelUpdateManyWithoutProjectNestedInput
+}
+
+export type ProjectUncheckedUpdateWithoutCustomerTicketsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  key?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  members?: Prisma.ProjectMemberUncheckedUpdateManyWithoutProjectNestedInput
+  sprints?: Prisma.SprintUncheckedUpdateManyWithoutProjectNestedInput
+  tasks?: Prisma.TaskUncheckedUpdateManyWithoutProjectNestedInput
+  labels?: Prisma.LabelUncheckedUpdateManyWithoutProjectNestedInput
 }
 
 export type ProjectCreateManyOwnerInput = {
@@ -792,7 +989,9 @@ export type ProjectCreateManyOwnerInput = {
   name: string
   key: string
   description?: string | null
+  status?: string
   createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
 export type ProjectUpdateWithoutOwnerInput = {
@@ -800,11 +999,14 @@ export type ProjectUpdateWithoutOwnerInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   key?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.ProjectMemberUpdateManyWithoutProjectNestedInput
   sprints?: Prisma.SprintUpdateManyWithoutProjectNestedInput
   tasks?: Prisma.TaskUpdateManyWithoutProjectNestedInput
   labels?: Prisma.LabelUpdateManyWithoutProjectNestedInput
+  customerTickets?: Prisma.CustomerTicketUpdateManyWithoutProjectNestedInput
 }
 
 export type ProjectUncheckedUpdateWithoutOwnerInput = {
@@ -812,11 +1014,14 @@ export type ProjectUncheckedUpdateWithoutOwnerInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   key?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.ProjectMemberUncheckedUpdateManyWithoutProjectNestedInput
   sprints?: Prisma.SprintUncheckedUpdateManyWithoutProjectNestedInput
   tasks?: Prisma.TaskUncheckedUpdateManyWithoutProjectNestedInput
   labels?: Prisma.LabelUncheckedUpdateManyWithoutProjectNestedInput
+  customerTickets?: Prisma.CustomerTicketUncheckedUpdateManyWithoutProjectNestedInput
 }
 
 export type ProjectUncheckedUpdateManyWithoutOwnerInput = {
@@ -824,7 +1029,9 @@ export type ProjectUncheckedUpdateManyWithoutOwnerInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   key?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 
@@ -837,6 +1044,7 @@ export type ProjectCountOutputType = {
   sprints: number
   tasks: number
   labels: number
+  customerTickets: number
 }
 
 export type ProjectCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -844,6 +1052,7 @@ export type ProjectCountOutputTypeSelect<ExtArgs extends runtime.Types.Extension
   sprints?: boolean | ProjectCountOutputTypeCountSprintsArgs
   tasks?: boolean | ProjectCountOutputTypeCountTasksArgs
   labels?: boolean | ProjectCountOutputTypeCountLabelsArgs
+  customerTickets?: boolean | ProjectCountOutputTypeCountCustomerTicketsArgs
 }
 
 /**
@@ -884,19 +1093,29 @@ export type ProjectCountOutputTypeCountLabelsArgs<ExtArgs extends runtime.Types.
   where?: Prisma.LabelWhereInput
 }
 
+/**
+ * ProjectCountOutputType without action
+ */
+export type ProjectCountOutputTypeCountCustomerTicketsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CustomerTicketWhereInput
+}
+
 
 export type ProjectSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
   key?: boolean
   description?: boolean
+  status?: boolean
   ownerId?: boolean
   createdAt?: boolean
+  updatedAt?: boolean
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   members?: boolean | Prisma.Project$membersArgs<ExtArgs>
   sprints?: boolean | Prisma.Project$sprintsArgs<ExtArgs>
   tasks?: boolean | Prisma.Project$tasksArgs<ExtArgs>
   labels?: boolean | Prisma.Project$labelsArgs<ExtArgs>
+  customerTickets?: boolean | Prisma.Project$customerTicketsArgs<ExtArgs>
   _count?: boolean | Prisma.ProjectCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["project"]>
 
@@ -905,8 +1124,10 @@ export type ProjectSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   name?: boolean
   key?: boolean
   description?: boolean
+  status?: boolean
   ownerId?: boolean
   createdAt?: boolean
+  updatedAt?: boolean
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["project"]>
 
@@ -915,8 +1136,10 @@ export type ProjectSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   name?: boolean
   key?: boolean
   description?: boolean
+  status?: boolean
   ownerId?: boolean
   createdAt?: boolean
+  updatedAt?: boolean
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["project"]>
 
@@ -925,17 +1148,20 @@ export type ProjectSelectScalar = {
   name?: boolean
   key?: boolean
   description?: boolean
+  status?: boolean
   ownerId?: boolean
   createdAt?: boolean
+  updatedAt?: boolean
 }
 
-export type ProjectOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "key" | "description" | "ownerId" | "createdAt", ExtArgs["result"]["project"]>
+export type ProjectOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "key" | "description" | "status" | "ownerId" | "createdAt" | "updatedAt", ExtArgs["result"]["project"]>
 export type ProjectInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   members?: boolean | Prisma.Project$membersArgs<ExtArgs>
   sprints?: boolean | Prisma.Project$sprintsArgs<ExtArgs>
   tasks?: boolean | Prisma.Project$tasksArgs<ExtArgs>
   labels?: boolean | Prisma.Project$labelsArgs<ExtArgs>
+  customerTickets?: boolean | Prisma.Project$customerTicketsArgs<ExtArgs>
   _count?: boolean | Prisma.ProjectCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ProjectIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -953,14 +1179,17 @@ export type $ProjectPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     sprints: Prisma.$SprintPayload<ExtArgs>[]
     tasks: Prisma.$TaskPayload<ExtArgs>[]
     labels: Prisma.$LabelPayload<ExtArgs>[]
+    customerTickets: Prisma.$CustomerTicketPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     name: string
     key: string
     description: string | null
+    status: string
     ownerId: string
     createdAt: Date
+    updatedAt: Date
   }, ExtArgs["result"]["project"]>
   composites: {}
 }
@@ -1360,6 +1589,7 @@ export interface Prisma__ProjectClient<T, Null = never, ExtArgs extends runtime.
   sprints<T extends Prisma.Project$sprintsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Project$sprintsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SprintPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   tasks<T extends Prisma.Project$tasksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Project$tasksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TaskPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   labels<T extends Prisma.Project$labelsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Project$labelsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LabelPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  customerTickets<T extends Prisma.Project$customerTicketsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Project$customerTicketsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CustomerTicketPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1393,8 +1623,10 @@ export interface ProjectFieldRefs {
   readonly name: Prisma.FieldRef<"Project", 'String'>
   readonly key: Prisma.FieldRef<"Project", 'String'>
   readonly description: Prisma.FieldRef<"Project", 'String'>
+  readonly status: Prisma.FieldRef<"Project", 'String'>
   readonly ownerId: Prisma.FieldRef<"Project", 'String'>
   readonly createdAt: Prisma.FieldRef<"Project", 'DateTime'>
+  readonly updatedAt: Prisma.FieldRef<"Project", 'DateTime'>
 }
     
 
@@ -1887,6 +2119,30 @@ export type Project$labelsArgs<ExtArgs extends runtime.Types.Extensions.Internal
   take?: number
   skip?: number
   distinct?: Prisma.LabelScalarFieldEnum | Prisma.LabelScalarFieldEnum[]
+}
+
+/**
+ * Project.customerTickets
+ */
+export type Project$customerTicketsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CustomerTicket
+   */
+  select?: Prisma.CustomerTicketSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the CustomerTicket
+   */
+  omit?: Prisma.CustomerTicketOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CustomerTicketInclude<ExtArgs> | null
+  where?: Prisma.CustomerTicketWhereInput
+  orderBy?: Prisma.CustomerTicketOrderByWithRelationInput | Prisma.CustomerTicketOrderByWithRelationInput[]
+  cursor?: Prisma.CustomerTicketWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CustomerTicketScalarFieldEnum | Prisma.CustomerTicketScalarFieldEnum[]
 }
 
 /**

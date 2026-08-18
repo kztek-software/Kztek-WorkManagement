@@ -15,10 +15,22 @@ export default async function ProjectLayout({
 
   const [project, projects] = await Promise.all([
     prisma.project.findFirst({
-      where: { id: projectId, members: { some: { userId: user.id } } },
+      where: user.role === "ADMIN"
+        ? { id: projectId }
+        : { id: projectId, members: { some: { userId: user.id } } },
       include: {
         members: {
-          include: { user: { select: { id: true, name: true, avatarColor: true, title: true } } },
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                avatarColor: true,
+                title: true,
+                team: { select: { id: true, name: true, code: true, color: true } },
+              },
+            },
+          },
         },
       },
     }),

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import {
   DndContext,
   DragOverlay,
@@ -72,6 +72,9 @@ export default function BoardPage() {
   const params = useParams<{ projectId: string }>();
   const projectId = params.projectId;
 
+  const searchParams = useSearchParams();
+  const urlTaskId = searchParams.get("taskId");
+
   const [data, setData] = useState<BoardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [connected, setConnected] = useState(false);
@@ -98,6 +101,12 @@ export default function BoardPage() {
 
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
+
+  useEffect(() => {
+    if (urlTaskId) {
+      setOpenTaskId(urlTaskId);
+    }
+  }, [urlTaskId]);
 
   const loadBoard = useCallback(async () => {
     try {

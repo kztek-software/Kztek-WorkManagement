@@ -63,7 +63,10 @@ export const ModelName = {
   TaskLabel: 'TaskLabel',
   Subtask: 'Subtask',
   Comment: 'Comment',
-  Activity: 'Activity'
+  Activity: 'Activity',
+  CustomerTicket: 'CustomerTicket',
+  TicketComment: 'TicketComment',
+  Attachment: 'Attachment'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -143,8 +146,10 @@ export const ProjectScalarFieldEnum = {
   name: 'name',
   key: 'key',
   description: 'description',
+  status: 'status',
   ownerId: 'ownerId',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 } as const
 
 export type ProjectScalarFieldEnum = (typeof ProjectScalarFieldEnum)[keyof typeof ProjectScalarFieldEnum]
@@ -246,6 +251,61 @@ export const ActivityScalarFieldEnum = {
 } as const
 
 export type ActivityScalarFieldEnum = (typeof ActivityScalarFieldEnum)[keyof typeof ActivityScalarFieldEnum]
+
+
+export const CustomerTicketScalarFieldEnum = {
+  id: 'id',
+  trackingCode: 'trackingCode',
+  projectId: 'projectId',
+  title: 'title',
+  description: 'description',
+  type: 'type',
+  status: 'status',
+  priority: 'priority',
+  customerName: 'customerName',
+  customerEmail: 'customerEmail',
+  customerPhone: 'customerPhone',
+  customerCompany: 'customerCompany',
+  environment: 'environment',
+  convertedTaskId: 'convertedTaskId',
+  internalNotes: 'internalNotes',
+  resolutionNotes: 'resolutionNotes',
+  resolvedAt: 'resolvedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CustomerTicketScalarFieldEnum = (typeof CustomerTicketScalarFieldEnum)[keyof typeof CustomerTicketScalarFieldEnum]
+
+
+export const TicketCommentScalarFieldEnum = {
+  id: 'id',
+  ticketId: 'ticketId',
+  authorName: 'authorName',
+  authorEmail: 'authorEmail',
+  isStaff: 'isStaff',
+  isInternalOnly: 'isInternalOnly',
+  message: 'message',
+  createdAt: 'createdAt'
+} as const
+
+export type TicketCommentScalarFieldEnum = (typeof TicketCommentScalarFieldEnum)[keyof typeof TicketCommentScalarFieldEnum]
+
+
+export const AttachmentScalarFieldEnum = {
+  id: 'id',
+  taskId: 'taskId',
+  ticketId: 'ticketId',
+  uploaderId: 'uploaderId',
+  fileName: 'fileName',
+  fileUrl: 'fileUrl',
+  fileType: 'fileType',
+  fileSize: 'fileSize',
+  mimeType: 'mimeType',
+  createdAt: 'createdAt'
+} as const
+
+export type AttachmentScalarFieldEnum = (typeof AttachmentScalarFieldEnum)[keyof typeof AttachmentScalarFieldEnum]
 
 
 export const SortOrder = {

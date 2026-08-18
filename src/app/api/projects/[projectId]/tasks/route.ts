@@ -4,12 +4,13 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { publish } from "@/lib/bus";
 import { canCreateTask } from "@/lib/permissions";
-import { sendNotification } from "@/lib/notifications";
+import { notifyTaskAssigned } from "@/lib/notifications";
 
 const taskInclude = {
   assignee: { select: { id: true, name: true, avatarColor: true } },
   labels: { include: { label: true } },
   subtasks: true,
+  attachments: true,
   _count: { select: { comments: true } },
 } as const;
 
@@ -120,15 +121,12 @@ export async function POST(
 
   publish(projectId, { type: "TASK_CREATED", taskId: task.id, actorId: user.id });
 
-  // Gửi thông báo giao việc nếu có người nhận
+  // Gửi thông báo & Email giao việc nếu có người nhận
   if (task.assigneeId && task.assigneeId !== user.id) {
-    sendNotification({
-      userId: task.assigneeId,
+    notifyTaskAssigned({
+      taskId: task.id,
+      assigneeId: task.assigneeId,
       actorId: user.id,
-      type: "ASSIGNED",
-      title: "Giao việc mới",
-      message: `${user.name} đã giao task FB-${task.number}: "${task.title}" cho bạn`,
-      link: `/projects/${projectId}/board`,
       projectId,
     });
   }

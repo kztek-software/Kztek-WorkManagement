@@ -30,6 +30,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
+import { MediaGallery } from "@/components/ui/media-gallery";
 import type { CustomerTicketDto, TicketCommentDto } from "@/lib/types";
 
 export default function TicketTrackingPage({
@@ -332,6 +333,13 @@ export default function TicketTrackingPage({
                     <div className="flex items-center gap-2 text-xs text-muted pt-2">
                       <Laptop className="w-4 h-4 text-muted shrink-0" />
                       <span>Môi trường: <strong className="text-foreground">{ticket.environment}</strong></span>
+                    </div>
+                  )}
+
+                  {/* Attachments & Media Gallery */}
+                  {ticket.attachments && ticket.attachments.length > 0 && (
+                    <div className="pt-3 border-t border-line/60">
+                      <MediaGallery attachments={ticket.attachments} />
                     </div>
                   )}
                 </div>

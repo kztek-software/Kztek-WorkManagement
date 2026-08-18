@@ -46,6 +46,55 @@ export const LABEL_COLORS = [
   "#06b6d4",
 ];
 
+export const PROJECT_STATUSES = [
+  {
+    id: "PLANNING",
+    label: "Lên kế hoạch",
+    color: "#3b82f6",
+    bg: "rgba(59, 130, 246, 0.12)",
+    border: "rgba(59, 130, 246, 0.3)",
+    description: "Dự án đang trong giai đoạn khảo sát, lập kế hoạch và phân bổ nguồn lực",
+  },
+  {
+    id: "IN_PROGRESS",
+    label: "Đang thực hiện",
+    color: "#10b981",
+    bg: "rgba(16, 185, 129, 0.12)",
+    border: "rgba(16, 185, 129, 0.3)",
+    description: "Dự án đang được tích cực triển khai theo các Sprint",
+  },
+  {
+    id: "ON_HOLD",
+    label: "Tạm dừng",
+    color: "#f59e0b",
+    bg: "rgba(245, 158, 11, 0.12)",
+    border: "rgba(245, 158, 11, 0.3)",
+    description: "Dự án tạm hoãn để chờ phản hồi khách hàng hoặc ưu tiên task khác",
+  },
+  {
+    id: "COMPLETED",
+    label: "Hoàn thành",
+    color: "#8b5cf6",
+    bg: "rgba(139, 92, 246, 0.12)",
+    border: "rgba(139, 92, 246, 0.3)",
+    description: "Dự án đã nghiệm thu và bàn giao thành công",
+  },
+  {
+    id: "CANCELLED",
+    label: "Đã hủy",
+    color: "#64748b",
+    bg: "rgba(100, 116, 139, 0.12)",
+    border: "rgba(100, 116, 139, 0.3)",
+    description: "Dự án đã bị hủy bỏ",
+  },
+] as const;
+
+export type ProjectStatusId = (typeof PROJECT_STATUSES)[number]["id"];
+
+export function projectStatusMeta(id?: string | null) {
+  return PROJECT_STATUSES.find((s) => s.id === id) ?? PROJECT_STATUSES[0];
+}
+
 export type StatusId = (typeof STATUSES)[number]["id"];
 export type PriorityId = (typeof PRIORITIES)[number]["id"];
 export type TaskTypeId = (typeof TASK_TYPES)[number]["id"];
@@ -59,3 +108,4 @@ export function priorityMeta(id: string) {
 export function typeMeta(id: string) {
   return TASK_TYPES.find((t) => t.id === id) ?? TASK_TYPES[0];
 }
+

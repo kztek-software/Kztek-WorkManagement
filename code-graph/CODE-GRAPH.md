@@ -57,6 +57,10 @@ Workspace điều phối AI agents cho KZTEK — Multi-Agent Orchestration Frame
 
 | Module | Path | Mục đích | Files quan trọng |
 |--------|------|----------|-----------------|
+| Comment & Tag Mentions | `src/components/board/mention-comment-input.tsx`, `src/app/api/projects/[projectId]/tasks/[taskId]/comments/` | Bình luận có gắn thẻ (@mention), gợi ý autocomplete thành viên, highlight badge và gửi email tự động | `src/components/board/mention-comment-input.tsx`, `src/app/api/projects/[projectId]/tasks/[taskId]/comments/route.ts` |
+| Attachment & Bug Media Gallery | `src/components/board/task-attachment-gallery.tsx`, `src/app/api/upload/`, `src/app/api/projects/[projectId]/tasks/[taskId]/attachments/` | Kéo thả upload ảnh chụp màn hình, video quay lỗi (MP4/WebM), tệp logs/tài liệu và xem trước đa phương tiện | `src/components/board/task-attachment-gallery.tsx`, `src/app/api/upload/route.ts`, `src/app/api/projects/[projectId]/tasks/[taskId]/attachments/route.ts` |
+| Notification Center & Mail Service | `src/components/notifications/notification-bell.tsx`, `src/lib/mail.ts`, `src/lib/notifications.ts` | Trung tâm thông báo đa năng với Tabs phân loại (Giao việc, Tag @, Bình luận, Trạng thái), Deep-linking mở task và gửi HTML Email tự động | `src/components/notifications/notification-bell.tsx`, `src/lib/mail.ts`, `src/lib/notifications.ts`, `src/app/api/notifications/email-logs/route.ts` |
+| Admin System Config & Header | `src/lib/system-config.ts`, `src/app/api/system/config/`, `src/app/projects/[projectId]/settings/` | Cấu hình hệ thống dành riêng cho ADMIN (SMTP, Branding, Notification rules) & Header góc trên phải | `src/lib/system-config.ts`, `src/app/api/system/config/route.ts`, `src/app/projects/[projectId]/settings/page.tsx`, `src/components/app-shell.tsx` |
 | TodoApp (C# WinForms) | `src/TodoApp/` | Ứng dụng Quản lý công việc (Todo) C# Windows Forms | `Program.cs`, `Form1.cs`, `Models/TodoItem.cs`, `Services/TodoService.cs` |
 | Agent Definitions | `.gemini/agents/` | Định nghĩa vai trò, model, tools, quy trình cho mỗi agent | `task-planner.md`, `senior-developer.md`, `qa-engineer.md`, `tech-lead.md`, ... |
 | Skills/Commands | `.gemini/commands/` | Các skill có thể gọi qua slash command | `ship.md`, `verify-pr.md`, `scope-check.md`, `security-audit-stride.md` |
@@ -167,6 +171,9 @@ Workspace điều phối AI agents cho KZTEK — Multi-Agent Orchestration Frame
 
 | Ngày | File/Module | Loại | Mô tả ngắn | Agent |
 |------|------------|------|------------|-------|
+| 2026-08-18 | `mention-comment-input.tsx`, `task-attachment-gallery.tsx`, `notification-bell.tsx`, `mail.ts` | Add | Bổ sung Comment gắn thẻ (@mention), Gửi Email khi được tag, Upload ảnh/video lỗi cạnh mô tả & Notification Center | senior-developer |
+| 2026-08-18 | `src/app/projects/[projectId]/settings/`, `system-config.ts` | Add | Xây dựng Trung tâm Cấu hình Hệ thống (Admin Config) & Chuyển thông tin tài khoản lên góc trên phải | senior-developer |
+| 2026-08-18 | `src/lib/mail.ts`, `notifications.ts`, `email-log-modal.tsx` | Add | Xây dựng Notify & Email Service, Branded HTML templates, Email Logs Modal | senior-developer |
 | 2026-07-27 | `setup-gemini-link.ps1` | Add | Tạo script tự động hóa thiết lập Junction Link cấu hình dùng chung | senior-developer |
 | 2026-07-23 | `src/TodoApp/` | Add | Xây dựng ứng dụng TodoApp C# Windows Forms (.NET 10) | senior-developer |
 | 2026-07-12 | `.gemini/evals/` | Add | Tạo thư mục + 3 eval mẫu (task-planner, senior-developer, qa-engineer) | senior-developer |

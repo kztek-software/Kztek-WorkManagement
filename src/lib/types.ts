@@ -4,6 +4,7 @@ export type UserLite = {
   email?: string;
   avatarColor: string;
   title?: string | null;
+  role?: string;
 };
 
 export type LabelDto = {
@@ -16,6 +17,20 @@ export type SubtaskDto = {
   id: string;
   title: string;
   done: boolean;
+};
+
+export type AttachmentDto = {
+  id: string;
+  taskId?: string | null;
+  ticketId?: string | null;
+  uploaderId?: string | null;
+  fileName: string;
+  fileUrl: string;
+  fileType: "image" | "video" | "document" | "other" | string;
+  fileSize?: number | null;
+  mimeType?: string | null;
+  createdAt: string;
+  uploader?: UserLite | null;
 };
 
 export type TaskDto = {
@@ -41,13 +56,14 @@ export type TaskDto = {
   assignee: UserLite | null;
   labels: { label: LabelDto }[];
   subtasks: SubtaskDto[];
+  attachments?: AttachmentDto[];
   customerTicket?: {
     id: string;
     trackingCode: string;
     customerName: string;
     customerEmail: string;
   } | null;
-  _count: { comments: number };
+  _count: { comments: number; attachments?: number };
 };
 
 export type SprintDto = {
@@ -64,12 +80,123 @@ export type ProjectDto = {
   name: string;
   key: string;
   description: string | null;
+  status?: string; // PLANNING | IN_PROGRESS | ON_HOLD | COMPLETED | CANCELLED
+  ownerId?: string;
+  owner?: UserLite;
+  createdAt?: string;
+  updatedAt?: string;
+  _count?: {
+    tasks?: number;
+    members?: number;
+    customerTickets?: number;
+  };
 };
 
 export type MemberDto = {
   id: string;
   role: string;
   user: UserLite;
+};
+
+export type ProjectDashboardData = {
+  project: ProjectDto & {
+    members: {
+      id: string;
+      role: string;
+      user: UserLite & {
+        team?: { id: string; name: string; code: string; color: string } | null;
+      };
+    }[];
+  };
+  currentRole: string;
+  summary: {
+    totalTasks: number;
+    doneTasks: number;
+    inProgressTasks: number;
+    inReviewTasks: number;
+    todoTasks: number;
+    backlogTasks: number;
+    overdueTasks: number;
+    urgentTasks: number;
+    completionRate: number;
+    totalStoryPoints: number;
+    doneStoryPoints: number;
+    remainingStoryPoints: number;
+    pointsCompletionRate: number;
+  };
+  activeSprint: {
+    id: string;
+    name: string;
+    goal: string | null;
+    status: string;
+    startDate: string | null;
+    endDate: string | null;
+    daysRemaining: number | null;
+    totalTasks: number;
+    doneTasks: number;
+    totalPoints: number;
+    donePoints: number;
+  } | null;
+  statusDistribution: { status: string; label: string; count: number; color: string }[];
+  priorityDistribution: { priority: string; label: string; count: number; color: string }[];
+  typeDistribution: { type: string; label: string; count: number; color: string }[];
+  memberWorkloads: {
+    userId: string;
+    name: string;
+    avatarColor: string;
+    title: string | null;
+    role: string;
+    teamName: string | null;
+    teamColor: string | null;
+    totalTasks: number;
+    doneTasks: number;
+    inProgressTasks: number;
+    overdueTasks: number;
+    storyPoints: number;
+    completionRate: number;
+  }[];
+  teamBreakdown: {
+    id: string;
+    name: string;
+    code: string;
+    color: string;
+    memberCount: number;
+    totalTasks: number;
+    doneTasks: number;
+  }[];
+  urgentAndOverdueTasks: {
+    id: string;
+    number: number;
+    title: string;
+    status: string;
+    priority: string;
+    type: string;
+    dueDate: string | null;
+    isOverdue: boolean;
+    assignee: UserLite | null;
+    storyPoints: number | null;
+  }[];
+  recentActivities: {
+    id: string;
+    action: string;
+    detail: string | null;
+    createdAt: string;
+    actor: UserLite;
+    task: {
+      id: string;
+      number: number;
+      title: string;
+    };
+  }[];
+  ticketStats: {
+    total: number;
+    open: number;
+    triaged: number;
+    inProgress: number;
+    resolved: number;
+    closed: number;
+    resolutionRate: number;
+  };
 };
 
 export type CommentDto = {
@@ -126,6 +253,7 @@ export type CustomerTicketDto = {
   createdAt: string;
   updatedAt: string;
   comments?: TicketCommentDto[];
+  attachments?: AttachmentDto[];
   _count?: { comments: number };
 };
 

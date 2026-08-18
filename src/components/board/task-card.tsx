@@ -30,6 +30,11 @@ export function TaskCard({ task, overlay }: { task: TaskDto; overlay?: boolean }
           <span className="text-[10px] font-bold font-mono text-muted tracking-tight">
             #{task.number}
           </span>
+          {task.title.startsWith("[TK-") && (
+            <span className="px-1.5 py-0.2 rounded text-[8px] font-mono font-bold bg-accent/20 text-accent border border-accent/30">
+              Ticket KH
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-1">

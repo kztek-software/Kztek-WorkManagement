@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  LayoutDashboard,
   KanbanSquare,
   BarChart3,
   Rocket,
@@ -21,8 +22,12 @@ import {
   FolderPlus,
   Loader2,
   X,
+  LifeBuoy,
+  Shield,
+  Clock,
+  UserCheck,
 } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, initials } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -31,13 +36,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog } from "primereact/dialog";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { PROJECT_STATUSES, projectStatusMeta } from "@/lib/constants";
 import type { UserLite } from "@/lib/types";
 
 type ProjectInfo = {
   id: string;
   name: string;
   key: string;
-  members: { id: string; role: string; user: UserLite }[];
+  status?: string;
+  members: { id: string; role: string; user: UserLite & { team?: { name: string; color: string } | null } }[];
 };
 
 const PROJECT_GRADIENTS = [
@@ -58,6 +65,24 @@ function getProjectGradient(key: string) {
   return PROJECT_GRADIENTS[index];
 }
 
+type TeamData = {
+  id: string;
+  name: string;
+  code: string;
+  color: string;
+  members: { id: string; name: string; email: string; avatarColor: string; title: string | null }[];
+};
+
+type UserData = {
+  id: string;
+  name: string;
+  email: string;
+  avatarColor: string;
+  title: string | null;
+  teamId: string | null;
+  team?: { id: string; name: string; code: string; color: string } | null;
+};
+
 export function AppShell({
   user,
   project,
@@ -66,7 +91,7 @@ export function AppShell({
 }: {
   user: UserLite;
   project: ProjectInfo;
-  projects: { id: string; name: string; key: string }[];
+  projects: { id: string; name: string; key: string; status?: string }[];
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -80,8 +105,16 @@ export function AppShell({
   const [newProjectName, setNewProjectName] = useState("");
   const [newProjectKey, setNewProjectKey] = useState("");
   const [newProjectDesc, setNewProjectDesc] = useState("");
+  const [newProjectStatus, setNewProjectStatus] = useState<string>("PLANNING");
+  const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
+  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
   const [creatingProject, setCreatingProject] = useState(false);
   const [createProjectError, setCreateProjectError] = useState("");
+
+  // Teams & Users Data for creation
+  const [availableTeams, setAvailableTeams] = useState<TeamData[]>([]);
+  const [availableUsers, setAvailableUsers] = useState<UserData[]>([]);
+  const [loadingModalData, setLoadingModalData] = useState(false);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -98,8 +131,27 @@ export function AppShell({
     };
   }, [projectMenuOpen]);
 
+  // Load teams and users when create modal is opened
+  useEffect(() => {
+    if (createProjectOpen && availableTeams.length === 0) {
+      setLoadingModalData(true);
+      Promise.all([
+        fetch("/api/teams").then((r) => r.json()),
+        fetch("/api/users").then((r) => r.json()),
+      ])
+        .then(([teamsData, usersData]) => {
+          if (teamsData.teams) setAvailableTeams(teamsData.teams);
+          if (usersData.users) setAvailableUsers(usersData.users);
+        })
+        .catch(() => {})
+        .finally(() => setLoadingModalData(false));
+    }
+  }, [createProjectOpen, availableTeams.length]);
+
   const mainNav = [
+    { href: `/projects/${project.id}/dashboard`, label: "Dashboard Dự Án", icon: LayoutDashboard },
     { href: `/projects/${project.id}/board`, label: "Board Công Việc", icon: KanbanSquare },
+    { href: `/projects/${project.id}/tickets`, label: "Hộp Thư Ticket KH", icon: LifeBuoy },
     { href: `/projects/${project.id}/sprints`, label: "Sprints & Kế Hoạch", icon: Rocket },
     { href: `/projects/${project.id}/reports`, label: "Báo Cáo & KPI", icon: BarChart3 },
   ];
@@ -128,6 +180,37 @@ export function AppShell({
     }
   }
 
+  // Handle Team selection with auto-selecting members
+  function toggleTeam(teamId: string) {
+    const isSelected = selectedTeamIds.includes(teamId);
+    const team = availableTeams.find((t) => t.id === teamId);
+    const teamMemberIds = team ? team.members.map((m) => m.id) : [];
+
+    if (isSelected) {
+      // Bỏ chọn team -> bỏ chọn teamId và các thành viên của team đó (nếu không thuộc team khác đã chọn)
+      setSelectedTeamIds((prev) => prev.filter((id) => id !== teamId));
+      setSelectedMemberIds((prev) => {
+        const remainingTeams = availableTeams.filter((t) => selectedTeamIds.includes(t.id) && t.id !== teamId);
+        const otherSelectedUserIds = new Set(remainingTeams.flatMap((t) => t.members.map((m) => m.id)));
+        return prev.filter((uid) => otherSelectedUserIds.has(uid) || !teamMemberIds.includes(uid));
+      });
+    } else {
+      // Chọn team -> thêm teamId và auto-select toàn bộ thành viên của team đó
+      setSelectedTeamIds((prev) => [...prev, teamId]);
+      setSelectedMemberIds((prev) => {
+        const newSet = new Set([...prev, ...teamMemberIds]);
+        return Array.from(newSet);
+      });
+    }
+  }
+
+  // Toggle individual member
+  function toggleMember(userId: string) {
+    setSelectedMemberIds((prev) =>
+      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
+    );
+  }
+
   async function handleCreateProject(e: React.FormEvent) {
     e.preventDefault();
     setCreateProjectError("");
@@ -141,6 +224,9 @@ export function AppShell({
           name: newProjectName.trim(),
           key: newProjectKey.trim().toUpperCase(),
           description: newProjectDesc.trim() || undefined,
+          status: newProjectStatus,
+          teamIds: selectedTeamIds,
+          memberIds: selectedMemberIds,
         }),
       });
 
@@ -154,10 +240,13 @@ export function AppShell({
       setNewProjectName("");
       setNewProjectKey("");
       setNewProjectDesc("");
+      setNewProjectStatus("PLANNING");
+      setSelectedTeamIds([]);
+      setSelectedMemberIds([]);
       setProjectMenuOpen(false);
 
-      // Redirect directly to the new project board
-      router.push(`/projects/${data.project.id}/board`);
+      // Redirect directly to the new project dashboard
+      router.push(`/projects/${data.project.id}/dashboard`);
       router.refresh();
     } catch {
       setCreateProjectError("Lỗi kết nối máy chủ");
@@ -171,6 +260,8 @@ export function AppShell({
       p.name.toLowerCase().includes(searchProject.toLowerCase()) ||
       p.key.toLowerCase().includes(searchProject.toLowerCase())
   );
+
+  const activeProjectStatusMeta = projectStatusMeta(project.status);
 
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground">
@@ -197,7 +288,7 @@ export function AppShell({
         </div>
 
         {/* ========================================================================= */}
-        {/* REDESIGNED PROJECT SWITCHER WIDGET                                        */}
+        {/* PROJECT SWITCHER WIDGET WITH STATUS BADGE                                */}
         {/* ========================================================================= */}
         <div className="relative p-3 border-b border-line/70 bg-surface/50" ref={dropdownRef}>
           <div className="text-[10px] font-bold uppercase tracking-wider text-muted/80 mb-1.5 px-1 flex items-center justify-between">
@@ -214,7 +305,7 @@ export function AppShell({
                 : "bg-surface-2/80 border-line hover:border-line-strong hover:bg-surface-3"
             )}
           >
-            <div className="flex items-center gap-2.5 min-w-0">
+            <div className="flex items-center gap-2.5 min-w-0 flex-1">
               {/* Vibrant Project Key Avatar */}
               <div
                 className={cn(
@@ -225,14 +316,22 @@ export function AppShell({
                 {project.key.slice(0, 3)}
               </div>
 
-              {/* Project Title & Key */}
+              {/* Project Title, Key & Status */}
               <div className="min-w-0 flex-1">
                 <div className="truncate text-xs font-bold text-foreground group-hover:text-white transition-colors">
                   {project.name}
                 </div>
-                <div className="text-[10px] text-muted font-mono flex items-center gap-1">
-                  <span>Mã:</span>
-                  <span className="font-semibold text-foreground/80">{project.key}</span>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span
+                    className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-bold"
+                    style={{
+                      backgroundColor: activeProjectStatusMeta.bg,
+                      color: activeProjectStatusMeta.color,
+                      border: `1px solid ${activeProjectStatusMeta.border}`,
+                    }}
+                  >
+                    {activeProjectStatusMeta.label}
+                  </span>
                 </div>
               </div>
             </div>
@@ -252,9 +351,9 @@ export function AppShell({
             <div className="absolute left-3 right-3 top-[calc(100%+6px)] z-50 rounded-2xl border border-white/15 bg-[#131826] p-2 shadow-2xl backdrop-blur-2xl animate-fade-in-up ring-1 ring-black/50">
               {/* Header */}
               <div className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted flex items-center justify-between border-b border-line/50 pb-2">
-                <span>Chuyển đổi dự án ({projects.length})</span>
+                <span>Dự án của bạn ({projects.length})</span>
                 <span className="rounded bg-surface-2 px-1.5 py-0.2 text-[9px] font-mono text-muted-light">
-                  ESC để đóng
+                  ESC
                 </span>
               </div>
 
@@ -277,10 +376,11 @@ export function AppShell({
               <div className="space-y-1 max-h-56 overflow-y-auto py-1 pr-0.5">
                 {filteredProjects.map((p) => {
                   const isActive = p.id === project.id;
+                  const pStatusMeta = projectStatusMeta(p.status);
                   return (
                     <Link
                       key={p.id}
-                      href={`/projects/${p.id}/board`}
+                      href={`/projects/${p.id}/dashboard`}
                       onClick={() => setProjectMenuOpen(false)}
                       className={cn(
                         "flex items-center justify-between rounded-xl px-2.5 py-2 transition-all group/item",
@@ -311,8 +411,15 @@ export function AppShell({
                           >
                             {p.name}
                           </div>
-                          <div className="text-[10px] text-muted font-mono">
-                            Mã: <span className="text-muted-light font-semibold">{p.key}</span>
+                          <div className="flex items-center gap-1.5 text-[10px] text-muted font-mono mt-0.5">
+                            <span>{p.key}</span>
+                            <span>•</span>
+                            <span
+                              className="px-1 py-0.1 rounded text-[8px] font-semibold"
+                              style={{ color: pStatusMeta.color }}
+                            >
+                              {pStatusMeta.label}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -361,7 +468,7 @@ export function AppShell({
               Quản lý dự án
             </div>
             {mainNav.map((item) => {
-              const active = pathname.startsWith(item.href);
+              const active = pathname === item.href || (item.href.endsWith("/dashboard") && pathname === `/projects/${project.id}`);
               return (
                 <Link
                   key={item.href}
@@ -437,7 +544,9 @@ export function AppShell({
                     </Avatar>
                     <div className="min-w-0">
                       <div className="truncate text-xs font-medium text-foreground">{m.user.name}</div>
-                      <div className="truncate text-[9px] text-muted">{m.user.title || m.role}</div>
+                      <div className="truncate text-[9px] text-muted">
+                        {m.user.team ? m.user.team.name : (m.user.title || m.role)}
+                      </div>
                     </div>
                   </div>
                   <span className="text-[9px] font-mono font-medium px-1.5 py-0.2 rounded bg-surface-2 text-muted border border-line">
@@ -493,47 +602,79 @@ export function AppShell({
       </main>
 
       {/* ========================================================================= */}
-      {/* MODAL: TẠO DỰ ÁN MỚI TRỰC TIẾP (IN-APP CREATE PROJECT DIALOG)            */}
+      {/* MODAL: TẠO DỰ ÁN MỚI — HỖ TRỢ CHỌN TEAM AUTO-SELECT THÀNH VIÊN VÀ STATUS */}
       {/* ========================================================================= */}
       <Dialog
         header="Khởi Tạo Dự Án Mới"
         visible={createProjectOpen}
         onHide={() => setCreateProjectOpen(false)}
-        className="w-full max-w-md border border-line bg-surface rounded-2xl shadow-2xl"
+        className="w-full max-w-2xl border border-line bg-surface rounded-2xl shadow-2xl"
       >
-        <form onSubmit={handleCreateProject} className="space-y-4 pt-2">
+        <form onSubmit={handleCreateProject} className="space-y-4 pt-2 max-h-[80vh] overflow-y-auto pr-1">
           {createProjectError && (
             <div className="rounded-xl bg-red-500/10 border border-red-500/30 p-2.5 text-xs text-red-400 font-medium">
               {createProjectError}
             </div>
           )}
 
-          <div className="space-y-1">
-            <Label className="text-xs font-semibold">Tên dự án *</Label>
-            <Input
-              placeholder="VD: Hệ Thống Bãi Xe Thông Minh KZ-2026"
-              value={newProjectName}
-              onChange={(e) => handleNameChange(e.target.value)}
-              className="text-xs h-9 bg-surface-2"
-              required
-              minLength={2}
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            <div className="space-y-1">
+              <Label className="text-xs font-semibold">Tên dự án *</Label>
+              <Input
+                placeholder="VD: Hệ Thống Bãi Xe Thông Minh KZ-2026"
+                value={newProjectName}
+                onChange={(e) => handleNameChange(e.target.value)}
+                className="text-xs h-9 bg-surface-2"
+                required
+                minLength={2}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-semibold">Mã dự án (Key: 2-6 ký tự in hoa) *</Label>
+                <span className="text-[10px] font-mono text-muted">VD: KZ, PARK</span>
+              </div>
+              <Input
+                placeholder="VD: KZ"
+                value={newProjectKey}
+                onChange={(e) => setNewProjectKey(e.target.value.toUpperCase())}
+                className="text-xs h-9 bg-surface-2 font-mono uppercase"
+                required
+                minLength={2}
+                maxLength={6}
+              />
+            </div>
           </div>
 
-          <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <Label className="text-xs font-semibold">Mã dự án (Key: 2-6 ký tự in hoa) *</Label>
-              <span className="text-[10px] font-mono text-muted">VD: KZ, PARK, HW</span>
+          {/* Trạng thái dự án ban đầu */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Trạng thái khởi tạo dự án</Label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+              {PROJECT_STATUSES.map((st) => {
+                const isSelected = newProjectStatus === st.id;
+                return (
+                  <button
+                    key={st.id}
+                    type="button"
+                    onClick={() => setNewProjectStatus(st.id)}
+                    className={cn(
+                      "flex flex-col items-center justify-center p-2 rounded-xl border text-center transition-all cursor-pointer",
+                      isSelected
+                        ? "bg-surface-3 shadow-sm ring-2 ring-accent"
+                        : "bg-surface-2/60 border-line hover:bg-surface-2"
+                    )}
+                    style={{
+                      borderColor: isSelected ? st.color : undefined,
+                    }}
+                  >
+                    <span className="text-xs font-bold" style={{ color: st.color }}>
+                      {st.label}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
-            <Input
-              placeholder="VD: KZ"
-              value={newProjectKey}
-              onChange={(e) => setNewProjectKey(e.target.value.toUpperCase())}
-              className="text-xs h-9 bg-surface-2 font-mono uppercase"
-              required
-              minLength={2}
-              maxLength={6}
-            />
           </div>
 
           <div className="space-y-1">
@@ -545,6 +686,134 @@ export function AppShell({
               rows={2}
               className="text-xs bg-surface-2"
             />
+          </div>
+
+          {/* ========================================================================= */}
+          {/* CHỌN TEAM / PHÒNG BAN THAM GIA -> TỰ ĐỘNG CHỌN THÀNH VIÊN                 */}
+          {/* ========================================================================= */}
+          <div className="space-y-2.5 rounded-xl border border-line bg-surface-2/40 p-3.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-accent" />
+                <span className="text-xs font-bold text-foreground">
+                  Chọn phòng ban / Team tham gia dự án
+                </span>
+              </div>
+              <span className="text-[10px] text-muted">
+                (Tự động chọn toàn bộ nhân sự của team)
+              </span>
+            </div>
+
+            {loadingModalData ? (
+              <div className="flex items-center justify-center py-4 text-xs text-muted">
+                <Loader2 className="h-4 w-4 animate-spin mr-2" /> Đang tải danh sách phòng ban...
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {availableTeams.map((team) => {
+                  const isChecked = selectedTeamIds.includes(team.id);
+                  return (
+                    <button
+                      type="button"
+                      key={team.id}
+                      onClick={() => toggleTeam(team.id)}
+                      className={cn(
+                        "flex items-center justify-between p-2.5 rounded-xl border text-left transition-all cursor-pointer",
+                        isChecked
+                          ? "bg-accent/15 border-accent shadow-sm"
+                          : "bg-surface border-line hover:border-line-strong hover:bg-surface-2"
+                      )}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div
+                          className="h-3 w-3 rounded-full shrink-0"
+                          style={{ backgroundColor: team.color }}
+                        />
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold truncate text-foreground">
+                            {team.name}
+                          </div>
+                          <div className="text-[10px] text-muted">
+                            {team.members.length} thành viên ({team.code})
+                          </div>
+                        </div>
+                      </div>
+                      <div
+                        className={cn(
+                          "h-5 w-5 rounded-md border flex items-center justify-center shrink-0 transition-colors",
+                          isChecked
+                            ? "bg-accent border-accent text-white"
+                            : "border-line bg-surface-2 text-transparent"
+                        )}
+                      >
+                        <Check className="h-3 w-3 stroke-[3]" />
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Danh sách thành viên được auto-select */}
+            <div className="pt-2 border-t border-line/60">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <UserCheck className="h-3.5 w-3.5 text-emerald-400" />
+                  Nhân sự tham gia dự án ({selectedMemberIds.length + 1} người)
+                </span>
+                <span className="text-[10px] text-muted italic">
+                  * Bạn ({user.name}) tự động là Chủ dự án (Owner)
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1.5 max-h-40 overflow-y-auto p-1 bg-surface rounded-xl border border-line">
+                {availableUsers.map((u) => {
+                  const isChecked = selectedMemberIds.includes(u.id) || u.id === user.id;
+                  const isCreator = u.id === user.id;
+                  return (
+                    <div
+                      key={u.id}
+                      onClick={() => !isCreator && toggleMember(u.id)}
+                      className={cn(
+                        "flex items-center justify-between p-1.5 rounded-lg text-xs transition-colors select-none",
+                        isCreator
+                          ? "bg-accent/15 border border-accent/30 cursor-default"
+                          : isChecked
+                          ? "bg-surface-2 hover:bg-surface-3 cursor-pointer border border-line"
+                          : "opacity-60 hover:opacity-100 hover:bg-surface-2 cursor-pointer border border-transparent"
+                      )}
+                    >
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <Avatar className="h-5 w-5 text-[9px] shrink-0">
+                          <AvatarFallback color={u.avatarColor}>
+                            {initials(u.name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0">
+                          <div className="truncate font-medium text-[11px] text-foreground flex items-center gap-1">
+                            {u.name}
+                            {isCreator && (
+                              <span className="text-[8px] font-bold text-accent bg-accent/20 px-1 rounded">
+                                Owner
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div
+                        className={cn(
+                          "h-4 w-4 rounded flex items-center justify-center shrink-0 text-[10px]",
+                          isChecked ? "text-emerald-400" : "text-transparent"
+                        )}
+                      >
+                        <Check className="h-3 w-3 stroke-[3]" />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
           <div className="flex justify-end gap-2 pt-3 border-t border-line">
@@ -560,7 +829,7 @@ export function AppShell({
               type="submit"
               size="sm"
               disabled={creatingProject}
-              className="font-bold bg-accent hover:bg-accent/90 text-white shadow-md shadow-accent/25"
+              className="font-bold bg-accent hover:bg-accent/90 text-white shadow-md shadow-accent/25 px-4"
             >
               {creatingProject ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />

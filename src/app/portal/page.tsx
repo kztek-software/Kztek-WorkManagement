@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { FileUploadZone, type UploadedFileItem } from "@/components/ui/file-upload-zone";
 
 interface ProjectOption {
   id: string;
@@ -55,6 +56,7 @@ export default function CustomerPortalPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [environment, setEnvironment] = useState("");
+  const [attachments, setAttachments] = useState<UploadedFileItem[]>([]);
 
   // Submission state
   const [submitting, setSubmitting] = useState(false);
@@ -141,6 +143,13 @@ export default function CustomerPortalPage() {
           title: title.trim(),
           description: description.trim(),
           environment: environment.trim() || null,
+          attachments: attachments.map((a) => ({
+            fileName: a.fileName,
+            fileUrl: a.fileUrl,
+            fileType: a.fileType,
+            fileSize: a.fileSize,
+            mimeType: a.mimeType,
+          })),
         }),
       });
 
@@ -494,6 +503,15 @@ export default function CustomerPortalPage() {
                     required
                   />
                 </div>
+
+                {/* Upload File / Ảnh / Video lỗi bên cạnh mô tả */}
+                <FileUploadZone
+                  files={attachments}
+                  onChange={setAttachments}
+                  maxFiles={8}
+                  label="Đính kèm hình ảnh, video quay lỗi hoặc tài liệu (Khuyên dùng)"
+                  helperText="Tải lên ảnh chụp màn hình, video quay thao tác lỗi hoặc file log để kỹ thuật xử lý nhanh nhất"
+                />
 
                 <div className="space-y-1.5">
                   <Label className="text-xs font-bold text-foreground flex items-center gap-1.5">

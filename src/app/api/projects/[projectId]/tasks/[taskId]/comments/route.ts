@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { publish } from "@/lib/bus";
+import { notifyTaskComment, notifyTaskMention } from "@/lib/notifications";
 
 export async function GET(
   _req: NextRequest,
@@ -19,7 +20,7 @@ export async function GET(
   const [comments, activity] = await Promise.all([
     prisma.comment.findMany({
       where: { taskId },
-      include: { author: { select: { id: true, name: true, avatarColor: true } } },
+      include: { author: { select: { id: true, name: true, email: true, avatarColor: true } } },
       orderBy: { createdAt: "asc" },
     }),
     prisma.activity.findMany({
@@ -33,7 +34,10 @@ export async function GET(
   return NextResponse.json({ comments, activity });
 }
 
-const commentSchema = z.object({ body: z.string().min(1).max(2000) });
+const commentSchema = z.object({
+  body: z.string().min(1).max(3000),
+  mentionedUserIds: z.array(z.string()).optional().default([]),
+});
 
 export async function POST(
   req: NextRequest,
@@ -53,15 +57,67 @@ export async function POST(
     return NextResponse.json({ error: "Bình luận không được để trống" }, { status: 400 });
   }
 
+  const commentText = parsed.data.body;
+  let mentionedUserIds = [...(parsed.data.mentionedUserIds || [])];
+
+  // Tự động tìm thêm user IDs nếu trong nội dung có định dạng @[Name](userId) hoặc @username
+  if (mentionedUserIds.length === 0 && commentText.includes("@")) {
+    // Tìm các project members có tên được nhắc đến trong comment
+    const projectMembers = await prisma.projectMember.findMany({
+      where: { projectId },
+      include: { user: { select: { id: true, name: true, email: true } } },
+    });
+
+    for (const pm of projectMembers) {
+      if (
+        pm.user.id !== user.id &&
+        (commentText.toLowerCase().includes(`@${pm.user.name.toLowerCase()}`) ||
+          commentText.toLowerCase().includes(`@${pm.user.email.toLowerCase()}`))
+      ) {
+        if (!mentionedUserIds.includes(pm.user.id)) {
+          mentionedUserIds.push(pm.user.id);
+        }
+      }
+    }
+  }
+
   const comment = await prisma.comment.create({
-    data: { taskId, authorId: user.id, body: parsed.data.body },
-    include: { author: { select: { id: true, name: true, avatarColor: true } } },
+    data: { taskId, authorId: user.id, body: commentText },
+    include: { author: { select: { id: true, name: true, email: true, avatarColor: true } } },
   });
 
   await prisma.activity.create({
-    data: { taskId, actorId: user.id, action: "COMMENTED", detail: "đã bình luận" },
+    data: {
+      taskId,
+      actorId: user.id,
+      action: "COMMENTED",
+      detail: mentionedUserIds.length > 0 ? `đã bình luận và nhắc đến ${mentionedUserIds.length} thành viên` : "đã bình luận",
+    },
   });
 
   publish(projectId, { type: "TASK_CHANGED", taskId, actorId: user.id });
+
+  // 1. Gửi thông báo & Email trực tiếp cho những người được tag (@mention)
+  let notifiedMentionUserIds: string[] = [];
+  if (mentionedUserIds.length > 0) {
+    notifiedMentionUserIds = await notifyTaskMention({
+      taskId,
+      authorId: user.id,
+      commentBody: commentText,
+      mentionedUserIds,
+      projectId,
+    });
+  }
+
+  // 2. Gửi thông báo & Email bình luận thông thường cho Assignee/Creator (loại trừ người đã được notify ở bước mention)
+  notifyTaskComment({
+    taskId,
+    authorId: user.id,
+    commentBody: commentText,
+    projectId,
+    excludeUserIds: notifiedMentionUserIds,
+  });
+
   return NextResponse.json({ comment }, { status: 201 });
 }
+

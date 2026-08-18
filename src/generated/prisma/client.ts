@@ -106,3 +106,18 @@ export type Comment = Prisma.CommentModel
  * 
  */
 export type Activity = Prisma.ActivityModel
+/**
+ * Model CustomerTicket
+ * 
+ */
+export type CustomerTicket = Prisma.CustomerTicketModel
+/**
+ * Model TicketComment
+ * 
+ */
+export type TicketComment = Prisma.TicketCommentModel
+/**
+ * Model Attachment
+ * 
+ */
+export type Attachment = Prisma.AttachmentModel

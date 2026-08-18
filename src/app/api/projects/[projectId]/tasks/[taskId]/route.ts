@@ -5,12 +5,13 @@ import { requireUser } from "@/lib/auth";
 import { publish } from "@/lib/bus";
 import { statusMeta } from "@/lib/constants";
 import { canEditTask, canDeleteTask } from "@/lib/permissions";
-import { sendNotification } from "@/lib/notifications";
+import { notifyTaskAssigned, notifyTaskStatusChanged } from "@/lib/notifications";
 
 const taskInclude = {
   assignee: { select: { id: true, name: true, avatarColor: true } },
   labels: { include: { label: true } },
   subtasks: true,
+  attachments: true,
   _count: { select: { comments: true } },
 } as const;
 
@@ -43,7 +44,7 @@ export async function PATCH(
   const task = await prisma.task.findFirst({ where: { id: taskId, projectId } });
   if (!task) return NextResponse.json({ error: "Không tìm thấy task" }, { status: 404 });
 
-  if (!canEditTask(member.role, task.creatorId === user.id, task.assigneeId === user.id)) {
+  if (!canEditTask(member.role)) {
     return NextResponse.json({ error: "Người xem (Viewer) không có quyền chỉnh sửa task" }, { status: 403 });
   }
 
@@ -106,26 +107,21 @@ export async function PATCH(
 
   publish(projectId, { type: "TASK_CHANGED", taskId, actorId: user.id });
 
-  // Gửi thông báo nếu có phân công người mới
+  // Gửi thông báo & Email nếu có phân công người mới
   if (d.assigneeId && d.assigneeId !== task.assigneeId && d.assigneeId !== user.id) {
-    sendNotification({
-      userId: d.assigneeId,
+    notifyTaskAssigned({
+      taskId,
+      assigneeId: d.assigneeId,
       actorId: user.id,
-      type: "ASSIGNED",
-      title: "Bạn vừa được giao task",
-      message: `${user.name} đã giao task FB-${updated.number}: "${updated.title}" cho bạn`,
-      link: `/projects/${projectId}/board`,
       projectId,
     });
-  } else if (d.status && d.status !== task.status && updated.assigneeId && updated.assigneeId !== user.id) {
-    // Thông báo cho người phụ trách khi trạng thái task thay đổi
-    sendNotification({
-      userId: updated.assigneeId,
+  } else if (d.status && d.status !== task.status) {
+    // Thông báo và email cập nhật tiến độ công việc
+    notifyTaskStatusChanged({
+      taskId,
       actorId: user.id,
-      type: "STATUS_CHANGED",
-      title: "Trạng thái task đã thay đổi",
-      message: `${user.name} đã chuyển task FB-${updated.number} sang ${d.status}`,
-      link: `/projects/${projectId}/board`,
+      oldStatus: task.status,
+      newStatus: d.status,
       projectId,
     });
   }
@@ -148,7 +144,7 @@ export async function DELETE(
   const task = await prisma.task.findFirst({ where: { id: taskId, projectId } });
   if (!task) return NextResponse.json({ error: "Không tìm thấy task" }, { status: 404 });
 
-  if (!canDeleteTask(member.role, task.creatorId === user.id)) {
+  if (!canDeleteTask(member.role)) {
     return NextResponse.json({ error: "Bạn không có quyền xóa task này (chỉ Admin/Owner hoặc Người tạo)" }, { status: 403 });
   }
 

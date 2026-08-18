@@ -2,9 +2,23 @@
 
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import { Bell, Check, CheckCheck, ExternalLink, Trash2, Clock, Sparkles } from "lucide-react";
+import {
+  Bell,
+  Check,
+  CheckCheck,
+  ExternalLink,
+  Mail,
+  Sparkles,
+  AtSign,
+  ClipboardList,
+  MessageSquare,
+  ArrowRightLeft,
+  Trash2,
+  Filter,
+} from "lucide-react";
 import { Avatar, AvatarFallback, initials } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { EmailLogModal } from "@/components/notifications/email-log-modal";
 
 type NotificationItem = {
   id: string;
@@ -21,11 +35,21 @@ type NotificationItem = {
   } | null;
 };
 
-export function NotificationBell({ projectId }: { projectId: string }) {
+type FilterCategory = "ALL" | "ASSIGNED" | "MENTIONED" | "COMMENTED" | "STATUS_CHANGED";
+
+export function NotificationBell({
+  projectId,
+  currentUserEmail,
+}: {
+  projectId?: string;
+  currentUserEmail?: string;
+}) {
   const [open, setOpen] = useState(false);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<FilterCategory>("ALL");
+  const [onlyUnread, setOnlyUnread] = useState(false);
   const popoverRef = useRef<HTMLDivElement | null>(null);
 
   async function fetchNotifications() {
@@ -43,7 +67,7 @@ export function NotificationBell({ projectId }: { projectId: string }) {
 
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 10000); // 10s poll
+    const interval = setInterval(fetchNotifications, 8000); // 8s poll
     return () => clearInterval(interval);
   }, []);
 
@@ -90,6 +114,15 @@ export function NotificationBell({ projectId }: { projectId: string }) {
     }
   }
 
+  async function clearReadNotifications() {
+    try {
+      await fetch("/api/notifications", { method: "DELETE" });
+      setNotifications((prev) => prev.filter((n) => !n.read));
+    } catch {
+      // ignore
+    }
+  }
+
   function formatTime(dateStr: string) {
     const d = new Date(dateStr);
     const now = new Date();
@@ -100,111 +133,317 @@ export function NotificationBell({ projectId }: { projectId: string }) {
     return `${d.getDate()}/${d.getMonth() + 1}`;
   }
 
-  return (
-    <div className="relative" ref={popoverRef}>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => {
-          setOpen((v) => !v);
-          if (!open) fetchNotifications();
-        }}
-        className="relative h-8 w-8 text-muted hover:text-foreground cursor-pointer"
-        title="Thông báo giao việc"
-      >
-        <Bell className="h-4 w-4" />
-        {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white shadow-sm animate-pulse">
-            {unreadCount > 9 ? "9+" : unreadCount}
-          </span>
-        )}
-      </Button>
+  function getTypeBadge(type: string) {
+    switch (type) {
+      case "MENTIONED":
+        return {
+          label: "Nhắc đến (@)",
+          icon: <AtSign className="h-3 w-3" />,
+          color: "text-amber-400 bg-amber-500/15 border-amber-500/30",
+        };
+      case "ASSIGNED":
+        return {
+          label: "Giao việc",
+          icon: <ClipboardList className="h-3 w-3" />,
+          color: "text-emerald-400 bg-emerald-500/15 border-emerald-500/30",
+        };
+      case "COMMENTED":
+        return {
+          label: "Bình luận",
+          icon: <MessageSquare className="h-3 w-3" />,
+          color: "text-blue-400 bg-blue-500/15 border-blue-500/30",
+        };
+      case "STATUS_CHANGED":
+        return {
+          label: "Đổi trạng thái",
+          icon: <ArrowRightLeft className="h-3 w-3" />,
+          color: "text-purple-400 bg-purple-500/15 border-purple-500/30",
+        };
+      default:
+        return {
+          label: "Thông báo",
+          icon: <Bell className="h-3 w-3" />,
+          color: "text-muted bg-line border-line",
+        };
+    }
+  }
 
-      {open && (
-        <div className="absolute right-0 bottom-full mb-2 w-80 sm:w-96 rounded-xl border border-line bg-surface-2 p-0 shadow-2xl z-50 animate-fade-in-up">
-          {/* Header */}
-          <div className="flex items-center justify-between border-b border-line p-3">
-            <div className="flex items-center gap-1.5 font-bold text-xs text-foreground">
-              <Bell className="h-3.5 w-3.5 text-accent" />
-              Thông Báo Giao Việc & Hoạt Động
-              {unreadCount > 0 && (
-                <span className="rounded-full bg-accent/20 px-1.5 py-0.2 text-[10px] text-accent font-semibold">
-                  {unreadCount} mới
-                </span>
+  // Filter notifications
+  const filteredNotifications = notifications.filter((n) => {
+    if (onlyUnread && n.read) return false;
+    if (activeTab === "ALL") return true;
+    if (activeTab === "ASSIGNED") return n.type === "ASSIGNED";
+    if (activeTab === "MENTIONED") return n.type === "MENTIONED";
+    if (activeTab === "COMMENTED") return n.type === "COMMENTED";
+    if (activeTab === "STATUS_CHANGED") return n.type === "STATUS_CHANGED";
+    return true;
+  });
+
+  // Calculate counts per tab
+  const assignedCount = notifications.filter((n) => n.type === "ASSIGNED" && !n.read).length;
+  const mentionCount = notifications.filter((n) => n.type === "MENTIONED" && !n.read).length;
+  const commentCount = notifications.filter((n) => n.type === "COMMENTED" && !n.read).length;
+  const statusCount = notifications.filter((n) => n.type === "STATUS_CHANGED" && !n.read).length;
+
+  return (
+    <>
+      <div className="relative" ref={popoverRef}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            setOpen((v) => !v);
+            if (!open) fetchNotifications();
+          }}
+          className="relative h-8 w-8 text-muted hover:text-foreground cursor-pointer"
+          title="Trung tâm thông báo"
+        >
+          <Bell className="h-4 w-4" />
+          {unreadCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white shadow-sm animate-pulse">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
+        </Button>
+
+        {open && (
+          <div className="absolute right-0 bottom-full mb-2 w-84 sm:w-[420px] rounded-2xl border border-line bg-surface-2 p-0 shadow-2xl z-50 animate-fade-in-up overflow-hidden">
+            {/* Header */}
+            <div className="border-b border-line p-3 bg-surface/90">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 font-bold text-xs text-foreground">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-accent/20 text-accent">
+                    <Bell className="h-3.5 w-3.5" />
+                  </div>
+                  <span>Trung Tâm Thông Báo</span>
+                  {unreadCount > 0 && (
+                    <span className="rounded-full bg-red-500/20 px-2 py-0.5 text-[10px] text-red-400 font-bold border border-red-500/30">
+                      {unreadCount} chưa đọc
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 text-xs">
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={markAllAsRead}
+                      className="text-[11px] text-accent hover:underline flex items-center gap-1 cursor-pointer font-semibold"
+                      title="Đánh dấu tất cả đã đọc"
+                    >
+                      <CheckCheck className="h-3 w-3" /> Đọc hết
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => setOnlyUnread((v) => !v)}
+                    className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition-colors cursor-pointer flex items-center gap-1 ${
+                      onlyUnread ? "bg-accent text-white" : "bg-surface text-muted hover:text-foreground"
+                    }`}
+                  >
+                    <Filter className="h-2.5 w-2.5" /> Chưa đọc
+                  </button>
+                </div>
+              </div>
+
+              {/* Category Tabs */}
+              <div className="flex items-center gap-1 pt-2.5 mt-1 overflow-x-auto no-scrollbar border-t border-line/60">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("ALL")}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all shrink-0 cursor-pointer ${
+                    activeTab === "ALL"
+                      ? "bg-accent text-white shadow-sm shadow-accent/20"
+                      : "text-muted hover:text-foreground hover:bg-surface"
+                  }`}
+                >
+                  Tất cả ({notifications.length})
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("ASSIGNED")}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1 ${
+                    activeTab === "ASSIGNED"
+                      ? "bg-emerald-600 text-white shadow-sm"
+                      : "text-muted hover:text-foreground hover:bg-surface"
+                  }`}
+                >
+                  <ClipboardList className="h-3 w-3" />
+                  Việc giao
+                  {assignedCount > 0 && (
+                    <span className="ml-0.5 rounded-full bg-emerald-400/30 px-1 text-[9px]">
+                      {assignedCount}
+                    </span>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("MENTIONED")}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1 ${
+                    activeTab === "MENTIONED"
+                      ? "bg-amber-600 text-white shadow-sm"
+                      : "text-muted hover:text-foreground hover:bg-surface"
+                  }`}
+                >
+                  <AtSign className="h-3 w-3" />
+                  Gắn thẻ
+                  {mentionCount > 0 && (
+                    <span className="ml-0.5 rounded-full bg-amber-400/30 px-1 text-[9px]">
+                      {mentionCount}
+                    </span>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("COMMENTED")}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1 ${
+                    activeTab === "COMMENTED"
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : "text-muted hover:text-foreground hover:bg-surface"
+                  }`}
+                >
+                  <MessageSquare className="h-3 w-3" />
+                  Bình luận
+                  {commentCount > 0 && (
+                    <span className="ml-0.5 rounded-full bg-blue-400/30 px-1 text-[9px]">
+                      {commentCount}
+                    </span>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("STATUS_CHANGED")}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1 ${
+                    activeTab === "STATUS_CHANGED"
+                      ? "bg-purple-600 text-white shadow-sm"
+                      : "text-muted hover:text-foreground hover:bg-surface"
+                  }`}
+                >
+                  <ArrowRightLeft className="h-3 w-3" />
+                  Trạng thái
+                  {statusCount > 0 && (
+                    <span className="ml-0.5 rounded-full bg-purple-400/30 px-1 text-[9px]">
+                      {statusCount}
+                    </span>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* List */}
+            <div className="max-h-84 overflow-y-auto divide-y divide-line/60">
+              {filteredNotifications.length === 0 ? (
+                <div className="p-8 text-center text-xs text-muted space-y-1.5">
+                  <Bell className="h-7 w-7 mx-auto text-muted/40 mb-1" />
+                  <p className="font-semibold text-foreground">Không có thông báo nào trong mục này</p>
+                  <p className="text-[11px] max-w-xs mx-auto">
+                    {onlyUnread
+                      ? "Bạn đã đọc hết các thông báo."
+                      : "Các hoạt động giao việc, nhắc tên (@) và bình luận sẽ hiển thị ở đây."}
+                  </p>
+                </div>
+              ) : (
+                filteredNotifications.map((n) => {
+                  const badge = getTypeBadge(n.type);
+                  return (
+                    <div
+                      key={n.id}
+                      className={`p-3 transition-colors flex items-start gap-2.5 ${
+                        n.read ? "bg-transparent opacity-85" : "bg-accent/5 font-medium border-l-2 border-accent"
+                      } hover:bg-surface`}
+                    >
+                      <Avatar className="h-7 w-7 shrink-0 mt-0.5 border border-white/10">
+                        <AvatarFallback color={n.actor?.avatarColor || "#6366f1"} className="text-[9px] font-bold">
+                          {n.actor ? initials(n.actor.name) : "KZ"}
+                        </AvatarFallback>
+                      </Avatar>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1 mb-0.5">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span
+                              className={`inline-flex items-center gap-1 rounded px-1.5 py-0.2 text-[9px] font-bold border ${badge.color}`}
+                            >
+                              {badge.icon}
+                              {badge.label}
+                            </span>
+                            <span className="text-xs font-bold text-foreground truncate">{n.title}</span>
+                          </div>
+                          <span className="text-[10px] text-muted shrink-0">{formatTime(n.createdAt)}</span>
+                        </div>
+
+                        <p className="text-[11px] text-muted leading-relaxed break-words line-clamp-2">
+                          {n.message}
+                        </p>
+
+                        <div className="flex items-center justify-between gap-2 mt-1.5">
+                          {n.link ? (
+                            <Link
+                              href={n.link}
+                              onClick={() => {
+                                markAsRead(n.id);
+                                setOpen(false);
+                              }}
+                              className="inline-flex items-center gap-1 text-[11px] font-bold text-accent hover:underline"
+                            >
+                              Mở công việc <ExternalLink className="h-2.5 w-2.5" />
+                            </Link>
+                          ) : (
+                            <span />
+                          )}
+
+                          {!n.read && (
+                            <button
+                              onClick={() => markAsRead(n.id)}
+                              className="h-5 px-1.5 rounded bg-line hover:bg-line/80 text-[10px] font-semibold text-muted hover:text-foreground flex items-center gap-1 cursor-pointer transition-colors"
+                              title="Đánh dấu đã đọc"
+                            >
+                              <Check className="h-2.5 w-2.5" /> Đã đọc
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
               )}
             </div>
 
-            {unreadCount > 0 && (
+            {/* Footer with Email Outbox & Clear Read Action */}
+            <div className="p-2.5 border-t border-line bg-surface flex items-center justify-between gap-2">
               <button
-                onClick={markAllAsRead}
-                className="text-[11px] text-accent hover:underline flex items-center gap-1 cursor-pointer font-medium"
+                type="button"
+                onClick={clearReadNotifications}
+                className="text-[10px] text-muted hover:text-red-400 flex items-center gap-1 cursor-pointer px-2 py-1 rounded hover:bg-line/40 transition-colors"
+                title="Xóa các thông báo đã đọc"
               >
-                <CheckCheck className="h-3 w-3" /> Đọc tất cả
+                <Trash2 className="h-3 w-3" /> Dọn đã đọc
               </button>
-            )}
+
+              <button
+                type="button"
+                onClick={() => {
+                  setEmailModalOpen(true);
+                  setOpen(false);
+                }}
+                className="text-[11px] font-bold text-accent hover:underline flex items-center gap-1.5 cursor-pointer py-1 px-3 rounded-lg hover:bg-accent/10 transition-colors"
+              >
+                <Mail className="h-3.5 w-3.5 text-accent" />
+                Hộp Thư Gửi & Quản Lý Email Service
+              </button>
+            </div>
           </div>
+        )}
+      </div>
 
-          {/* List */}
-          <div className="max-h-80 overflow-y-auto divide-y divide-line/60">
-            {notifications.length === 0 ? (
-              <div className="p-6 text-center text-xs text-muted space-y-1">
-                <Bell className="h-6 w-6 mx-auto text-muted/50 mb-1" />
-                <p className="font-semibold text-foreground">Không có thông báo nào</p>
-                <p className="text-[11px]">Bạn sẽ nhận được thông báo khi có người giao việc hoặc cập nhật task.</p>
-              </div>
-            ) : (
-              notifications.map((n) => (
-                <div
-                  key={n.id}
-                  className={`p-3 transition-colors flex items-start gap-2.5 ${
-                    n.read ? "bg-transparent opacity-80" : "bg-accent/5 font-medium"
-                  } hover:bg-surface`}
-                >
-                  <Avatar className="h-7 w-7 shrink-0 mt-0.5">
-                    <AvatarFallback color={n.actor?.avatarColor || "#6366f1"} className="text-[9px]">
-                      {n.actor ? initials(n.actor.name) : "KZ"}
-                    </AvatarFallback>
-                  </Avatar>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-1">
-                      <span className="text-xs font-semibold text-foreground truncate">{n.title}</span>
-                      <span className="text-[10px] text-muted shrink-0">{formatTime(n.createdAt)}</span>
-                    </div>
-
-                    <p className="text-[11px] text-muted leading-snug mt-0.5 break-words">
-                      {n.message}
-                    </p>
-
-                    {n.link && (
-                      <Link
-                        href={n.link}
-                        onClick={() => {
-                          markAsRead(n.id);
-                          setOpen(false);
-                        }}
-                        className="inline-flex items-center gap-1 text-[10px] font-semibold text-accent hover:underline mt-1"
-                      >
-                        Mở công việc <ExternalLink className="h-2.5 w-2.5" />
-                      </Link>
-                    )}
-                  </div>
-
-                  {!n.read && (
-                    <button
-                      onClick={() => markAsRead(n.id)}
-                      className="h-5 w-5 shrink-0 rounded hover:bg-line text-muted hover:text-foreground flex items-center justify-center cursor-pointer"
-                      title="Đánh dấu đã đọc"
-                    >
-                      <Check className="h-3 w-3" />
-                    </button>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      )}
-    </div>
+      <EmailLogModal
+        visible={emailModalOpen}
+        onHide={() => setEmailModalOpen(false)}
+        currentUserEmail={currentUserEmail}
+      />
+    </>
   );
 }

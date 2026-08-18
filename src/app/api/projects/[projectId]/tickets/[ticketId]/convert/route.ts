@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { publish } from "@/lib/bus";
-import { sendNotification } from "@/lib/notifications";
+import { notifyTaskAssigned } from "@/lib/notifications";
 import { getTicketById, updateTicket } from "@/lib/tickets";
 
 const convertSchema = z.object({
@@ -119,6 +119,21 @@ export async function POST(
       },
     });
 
+    // Sao chép toàn bộ attachments của ticket sang task mới
+    if (ticket.attachments && ticket.attachments.length > 0) {
+      await prisma.attachment.createMany({
+        data: ticket.attachments.map((att) => ({
+          taskId: task.id,
+          fileName: att.fileName,
+          fileUrl: att.fileUrl,
+          fileType: att.fileType,
+          fileSize: att.fileSize,
+          mimeType: att.mimeType,
+          uploaderId: user.id,
+        })),
+      });
+    }
+
     // Cập nhật ticket với convertedTaskId và đổi trạng thái sang IN_PROGRESS
     await updateTicket(ticketId, {
       convertedTaskId: task.id,
@@ -138,15 +153,12 @@ export async function POST(
       actorId: user.id,
     });
 
-    // Gửi thông báo giao việc nếu có gán người
+    // Gửi thông báo & Email giao việc nếu có gán người
     if (task.assigneeId && task.assigneeId !== user.id) {
-      sendNotification({
-        userId: task.assigneeId,
+      notifyTaskAssigned({
+        taskId: task.id,
+        assigneeId: task.assigneeId,
         actorId: user.id,
-        type: "ASSIGNED",
-        title: "Giao xử lý lỗi khách hàng",
-        message: `${user.name} đã giao task #${task.number} (từ ticket ${ticket.trackingCode}) cho bạn`,
-        link: `/projects/${projectId}/board`,
         projectId,
       });
     }

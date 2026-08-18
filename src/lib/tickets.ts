@@ -41,6 +41,13 @@ export type CreateTicketParams = {
   customerPhone?: string | null;
   customerCompany?: string | null;
   environment?: string | null;
+  attachments?: Array<{
+    fileName: string;
+    fileUrl: string;
+    fileType?: string;
+    fileSize?: number | null;
+    mimeType?: string | null;
+  }>;
 };
 
 export async function createTicket(params: CreateTicketParams): Promise<CustomerTicketDto> {
@@ -86,6 +93,26 @@ export async function createTicket(params: CreateTicketParams): Promise<Customer
     now,
     now
   );
+
+  // Insert attachments if any
+  if (params.attachments && params.attachments.length > 0) {
+    const attachStmt = db.prepare(`
+      INSERT INTO Attachment (id, ticketId, fileName, fileUrl, fileType, fileSize, mimeType, createdAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    for (const att of params.attachments) {
+      attachStmt.run(
+        generateId(),
+        id,
+        att.fileName,
+        att.fileUrl,
+        att.fileType || "other",
+        att.fileSize || null,
+        att.mimeType || null,
+        now
+      );
+    }
+  }
 
   publish(params.projectId, {
     type: "TICKET_CREATED",
@@ -332,6 +359,24 @@ export async function getTicketComments(
 
 async function formatTicketRow(row: any, includeInternal: boolean): Promise<CustomerTicketDto> {
   const comments = await getTicketComments(row.id, includeInternal);
+  const db = getDb();
+
+  // Query attachments for this ticket
+  const attachmentRows = db.prepare(`
+    SELECT * FROM Attachment WHERE ticketId = ? ORDER BY createdAt ASC
+  `).all(row.id) as any[];
+
+  const attachments = attachmentRows.map((a) => ({
+    id: a.id,
+    ticketId: a.ticketId,
+    taskId: a.taskId,
+    fileName: a.fileName,
+    fileUrl: a.fileUrl,
+    fileType: a.fileType,
+    fileSize: a.fileSize,
+    mimeType: a.mimeType,
+    createdAt: a.createdAt,
+  }));
 
   let convertedTask = null;
   if (row.convertedTaskId) {
@@ -364,6 +409,7 @@ async function formatTicketRow(row: any, includeInternal: boolean): Promise<Cust
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     comments,
+    attachments,
     _count: { comments: comments.length },
   };
 }

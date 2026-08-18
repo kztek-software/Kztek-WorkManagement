@@ -1,7 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Users, UserPlus, Shield, Trash2, Check, AlertCircle } from "lucide-react";
+import {
+  Users,
+  UserPlus,
+  Shield,
+  Trash2,
+  Check,
+  AlertCircle,
+  Building2,
+  UserCheck,
+  Plus,
+  Loader2,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +33,8 @@ type MemberInfo = {
     email: string;
     avatarColor: string;
     title: string | null;
+    teamId?: string | null;
+    team?: { id: string; name: string; code: string; color: string } | null;
   };
 };
 
@@ -31,6 +44,16 @@ type NonMember = {
   email: string;
   avatarColor: string;
   title: string | null;
+  teamId?: string | null;
+  team?: { id: string; name: string; code: string; color: string } | null;
+};
+
+type TeamItem = {
+  id: string;
+  name: string;
+  code: string;
+  color: string;
+  members: { id: string; name: string; email: string; avatarColor: string; title: string | null }[];
 };
 
 export function MemberDialog({
@@ -46,9 +69,14 @@ export function MemberDialog({
 }) {
   const [members, setMembers] = useState<MemberInfo[]>([]);
   const [nonMembers, setNonMembers] = useState<NonMember[]>([]);
+  const [teams, setTeams] = useState<TeamItem[]>([]);
   const [currentRole, setCurrentRole] = useState<string>("MEMBER");
   const [loading, setLoading] = useState(false);
+  const [adding, setAdding] = useState(false);
+
+  const [addMode, setAddMode] = useState<"individual" | "team">("team");
   const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [selectedTeamId, setSelectedTeamId] = useState<string>("");
   const [selectedRole, setSelectedRole] = useState<ProjectRole>("MEMBER");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -62,9 +90,14 @@ export function MemberDialog({
         const data = await res.json();
         setMembers(data.members || []);
         setNonMembers(data.nonMembers || []);
+        setTeams(data.teams || []);
         setCurrentRole(data.currentRole || "MEMBER");
+
         if (data.nonMembers?.length > 0) {
           setSelectedUserId(data.nonMembers[0].id);
+        }
+        if (data.teams?.length > 0) {
+          setSelectedTeamId(data.teams[0].id);
         }
       }
     } catch {
@@ -82,10 +115,12 @@ export function MemberDialog({
 
   const hasManageRight = canManageMembers(currentRole);
 
-  async function handleAddMember() {
+  // Thêm cá nhân
+  async function handleAddIndividualMember() {
     if (!selectedUserId) return;
     setError(null);
     setSuccess(null);
+    setAdding(true);
     try {
       const res = await fetch(`/api/projects/${projectId}/members`, {
         method: "POST",
@@ -102,6 +137,35 @@ export function MemberDialog({
       onMembersChanged?.();
     } catch {
       setError("Lỗi kết nối máy chủ");
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  // Thêm toàn bộ phòng ban
+  async function handleAddTeamMembers() {
+    if (!selectedTeamId) return;
+    setError(null);
+    setSuccess(null);
+    setAdding(true);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/members`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teamId: selectedTeamId, role: selectedRole }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Thêm phòng ban thất bại");
+        return;
+      }
+      setSuccess(data.message || "Đã thêm các thành viên phòng ban vào dự án!");
+      loadData();
+      onMembersChanged?.();
+    } catch {
+      setError("Lỗi kết nối máy chủ");
+    } finally {
+      setAdding(false);
     }
   }
 
@@ -148,73 +212,173 @@ export function MemberDialog({
     }
   }
 
+  const selectedTeamData = teams.find((t) => t.id === selectedTeamId);
+  const selectedTeamAvailableCount = selectedTeamData
+    ? selectedTeamData.members.filter((tm) => nonMembers.some((nm) => nm.id === tm.id)).length
+    : 0;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-base">
+          <DialogTitle className="flex items-center gap-2 text-base font-bold">
             <Users className="h-5 w-5 text-accent" />
             Thành viên & Phân quyền Dự án
           </DialogTitle>
         </DialogHeader>
 
         {error && (
-          <div className="flex items-center gap-2 rounded-lg bg-red-950/50 p-2.5 text-xs text-red-300 border border-red-800/40">
+          <div className="flex items-center gap-2 rounded-xl bg-red-950/50 p-2.5 text-xs text-red-300 border border-red-800/40">
             <AlertCircle className="h-4 w-4 shrink-0" />
             {error}
           </div>
         )}
 
         {success && (
-          <div className="flex items-center gap-2 rounded-lg bg-emerald-950/50 p-2.5 text-xs text-emerald-300 border border-emerald-800/40">
+          <div className="flex items-center gap-2 rounded-xl bg-emerald-950/50 p-2.5 text-xs text-emerald-300 border border-emerald-800/40">
             <Check className="h-4 w-4 shrink-0" />
             {success}
           </div>
         )}
 
         <div className="space-y-4">
-          {/* Add new member section (Only for OWNER/ADMIN) */}
-          {hasManageRight && nonMembers.length > 0 && (
-            <div className="rounded-xl border border-line bg-surface/70 p-3.5 space-y-2.5">
-              <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
-                <UserPlus className="h-4 w-4 text-accent" />
-                Thêm thành viên mới vào dự án
-              </div>
-              <div className="flex items-center gap-2">
-                <select
-                  value={selectedUserId}
-                  onChange={(e) => setSelectedUserId(e.target.value)}
-                  className="flex-1 h-8.5 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none"
-                >
-                  {nonMembers.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name} ({u.email}) {u.title ? `— ${u.title}` : ""}
-                    </option>
-                  ))}
-                </select>
+          {/* Add member section (Only for OWNER/ADMIN) */}
+          {hasManageRight && (
+            <div className="rounded-xl border border-line bg-surface/70 p-3.5 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-bold text-foreground">
+                  <UserPlus className="h-4 w-4 text-accent" />
+                  Thêm nhân sự vào dự án
+                </div>
 
-                <select
-                  value={selectedRole}
-                  onChange={(e) => setSelectedRole(e.target.value as ProjectRole)}
-                  className="h-8.5 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none"
-                >
-                  <option value="MEMBER">Thành viên (Member)</option>
-                  <option value="ADMIN">Quản trị viên (Admin)</option>
-                  <option value="VIEWER">Người xem (Viewer)</option>
-                </select>
-
-                <Button size="sm" onClick={handleAddMember} className="h-8.5 text-xs px-3">
-                  Thêm vào dự án
-                </Button>
+                {/* Switch Add Mode */}
+                <div className="flex items-center rounded-lg bg-surface-2 p-0.5 border border-line">
+                  <button
+                    type="button"
+                    onClick={() => setAddMode("team")}
+                    className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold transition-colors cursor-pointer ${
+                      addMode === "team" ? "bg-accent text-white shadow-sm" : "text-muted hover:text-foreground"
+                    }`}
+                  >
+                    <Building2 className="h-3 w-3" /> Theo Phòng Ban
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAddMode("individual")}
+                    className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold transition-colors cursor-pointer ${
+                      addMode === "individual" ? "bg-accent text-white shadow-sm" : "text-muted hover:text-foreground"
+                    }`}
+                  >
+                    <Users className="h-3 w-3" /> Từng người
+                  </button>
+                </div>
               </div>
+
+              {/* Form Mode 1: Theo Phòng Ban */}
+              {addMode === "team" && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <select
+                      value={selectedTeamId}
+                      onChange={(e) => setSelectedTeamId(e.target.value)}
+                      className="flex-1 min-w-[200px] h-8.5 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none cursor-pointer"
+                    >
+                      {teams.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          🏢 {t.name} ({t.members.length} nhân sự)
+                        </option>
+                      ))}
+                    </select>
+
+                    <select
+                      value={selectedRole}
+                      onChange={(e) => setSelectedRole(e.target.value as ProjectRole)}
+                      className="h-8.5 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none cursor-pointer"
+                    >
+                      <option value="MEMBER">Thành viên (Member)</option>
+                      <option value="ADMIN">Quản trị viên (Admin)</option>
+                      <option value="VIEWER">Người xem (Viewer)</option>
+                    </select>
+
+                    <Button
+                      size="sm"
+                      onClick={handleAddTeamMembers}
+                      disabled={adding || selectedTeamAvailableCount === 0}
+                      className="h-8.5 text-xs px-3 font-bold bg-accent hover:bg-accent/90 text-white shadow-sm shrink-0"
+                    >
+                      {adding ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Plus className="h-3.5 w-3.5 mr-1" />}
+                      Thêm cả phòng ban ({selectedTeamAvailableCount} người)
+                    </Button>
+                  </div>
+
+                  {selectedTeamData && (
+                    <div className="text-[11px] text-muted flex items-center gap-2 px-1">
+                      <span>• Tổng: {selectedTeamData.members.length} thành viên</span>
+                      <span>• Chưa tham gia: <strong className="text-emerald-400">{selectedTeamAvailableCount}</strong> người</span>
+                      {selectedTeamAvailableCount === 0 && (
+                        <span className="text-amber-400 font-semibold">(Tất cả đã có mặt trong dự án)</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Form Mode 2: Từng Cá Nhân */}
+              {addMode === "individual" && (
+                <div>
+                  {nonMembers.length > 0 ? (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <select
+                        value={selectedUserId}
+                        onChange={(e) => setSelectedUserId(e.target.value)}
+                        className="flex-1 min-w-[200px] h-8.5 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none cursor-pointer"
+                      >
+                        {nonMembers.map((u) => (
+                          <option key={u.id} value={u.id}>
+                            {u.name} ({u.email}) {u.team ? `— [${u.team.name}]` : ""} {u.title ? `• ${u.title}` : ""}
+                          </option>
+                        ))}
+                      </select>
+
+                      <select
+                        value={selectedRole}
+                        onChange={(e) => setSelectedRole(e.target.value as ProjectRole)}
+                        className="h-8.5 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none cursor-pointer"
+                      >
+                        <option value="MEMBER">Thành viên (Member)</option>
+                        <option value="ADMIN">Quản trị viên (Admin)</option>
+                        <option value="VIEWER">Người xem (Viewer)</option>
+                      </select>
+
+                      <Button
+                        size="sm"
+                        onClick={handleAddIndividualMember}
+                        disabled={adding}
+                        className="h-8.5 text-xs px-3 font-bold bg-accent hover:bg-accent/90 text-white shadow-sm shrink-0"
+                      >
+                        {adding ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Plus className="h-3.5 w-3.5 mr-1" />}
+                        Thêm vào dự án
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-muted py-1">
+                      Tất cả tài khoản trong hệ thống đều đã tham gia dự án này.
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
           {/* Members list */}
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs text-muted px-1">
-              <span>Danh sách thành viên ({members.length})</span>
-              <span className="text-[11px]">Vai trò của bạn: <strong className="text-foreground">{currentRole}</strong></span>
+              <span className="font-semibold text-foreground">
+                Danh sách thành viên hiện tại ({members.length})
+              </span>
+              <span className="text-[11px]">
+                Vai trò của bạn: <strong className="text-accent">{currentRole}</strong>
+              </span>
             </div>
 
             <div className="divide-y divide-line rounded-xl border border-line bg-surface max-h-72 overflow-y-auto">
@@ -222,18 +386,30 @@ export function MemberDialog({
                 const isOwner = m.role === "OWNER";
                 return (
                   <div key={m.id} className="flex items-center justify-between p-3 gap-3">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <Avatar>
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <Avatar className="h-8 w-8 border border-white/10 shrink-0">
                         <AvatarFallback color={m.user.avatarColor}>
                           {initials(m.user.name)}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="min-w-0">
-                        <div className="text-xs font-semibold text-foreground truncate flex items-center gap-1.5">
-                          {m.user.name}
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-bold text-foreground truncate flex items-center gap-1.5">
+                          <span>{m.user.name}</span>
                           {isOwner && (
-                            <span className="rounded bg-red-500/15 px-1.5 py-0.2 text-[10px] font-bold text-red-400">
+                            <span className="rounded bg-red-500/15 border border-red-500/30 px-1.5 py-0.1 text-[9px] font-black text-red-400">
                               Chủ dự án
+                            </span>
+                          )}
+                          {m.user.team && (
+                            <span
+                              className="rounded px-1.5 py-0.1 text-[9px] font-semibold"
+                              style={{
+                                backgroundColor: `${m.user.team.color}18`,
+                                color: m.user.team.color,
+                                border: `1px solid ${m.user.team.color}35`,
+                              }}
+                            >
+                              {m.user.team.name}
                             </span>
                           )}
                         </div>
@@ -255,7 +431,7 @@ export function MemberDialog({
                           <option value="VIEWER">Người xem (Viewer)</option>
                         </select>
                       ) : (
-                        <span className="rounded-full bg-surface-2 px-2.5 py-1 text-xs font-medium text-muted flex items-center gap-1">
+                        <span className="rounded-full bg-surface-2 px-2.5 py-1 text-xs font-medium text-muted flex items-center gap-1 border border-line">
                           <Shield className="h-3 w-3" />
                           {m.role}
                         </span>

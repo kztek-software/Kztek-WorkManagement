@@ -409,7 +409,10 @@ export const ModelName = {
   TaskLabel: 'TaskLabel',
   Subtask: 'Subtask',
   Comment: 'Comment',
-  Activity: 'Activity'
+  Activity: 'Activity',
+  CustomerTicket: 'CustomerTicket',
+  TicketComment: 'TicketComment',
+  Attachment: 'Attachment'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -425,7 +428,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "team" | "roleDefinition" | "notification" | "project" | "projectMember" | "sprint" | "task" | "label" | "taskLabel" | "subtask" | "comment" | "activity"
+    modelProps: "user" | "team" | "roleDefinition" | "notification" | "project" | "projectMember" | "sprint" | "task" | "label" | "taskLabel" | "subtask" | "comment" | "activity" | "customerTicket" | "ticketComment" | "attachment"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1391,6 +1394,228 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    CustomerTicket: {
+      payload: Prisma.$CustomerTicketPayload<ExtArgs>
+      fields: Prisma.CustomerTicketFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CustomerTicketFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerTicketPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CustomerTicketFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerTicketPayload>
+        }
+        findFirst: {
+          args: Prisma.CustomerTicketFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerTicketPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CustomerTicketFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerTicketPayload>
+        }
+        findMany: {
+          args: Prisma.CustomerTicketFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerTicketPayload>[]
+        }
+        create: {
+          args: Prisma.CustomerTicketCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerTicketPayload>
+        }
+        createMany: {
+          args: Prisma.CustomerTicketCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.CustomerTicketCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerTicketPayload>[]
+        }
+        delete: {
+          args: Prisma.CustomerTicketDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerTicketPayload>
+        }
+        update: {
+          args: Prisma.CustomerTicketUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerTicketPayload>
+        }
+        deleteMany: {
+          args: Prisma.CustomerTicketDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CustomerTicketUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.CustomerTicketUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerTicketPayload>[]
+        }
+        upsert: {
+          args: Prisma.CustomerTicketUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerTicketPayload>
+        }
+        aggregate: {
+          args: Prisma.CustomerTicketAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCustomerTicket>
+        }
+        groupBy: {
+          args: Prisma.CustomerTicketGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CustomerTicketGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CustomerTicketCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CustomerTicketCountAggregateOutputType> | number
+        }
+      }
+    }
+    TicketComment: {
+      payload: Prisma.$TicketCommentPayload<ExtArgs>
+      fields: Prisma.TicketCommentFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TicketCommentFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TicketCommentPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TicketCommentFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TicketCommentPayload>
+        }
+        findFirst: {
+          args: Prisma.TicketCommentFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TicketCommentPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TicketCommentFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TicketCommentPayload>
+        }
+        findMany: {
+          args: Prisma.TicketCommentFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TicketCommentPayload>[]
+        }
+        create: {
+          args: Prisma.TicketCommentCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TicketCommentPayload>
+        }
+        createMany: {
+          args: Prisma.TicketCommentCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TicketCommentCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TicketCommentPayload>[]
+        }
+        delete: {
+          args: Prisma.TicketCommentDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TicketCommentPayload>
+        }
+        update: {
+          args: Prisma.TicketCommentUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TicketCommentPayload>
+        }
+        deleteMany: {
+          args: Prisma.TicketCommentDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TicketCommentUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TicketCommentUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TicketCommentPayload>[]
+        }
+        upsert: {
+          args: Prisma.TicketCommentUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TicketCommentPayload>
+        }
+        aggregate: {
+          args: Prisma.TicketCommentAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTicketComment>
+        }
+        groupBy: {
+          args: Prisma.TicketCommentGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TicketCommentGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TicketCommentCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TicketCommentCountAggregateOutputType> | number
+        }
+      }
+    }
+    Attachment: {
+      payload: Prisma.$AttachmentPayload<ExtArgs>
+      fields: Prisma.AttachmentFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AttachmentFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttachmentPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AttachmentFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttachmentPayload>
+        }
+        findFirst: {
+          args: Prisma.AttachmentFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttachmentPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AttachmentFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttachmentPayload>
+        }
+        findMany: {
+          args: Prisma.AttachmentFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttachmentPayload>[]
+        }
+        create: {
+          args: Prisma.AttachmentCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttachmentPayload>
+        }
+        createMany: {
+          args: Prisma.AttachmentCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.AttachmentCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttachmentPayload>[]
+        }
+        delete: {
+          args: Prisma.AttachmentDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttachmentPayload>
+        }
+        update: {
+          args: Prisma.AttachmentUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttachmentPayload>
+        }
+        deleteMany: {
+          args: Prisma.AttachmentDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AttachmentUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.AttachmentUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttachmentPayload>[]
+        }
+        upsert: {
+          args: Prisma.AttachmentUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttachmentPayload>
+        }
+        aggregate: {
+          args: Prisma.AttachmentAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAttachment>
+        }
+        groupBy: {
+          args: Prisma.AttachmentGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AttachmentGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AttachmentCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AttachmentCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1491,8 +1716,10 @@ export const ProjectScalarFieldEnum = {
   name: 'name',
   key: 'key',
   description: 'description',
+  status: 'status',
   ownerId: 'ownerId',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 } as const
 
 export type ProjectScalarFieldEnum = (typeof ProjectScalarFieldEnum)[keyof typeof ProjectScalarFieldEnum]
@@ -1594,6 +1821,61 @@ export const ActivityScalarFieldEnum = {
 } as const
 
 export type ActivityScalarFieldEnum = (typeof ActivityScalarFieldEnum)[keyof typeof ActivityScalarFieldEnum]
+
+
+export const CustomerTicketScalarFieldEnum = {
+  id: 'id',
+  trackingCode: 'trackingCode',
+  projectId: 'projectId',
+  title: 'title',
+  description: 'description',
+  type: 'type',
+  status: 'status',
+  priority: 'priority',
+  customerName: 'customerName',
+  customerEmail: 'customerEmail',
+  customerPhone: 'customerPhone',
+  customerCompany: 'customerCompany',
+  environment: 'environment',
+  convertedTaskId: 'convertedTaskId',
+  internalNotes: 'internalNotes',
+  resolutionNotes: 'resolutionNotes',
+  resolvedAt: 'resolvedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CustomerTicketScalarFieldEnum = (typeof CustomerTicketScalarFieldEnum)[keyof typeof CustomerTicketScalarFieldEnum]
+
+
+export const TicketCommentScalarFieldEnum = {
+  id: 'id',
+  ticketId: 'ticketId',
+  authorName: 'authorName',
+  authorEmail: 'authorEmail',
+  isStaff: 'isStaff',
+  isInternalOnly: 'isInternalOnly',
+  message: 'message',
+  createdAt: 'createdAt'
+} as const
+
+export type TicketCommentScalarFieldEnum = (typeof TicketCommentScalarFieldEnum)[keyof typeof TicketCommentScalarFieldEnum]
+
+
+export const AttachmentScalarFieldEnum = {
+  id: 'id',
+  taskId: 'taskId',
+  ticketId: 'ticketId',
+  uploaderId: 'uploaderId',
+  fileName: 'fileName',
+  fileUrl: 'fileUrl',
+  fileType: 'fileType',
+  fileSize: 'fileSize',
+  mimeType: 'mimeType',
+  createdAt: 'createdAt'
+} as const
+
+export type AttachmentScalarFieldEnum = (typeof AttachmentScalarFieldEnum)[keyof typeof AttachmentScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1816,6 +2098,9 @@ export type GlobalOmitConfig = {
   subtask?: Prisma.SubtaskOmit
   comment?: Prisma.CommentOmit
   activity?: Prisma.ActivityOmit
+  customerTicket?: Prisma.CustomerTicketOmit
+  ticketComment?: Prisma.TicketCommentOmit
+  attachment?: Prisma.AttachmentOmit
 }
 
 /* Types for Logging */
