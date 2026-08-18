@@ -1,15 +1,21 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0e1014;
-  --foreground: #e8eaed;
-  --surface: #15181f;
-  --surface-2: #1b1f28;
-  --border: #262b36;
-  --border-strong: #333a49;
-  --muted: #8b93a3;
-  --accent: #6366f1;
-  --accent-hover: #7577f5;
+  --background: #090B10;
+  --foreground: #F1F4F9;
+  --surface: #111520;
+  --surface-2: #181E2E;
+  --surface-3: #20273D;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --muted: #8E98B0;
+  --muted-light: #B4BCCF;
+  --accent: #F05922;
+  --accent-hover: #FF6B35;
+  --accent-subtle: rgba(240, 89, 34, 0.14);
+  --accent-blue: #3B82F6;
+  --accent-purple: #8B5CF6;
+  --accent-emerald: #10B981;
 }
 
 @theme inline {
@@ -17,9 +23,11 @@
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
   --color-line: var(--border);
   --color-line-strong: var(--border-strong);
   --color-muted: var(--muted);
+  --color-muted-light: var(--muted-light);
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
   --font-sans: var(--font-geist-sans);
@@ -29,56 +37,77 @@
 html,
 body {
   height: 100%;
-}
-
-body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+/* Custom Sleek Scrollbars */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--border-strong) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
 }
 
 *::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 *::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 9999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.24);
 }
 *::-webkit-scrollbar-track {
   background: transparent;
 }
 
+/* Micro-interactions & animations */
 @keyframes fade-in-up {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(8px) scale(0.99);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
 .animate-fade-in-up {
-  animation: fade-in-up 0.18s ease-out;
+  animation: fade-in-up 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes pulse-dot {
-  0%,
-  100% {
+@keyframes pulse-subtle {
+  0%, 100% {
     opacity: 1;
   }
   50% {
-    opacity: 0.35;
+    opacity: 0.5;
   }
 }
 
-.animate-pulse-dot {
-  animation: pulse-dot 1.6s ease-in-out infinite;
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Glassmorphism & Card Glows */
+.glass-panel {
+  background: rgba(17, 21, 32, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+}
+
+.card-interactive {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-interactive:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
 }

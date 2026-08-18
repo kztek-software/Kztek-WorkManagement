@@ -131,11 +131,12 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const tooltipStyle = {
-  backgroundColor: "#1b1f28",
-  border: "1px solid #333a49",
-  borderRadius: 8,
+  backgroundColor: "#181E2E",
+  border: "1px solid rgba(255, 255, 255, 0.14)",
+  borderRadius: 10,
   fontSize: 12,
-  color: "#e8eaed",
+  color: "#F1F4F9",
+  boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.5)",
 };
 
 export default function ReportsPage() {

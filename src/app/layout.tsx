@@ -13,17 +13,19 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FlowBoard — Quản lý công việc",
-  description: "Ứng dụng quản lý công việc nhanh, gọn, thông minh hơn Jira",
+  title: "KZTEK Work — Nền tảng Điều hành & Quản lý Công việc",
+  description: "Hệ thống quản lý công việc, dự án, sprint và phân quyền thông minh chuẩn nội bộ KZTEK",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
-      lang="en"
+      lang="vi"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col bg-background text-foreground selection:bg-accent/30 selection:text-accent">
+        {children}
+      </body>
     </html>
   );
 }

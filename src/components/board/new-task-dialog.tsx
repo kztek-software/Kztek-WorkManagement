@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, Loader2 } from "lucide-react";
+import { Sparkles, Loader2, Plus } from "lucide-react";
 import { STATUSES, PRIORITIES, TASK_TYPES } from "@/lib/constants";
 import type { LabelDto, MemberDto, SprintDto } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -78,32 +78,29 @@ export function NewTaskDialog({
     setAiSource(null);
   }
 
-  async function handleAiSuggest() {
-    if (title.trim().length < 3) {
-      setError("Nhập tiêu đề ≥ 3 ký tự để AI phân tích");
+  async function generateAiTask() {
+    if (!title.trim()) {
+      setError("Vui lòng nhập tiêu đề sơ bộ để AI tự động gợi ý mô tả và checklist");
       return;
     }
     setError("");
     setAiLoading(true);
     try {
-      const res = await fetch(`/api/projects/${projectId}/ai/suggest`, {
+      const res = await fetch("/api/ai/generate-task", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title }),
+        body: JSON.stringify({ title, type }),
       });
       const data = await res.json();
       if (!res.ok) {
         setError(data.error ?? "AI không phản hồi");
         return;
       }
-      const s = data.suggestion;
-      setDescription(s.description);
-      setStoryPoints(String(s.storyPoints));
-      setPriority(s.priority);
-      setSubtasks(s.subtasks ?? []);
-      const matched = labels.filter((l) => s.labels.includes(l.name)).map((l) => l.id);
-      setLabelIds(matched);
-      setAiSource(s.source === "openai" ? "OpenAI" : "AI local");
+      if (data.description) setDescription(data.description);
+      if (data.storyPoints) setStoryPoints(String(data.storyPoints));
+      if (data.subtasks && Array.isArray(data.subtasks)) setSubtasks(data.subtasks);
+      if (data.priority) setPriority(data.priority);
+      setAiSource(data.source ?? "rule-based");
     } catch {
       setError("Lỗi kết nối AI");
     } finally {
@@ -113,38 +110,38 @@ export function NewTaskDialog({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!title.trim()) {
-      setError("Tiêu đề là bắt buộc");
-      return;
-    }
+    if (!title.trim()) return;
     setError("");
     setLoading(true);
+
     try {
       const res = await fetch(`/api/projects/${projectId}/tasks`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: title.trim(),
-          description: description || undefined,
+          description: description.trim() || undefined,
           type,
           status,
           priority,
-          storyPoints: storyPoints ? Number(storyPoints) : null,
-          assigneeId: assigneeId || null,
-          sprintId: sprintId || null,
+          storyPoints: storyPoints ? Number(storyPoints) : undefined,
+          assigneeId: assigneeId || undefined,
+          sprintId: sprintId || undefined,
           labelIds,
-          subtasks,
+          subtasks: subtasks.map((st) => ({ title: st })),
         }),
       });
+
       const data = await res.json();
       if (!res.ok) {
         setError(data.error ?? "Không tạo được task");
         return;
       }
+
       onOpenChange(false);
       onCreated();
     } catch {
-      setError("Lỗi kết nối");
+      setError("Lỗi kết nối máy chủ");
     } finally {
       setLoading(false);
     }
@@ -152,136 +149,156 @@ export function NewTaskDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-2xl border border-line bg-surface p-6 shadow-2xl rounded-2xl">
         <DialogHeader>
-          <DialogTitle>Tạo task mới</DialogTitle>
-          <DialogDescription>
-            Mẹo: nhập tiêu đề rồi bấm ✨ AI để tự điền mô tả, points và subtasks
-          </DialogDescription>
-        </DialogHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <DialogTitle className="text-base font-bold text-foreground">Tạo công việc mới</DialogTitle>
+              <DialogDescription className="text-xs text-muted">
+                Thêm task, bug, story hoặc epic vào quy trình của dự án
+              </DialogDescription>
+            </div>
 
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-          <div className="flex gap-2">
-            <Input
-              placeholder="Tiêu đề task..."
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              autoFocus
-            />
             <Button
               type="button"
-              variant="secondary"
-              onClick={handleAiSuggest}
-              disabled={aiLoading}
-              className="shrink-0"
+              variant="outline"
+              size="sm"
+              onClick={generateAiTask}
+              disabled={aiLoading || !title.trim()}
+              className="text-xs font-semibold border-amber-500/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20"
             >
               {aiLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
               ) : (
-                <Sparkles className="h-4 w-4 text-amber-400" />
+                <Sparkles className="h-3.5 w-3.5 mr-1 text-amber-400" />
               )}
-              AI gợi ý
+              AI Gợi ý chi tiết
             </Button>
           </div>
-          {aiSource && (
-            <p className="text-xs text-emerald-400">
-              ✓ Đã điền gợi ý từ {aiSource} — chỉnh sửa thoải mái trước khi lưu
-            </p>
-          )}
+        </DialogHeader>
 
-          <div className="space-y-1.5">
-            <Label>Mô tả</Label>
-            <Textarea
-              placeholder="Mô tả chi tiết, acceptance criteria..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={5}
+        {aiSource && (
+          <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 text-xs text-amber-300 flex items-center gap-1.5">
+            <Sparkles className="h-3.5 w-3.5 shrink-0" />
+            <span>Đã tự động điền mô tả và checklist theo chuẩn AI KZTEK</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="mt-2 space-y-4">
+          <div className="space-y-1">
+            <Label className="text-xs font-semibold text-muted">Tiêu đề công việc *</Label>
+            <Input
+              placeholder="VD: Nâng cấp bo mạch cảm biến KZ-S200..."
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="text-xs h-9 bg-surface-2"
+              required
+              autoFocus
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label>Loại</Label>
+          <div className="space-y-1">
+            <Label className="text-xs font-semibold text-muted">Mô tả chi tiết</Label>
+            <Textarea
+              placeholder="Mô tả yêu cầu, tiêu chí nghiệm thu (Acceptance Criteria)..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              className="text-xs bg-surface-2 leading-relaxed"
+            />
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs font-semibold text-muted">Loại task</Label>
               <Select value={type} onValueChange={setType}>
-                <SelectTrigger>
+                <SelectTrigger className="h-8 text-xs bg-surface-2">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {TASK_TYPES.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
+                    <SelectItem key={t.id} value={t.id} className="text-xs">
                       {t.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
-              <Label>Trạng thái</Label>
+
+            <div className="space-y-1">
+              <Label className="text-xs font-semibold text-muted">Trạng thái</Label>
               <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger>
+                <SelectTrigger className="h-8 text-xs bg-surface-2">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {STATUSES.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
+                    <SelectItem key={s.id} value={s.id} className="text-xs">
                       {s.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
-              <Label>Độ ưu tiên</Label>
+
+            <div className="space-y-1">
+              <Label className="text-xs font-semibold text-muted">Độ ưu tiên</Label>
               <Select value={priority} onValueChange={setPriority}>
-                <SelectTrigger>
+                <SelectTrigger className="h-8 text-xs bg-surface-2">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   {PRIORITIES.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
+                    <SelectItem key={p.id} value={p.id} className="text-xs">
                       {p.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
-              <Label>Story points</Label>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs font-semibold text-muted">Story Points</Label>
               <Input
                 type="number"
                 min={0}
                 max={100}
-                placeholder="VD: 3"
+                placeholder="VD: 5"
                 value={storyPoints}
                 onChange={(e) => setStoryPoints(e.target.value)}
+                className="text-xs h-8 bg-surface-2 font-mono"
               />
             </div>
-            <div className="space-y-1.5">
-              <Label>Assignee</Label>
+
+            <div className="space-y-1">
+              <Label className="text-xs font-semibold text-muted">Người phụ trách</Label>
               <Select value={assigneeId || "none"} onValueChange={(v) => setAssigneeId(v === "none" ? "" : v)}>
-                <SelectTrigger>
+                <SelectTrigger className="h-8 text-xs bg-surface-2">
                   <SelectValue placeholder="Chưa giao" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Chưa giao</SelectItem>
+                  <SelectItem value="none" className="text-xs text-muted">Chưa giao</SelectItem>
                   {members.map((m) => (
-                    <SelectItem key={m.user.id} value={m.user.id}>
-                      {m.user.name}
+                    <SelectItem key={m.user.id} value={m.user.id} className="text-xs">
+                      {m.user.name} ({m.role})
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
-              <Label>Sprint</Label>
+
+            <div className="space-y-1">
+              <Label className="text-xs font-semibold text-muted">Sprint</Label>
               <Select value={sprintId || "none"} onValueChange={(v) => setSprintId(v === "none" ? "" : v)}>
-                <SelectTrigger>
+                <SelectTrigger className="h-8 text-xs bg-surface-2">
                   <SelectValue placeholder="Không thuộc sprint" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Không thuộc sprint</SelectItem>
+                  <SelectItem value="none" className="text-xs text-muted">Không thuộc sprint</SelectItem>
                   {sprints.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
+                    <SelectItem key={s.id} value={s.id} className="text-xs">
                       {s.name}
                     </SelectItem>
                   ))}
@@ -290,44 +307,49 @@ export function NewTaskDialog({
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label>Labels</Label>
-            <div className="flex flex-wrap gap-1.5">
-              {labels.map((l) => {
-                const selected = labelIds.includes(l.id);
-                return (
-                  <button
-                    key={l.id}
-                    type="button"
-                    onClick={() =>
-                      setLabelIds((prev) =>
-                        selected ? prev.filter((id) => id !== l.id) : [...prev, l.id]
-                      )
-                    }
-                    className="rounded-full px-2.5 py-1 text-xs font-medium transition-all cursor-pointer"
-                    style={{
-                      backgroundColor: selected ? l.color : `${l.color}18`,
-                      color: selected ? "#fff" : l.color,
-                    }}
-                  >
-                    {l.name}
-                  </button>
-                );
-              })}
+          {/* Labels */}
+          {labels.length > 0 && (
+            <div className="space-y-1">
+              <Label className="text-xs font-semibold text-muted">Nhãn phân loại</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {labels.map((l) => {
+                  const selected = labelIds.includes(l.id);
+                  return (
+                    <button
+                      key={l.id}
+                      type="button"
+                      onClick={() =>
+                        setLabelIds((prev) =>
+                          selected ? prev.filter((id) => id !== l.id) : [...prev, l.id]
+                        )
+                      }
+                      className="rounded-full px-2.5 py-0.5 text-[11px] font-bold transition-all cursor-pointer"
+                      style={{
+                        backgroundColor: selected ? l.color : `${l.color}15`,
+                        color: selected ? "#fff" : l.color,
+                        border: `1px solid ${l.color}40`,
+                      }}
+                    >
+                      {l.name}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
+          {/* Subtasks */}
           {subtasks.length > 0 && (
-            <div className="space-y-1.5">
-              <Label>Subtasks ({subtasks.length})</Label>
-              <ul className="space-y-1 rounded-md border border-line bg-surface p-2">
+            <div className="space-y-1.5 rounded-xl border border-line bg-surface-2/40 p-3">
+              <Label className="text-xs font-semibold text-muted">Checklist việc con ({subtasks.length})</Label>
+              <ul className="space-y-1">
                 {subtasks.map((s, i) => (
-                  <li key={i} className="flex items-center justify-between text-xs">
+                  <li key={i} className="flex items-center justify-between text-xs p-1.5 rounded bg-surface border border-line">
                     <span>{s}</span>
                     <button
                       type="button"
                       onClick={() => setSubtasks((prev) => prev.filter((_, j) => j !== i))}
-                      className="text-muted hover:text-red-400 cursor-pointer"
+                      className="text-muted hover:text-red-400 cursor-pointer font-bold px-1"
                     >
                       ✕
                     </button>
@@ -338,15 +360,16 @@ export function NewTaskDialog({
           )}
 
           {error && (
-            <p className="rounded-md bg-red-500/10 px-3 py-2 text-sm text-red-400">{error}</p>
+            <p className="rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-400 border border-red-500/20">{error}</p>
           )}
 
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
-              Huỷ
+          <div className="flex justify-end gap-2 pt-3 border-t border-line">
+            <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+              Hủy
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Đang tạo..." : "Tạo task"}
+            <Button type="submit" size="sm" disabled={loading} className="font-bold bg-accent hover:bg-accent/90 text-white">
+              {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Plus className="h-3.5 w-3.5 mr-1" />}
+              Tạo công việc
             </Button>
           </div>
         </form>

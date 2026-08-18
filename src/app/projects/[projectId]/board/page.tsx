@@ -31,13 +31,11 @@ import {
   Shield,
   Eye,
   ArrowUpDown,
-  X,
-  Clock,
-  UserCheck,
-  AlertTriangle,
   RotateCcw,
-  SlidersHorizontal,
-  ChevronDown,
+  Sparkles,
+  Calendar,
+  Layers,
+  ChevronRight,
 } from "lucide-react";
 import { STATUSES, PRIORITIES, TASK_TYPES } from "@/lib/constants";
 import type { BoardData, TaskDto } from "@/lib/types";
@@ -83,11 +81,11 @@ export default function BoardPage() {
   const [assigneeFilter, setAssigneeFilter] = useState<string>("ALL");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [priorityFilter, setPriorityFilter] = useState<string>("ALL");
-  const [timeFilter, setTimeFilter] = useState<string>("ALL"); // ALL | TODAY | THIS_WEEK | OVERDUE | NO_DUE_DATE
-  const [typeFilter, setTypeFilter] = useState<string>("ALL"); // ALL | TASK | BUG | STORY | EPIC
+  const [timeFilter, setTimeFilter] = useState<string>("ALL");
+  const [typeFilter, setTypeFilter] = useState<string>("ALL");
 
   // Sorting State
-  const [sortBy, setSortBy] = useState<string>("MANUAL"); // MANUAL | PRIORITY | DUE_DATE | CREATED_AT | STORY_POINTS | TITLE
+  const [sortBy, setSortBy] = useState<string>("MANUAL");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   // Dialogs State
@@ -117,7 +115,7 @@ export default function BoardPage() {
     loadBoard();
   }, [loadBoard]);
 
-  // Keyboard shortcuts (C for new task, / for search, N for notion)
+  // Keyboard shortcuts
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       const target = e.target as HTMLElement;
@@ -140,7 +138,7 @@ export default function BoardPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // SSE realtime
+  // Realtime SSE
   useEffect(() => {
     const es = new EventSource(`/api/projects/${projectId}/stream`);
     eventSourceRef.current = es;
@@ -167,20 +165,13 @@ export default function BoardPage() {
   }, [projectId, loadBoard]);
 
   const mouseSensor = useSensor(MouseSensor, {
-    activationConstraint: {
-      distance: 4,
-    },
+    activationConstraint: { distance: 4 },
   });
   const touchSensor = useSensor(TouchSensor, {
-    activationConstraint: {
-      delay: 150,
-      tolerance: 6,
-    },
+    activationConstraint: { delay: 150, tolerance: 6 },
   });
   const pointerSensor = useSensor(PointerSensor, {
-    activationConstraint: {
-      distance: 4,
-    },
+    activationConstraint: { distance: 4 },
   });
   const keyboardSensor = useSensor(KeyboardSensor);
   const sensors = useSensors(mouseSensor, touchSensor, pointerSensor, keyboardSensor);
@@ -205,9 +196,7 @@ export default function BoardPage() {
     const endOfToday = new Date(startOfToday.getTime() + 86400000 - 1);
     const endOfWeek = new Date(startOfToday.getTime() + 7 * 86400000);
 
-    // 1. Filter
     const filtered = data.tasks.filter((t) => {
-      // Keyword search
       if (q) {
         const matchKey = `${data.project.key}-${t.number}`.toLowerCase().includes(q);
         const matchTitle = t.title.toLowerCase().includes(q);
@@ -215,22 +204,16 @@ export default function BoardPage() {
         if (!matchKey && !matchTitle && !matchDesc) return false;
       }
 
-      // Status filter
       if (statusFilter !== "ALL" && t.status !== statusFilter) return false;
 
-      // Assignee filter
       if (assigneeFilter !== "ALL") {
         if (assigneeFilter === "UNASSIGNED" && t.assigneeId) return false;
         if (assigneeFilter !== "UNASSIGNED" && t.assigneeId !== assigneeFilter) return false;
       }
 
-      // Priority filter
       if (priorityFilter !== "ALL" && t.priority !== priorityFilter) return false;
-
-      // Type filter
       if (typeFilter !== "ALL" && t.type !== typeFilter) return false;
 
-      // Time / Due date filter
       if (timeFilter !== "ALL") {
         if (timeFilter === "NO_DUE_DATE" && t.dueDate) return false;
         if (timeFilter === "TODAY") {
@@ -253,12 +236,10 @@ export default function BoardPage() {
       return true;
     });
 
-    // Group by status
     for (const t of filtered) {
       (map[t.status] ??= []).push(t);
     }
 
-    // 2. Sort inside each column
     for (const s of STATUSES) {
       map[s.id]?.sort((a, b) => {
         let cmp = 0;
@@ -275,7 +256,6 @@ export default function BoardPage() {
         } else if (sortBy === "TITLE") {
           cmp = a.title.localeCompare(b.title);
         } else {
-          // MANUAL (by position)
           cmp = a.position - b.position;
         }
         return sortOrder === "asc" ? -cmp : cmp;
@@ -378,7 +358,6 @@ export default function BoardPage() {
       : null;
     if (!newStatus) return;
 
-    // Tính position mới
     let newPosition = task.position;
     if (overTask && overTask.id !== task.id) {
       const columnTasks = data.tasks
@@ -400,7 +379,6 @@ export default function BoardPage() {
       newPosition = lastTask ? lastTask.position + 1000 : 1000;
     }
 
-    // Optimistic update
     setData((prev) => {
       if (!prev) return prev;
       return {
@@ -426,7 +404,10 @@ export default function BoardPage() {
   if (loading) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <div className="text-sm text-muted">Đang tải board...</div>
+        <div className="text-xs font-semibold text-muted flex items-center gap-2">
+          <div className="h-4 w-4 rounded-full border-2 border-accent border-t-transparent animate-spin" />
+          Đang tải dữ liệu Board...
+        </div>
       </div>
     );
   }
@@ -434,7 +415,7 @@ export default function BoardPage() {
   if (!data) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <div className="text-sm text-muted">Không tải được dữ liệu board</div>
+        <div className="text-xs text-muted">Không thể tải thông tin dự án.</div>
       </div>
     );
   }
@@ -442,47 +423,59 @@ export default function BoardPage() {
   const isUserViewer = isViewer(data.currentRole);
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden">
+    <div className="flex flex-1 flex-col overflow-hidden bg-background">
       {/* Viewer Notice Banner */}
       {isUserViewer && (
-        <div className="flex items-center justify-center gap-2 bg-slate-900 border-b border-slate-800 py-1.5 px-4 text-xs text-slate-300">
-          <Eye className="h-3.5 w-3.5 text-accent" />
-          <span>Bạn đang xem dự án ở chế độ <strong>Người xem (Viewer)</strong> — không thể thêm, sửa hoặc kéo thả task.</span>
+        <div className="flex items-center justify-center gap-2 bg-amber-950/40 border-b border-amber-800/40 py-1.5 px-4 text-xs text-amber-200">
+          <Eye className="h-3.5 w-3.5 text-amber-400" />
+          <span>Bạn đang xem dự án ở chế độ <strong>Người xem (Viewer)</strong> — không thể tạo, chỉnh sửa hoặc kéo thả công việc.</span>
         </div>
       )}
 
-      {/* Topbar: Title & Primary Actions */}
-      <div className="flex h-13 shrink-0 items-center justify-between border-b border-line px-4 gap-3">
-        <div className="flex items-center gap-3">
-          <h1 className="text-sm font-semibold">Board</h1>
+      {/* Top Header Bar */}
+      <div className="flex h-14 shrink-0 items-center justify-between border-b border-line px-5 gap-3 bg-surface/40 backdrop-blur-md">
+        {/* Breadcrumb & Live Status */}
+        <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-muted">
+            <span>Dự án</span>
+            <ChevronRight className="h-3.5 w-3.5 text-muted/60" />
+            <span className="text-foreground font-bold">{data.project.name}</span>
+          </div>
+
           {activeSprint && (
-            <span className="rounded-full bg-accent/15 px-2.5 py-0.5 text-xs font-medium text-accent">
+            <span className="rounded-full bg-accent/15 border border-accent/30 px-2.5 py-0.5 text-[11px] font-bold text-accent flex items-center gap-1">
+              <Sparkles className="h-3 w-3" />
               {activeSprint.name}
             </span>
           )}
+
           {data.currentRole && (
-            <span className="rounded-full bg-surface-2 border border-line px-2.5 py-0.5 text-[11px] font-medium text-foreground flex items-center gap-1.5">
+            <span className="rounded-md bg-surface-2 border border-line px-2 py-0.5 text-[10px] font-bold text-muted font-mono flex items-center gap-1">
               <Shield className="h-3 w-3 text-accent" />
               {data.currentRole}
             </span>
           )}
-          <span
-            className={`flex items-center gap-1.5 text-xs ${connected ? "text-emerald-400" : "text-muted"}`}
+
+          <div
+            className={`flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full ${
+              connected
+                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                : "bg-neutral-800 text-muted"
+            }`}
           >
             {connected ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-            {connected ? "Realtime" : "Mất kết nối"}
-          </span>
+            <span>{connected ? "Realtime Live" : "Mất kết nối"}</span>
+          </div>
         </div>
 
-        {/* Action Buttons */}
+        {/* Primary Action Buttons */}
         <div className="flex items-center gap-2">
-          {/* Members & Roles Management Button */}
+          {/* Members Button */}
           <Button
             size="sm"
             variant="outline"
             onClick={() => setMemberOpen(true)}
-            className="h-8 text-xs font-medium border-line hover:bg-surface-2 flex items-center gap-1.5"
-            title="Quản lý thành viên & phân quyền"
+            className="h-8 text-xs font-semibold border-line bg-surface hover:bg-surface-2 shadow-sm flex items-center gap-1.5"
           >
             <Users className="h-3.5 w-3.5 text-accent" />
             Thành viên ({data.members.length})
@@ -493,16 +486,15 @@ export default function BoardPage() {
             size="sm"
             variant="outline"
             onClick={() => setNotionOpen(true)}
-            className="h-8 text-xs font-medium border-neutral-700 hover:bg-neutral-800 flex items-center gap-1.5"
-            title="Kiểm tra & liên kết trực tiếp Notion (Phím N)"
+            className="h-8 text-xs font-semibold border-neutral-700 bg-neutral-900 hover:bg-neutral-800 shadow-sm flex items-center gap-1.5 text-white"
           >
-            <span className="flex h-4 w-4 items-center justify-center rounded bg-neutral-900 text-[10px] font-bold text-white border border-neutral-700">
+            <span className="flex h-4 w-4 items-center justify-center rounded bg-neutral-800 text-[10px] font-bold text-white border border-neutral-700">
               N
             </span>
             Notion Hub
           </Button>
 
-          {/* New Task Button (Hidden for Viewers) */}
+          {/* New Task Button */}
           {canCreateTask(data.currentRole) ? (
             <Button
               size="sm"
@@ -510,13 +502,12 @@ export default function BoardPage() {
                 setNewTaskStatus("TODO");
                 setNewTaskOpen(true);
               }}
-              className="h-8 text-xs"
-              title="Tạo task mới (Phím C)"
+              className="h-8 text-xs font-bold bg-accent hover:bg-accent/90 text-white shadow-md shadow-accent/25"
             >
-              <Plus className="h-3.5 w-3.5" /> Task mới
+              <Plus className="h-3.5 w-3.5 mr-1" /> Task mới
             </Button>
           ) : (
-            <span className="rounded-lg bg-surface-2 px-2.5 py-1.5 text-xs text-muted font-medium flex items-center gap-1 border border-line">
+            <span className="rounded-lg bg-surface-2 px-2.5 py-1 text-xs text-muted font-medium flex items-center gap-1 border border-line">
               <Eye className="h-3.5 w-3.5" /> Chỉ xem
             </span>
           )}
@@ -524,9 +515,9 @@ export default function BoardPage() {
       </div>
 
       {/* Filter & Sorting Control Toolbar */}
-      <div className="flex items-center justify-between border-b border-line bg-surface/50 px-4 py-2 text-xs gap-3 overflow-x-auto">
+      <div className="flex items-center justify-between border-b border-line bg-surface/50 px-5 py-2.5 text-xs gap-3 overflow-x-auto">
         <div className="flex items-center gap-2 flex-wrap">
-          {/* Search box */}
+          {/* Search Box */}
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
             <Input
@@ -534,18 +525,18 @@ export default function BoardPage() {
               placeholder="Tìm theo tên/mã task... (bấm /)"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="h-8 w-52 pl-8 text-xs bg-surface"
+              className="h-8 w-56 pl-8 text-xs bg-surface border-line focus:border-accent"
             />
           </div>
 
-          {/* User / Assignee Filter */}
+          {/* Assignee Filter */}
           <select
             value={assigneeFilter}
             onChange={(e) => setAssigneeFilter(e.target.value)}
-            className="h-8 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none cursor-pointer"
+            className="h-8 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none cursor-pointer hover:border-line-strong transition-colors"
           >
             <option value="ALL">👤 Tất cả nhân sự</option>
-            <option value="UNASSIGNED">Chưa giao người phụ trách</option>
+            <option value="UNASSIGNED">Chưa giao người nhận</option>
             {data.members.map((m) => (
               <option key={m.user.id} value={m.user.id}>
                 {m.user.name} ({m.role})
@@ -557,7 +548,7 @@ export default function BoardPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-8 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none cursor-pointer"
+            className="h-8 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none cursor-pointer hover:border-line-strong transition-colors"
           >
             <option value="ALL">📋 Tất cả trạng thái</option>
             {STATUSES.map((s) => (
@@ -567,13 +558,13 @@ export default function BoardPage() {
             ))}
           </select>
 
-          {/* Priority filter */}
+          {/* Priority Filter */}
           <select
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
-            className="h-8 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none cursor-pointer"
+            className="h-8 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none cursor-pointer hover:border-line-strong transition-colors"
           >
-            <option value="ALL">🔥 Tất cả mức ưu tiên</option>
+            <option value="ALL">🔥 Tất cả độ ưu tiên</option>
             {PRIORITIES.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.label}
@@ -581,24 +572,24 @@ export default function BoardPage() {
             ))}
           </select>
 
-          {/* Time / Due Date Filter */}
+          {/* Time Filter */}
           <select
             value={timeFilter}
             onChange={(e) => setTimeFilter(e.target.value)}
-            className="h-8 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none cursor-pointer"
+            className="h-8 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none cursor-pointer hover:border-line-strong transition-colors"
           >
-            <option value="ALL">⏰ Tất cả thời gian</option>
+            <option value="ALL">⏰ Mọi mốc thời gian</option>
             <option value="TODAY">Hạn chót hôm nay</option>
             <option value="THIS_WEEK">Hạn chót tuần này</option>
             <option value="OVERDUE">⚠️ Đã quá hạn (Overdue)</option>
-            <option value="NO_DUE_DATE">Không đặt hạn chót</option>
+            <option value="NO_DUE_DATE">Không có hạn chót</option>
           </select>
 
           {/* Type Filter */}
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="h-8 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none cursor-pointer"
+            className="h-8 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none cursor-pointer hover:border-line-strong transition-colors"
           >
             <option value="ALL">🏷️ Tất cả loại</option>
             {TASK_TYPES.map((t) => (
@@ -609,20 +600,20 @@ export default function BoardPage() {
           </select>
         </div>
 
-        {/* Sorting & Reset Controls */}
+        {/* Sorting & Clear Controls */}
         <div className="flex items-center gap-2 shrink-0">
           <div className="flex items-center gap-1 rounded-lg border border-line bg-surface p-0.5">
             <span className="text-[11px] text-muted pl-2 font-medium">Sắp xếp:</span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="h-7 border-none bg-transparent px-2 text-xs text-foreground focus:outline-none cursor-pointer"
+              className="h-7 border-none bg-transparent px-2 text-xs text-foreground focus:outline-none cursor-pointer font-medium"
             >
-              <option value="MANUAL">Thứ tự thủ công (Kéo thả)</option>
-              <option value="PRIORITY">Mức ưu tiên (Cao $\rightarrow$ Thấp)</option>
+              <option value="MANUAL">Thứ tự kéo thả</option>
+              <option value="PRIORITY">Độ ưu tiên (Khẩn cấp $\rightarrow$ Thấp)</option>
               <option value="DUE_DATE">Hạn chót (Gần nhất)</option>
               <option value="CREATED_AT">Ngày tạo (Mới nhất)</option>
-              <option value="STORY_POINTS">Story points (Điểm cao)</option>
+              <option value="STORY_POINTS">Story Points (Điểm cao)</option>
               <option value="TITLE">Tiêu đề (A-Z)</option>
             </select>
 
@@ -630,30 +621,29 @@ export default function BoardPage() {
               <button
                 onClick={() => setSortOrder((o) => (o === "asc" ? "desc" : "asc"))}
                 className="h-7 px-2 rounded hover:bg-surface-2 text-muted hover:text-foreground cursor-pointer flex items-center gap-1 text-[11px]"
-                title={sortOrder === "asc" ? "Đang tăng dần (Bấm để đảo chiều)" : "Đang giảm dần (Bấm để đảo chiều)"}
+                title={sortOrder === "asc" ? "Đang tăng dần" : "Đang giảm dần"}
               >
                 <ArrowUpDown className="h-3 w-3" />
-                {sortOrder === "asc" ? "Tăng dần" : "Giảm dần"}
+                {sortOrder === "asc" ? "Tăng" : "Giảm"}
               </button>
             )}
           </div>
 
-          {/* Reset Filters Button */}
           {activeFilterCount > 0 && (
             <Button
               size="sm"
               variant="ghost"
               onClick={resetFilters}
-              className="h-8 text-xs text-amber-400 hover:text-amber-300 hover:bg-amber-950/30 flex items-center gap-1"
+              className="h-8 text-xs text-amber-400 hover:text-amber-300 hover:bg-amber-950/30 flex items-center gap-1 font-semibold"
             >
               <RotateCcw className="h-3 w-3" />
-              Xóa lọc ({activeFilterCount})
+              Xóa bộ lọc ({activeFilterCount})
             </Button>
           )}
         </div>
       </div>
 
-      {/* Board */}
+      {/* Kanban Board Viewport */}
       <DndContext
         sensors={sensors}
         collisionDetection={collisionDetectionStrategy}
@@ -661,7 +651,7 @@ export default function BoardPage() {
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex flex-1 gap-3 overflow-x-auto p-4">
+        <div className="flex flex-1 gap-4 overflow-x-auto p-5">
           {STATUSES.map((status) => (
             <BoardColumn
               key={status.id}
@@ -682,7 +672,7 @@ export default function BoardPage() {
         </DragOverlay>
       </DndContext>
 
-      {/* Task detail dialog */}
+      {/* Task Detail Dialog */}
       {openTaskId && (
         <TaskDialog
           projectId={projectId}
@@ -696,7 +686,7 @@ export default function BoardPage() {
         />
       )}
 
-      {/* New task dialog */}
+      {/* New Task Dialog */}
       <NewTaskDialog
         projectId={projectId}
         open={newTaskOpen}
