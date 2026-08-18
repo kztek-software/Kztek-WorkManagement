@@ -29,19 +29,16 @@ import {
   Briefcase,
   Layers,
   Crown,
+  Filter,
+  ArrowUpDown,
+  UserCog,
+  CheckSquare,
 } from "lucide-react";
 
-// PrimeReact UI Components
+// PrimeReact UI Components (LTS 10.9.3)
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Dialog } from "primereact/dialog";
-import { Button as PrimeButton } from "primereact/button";
-import { InputText } from "primereact/inputtext";
-import { InputTextarea } from "primereact/inputtextarea";
-import { Dropdown } from "primereact/dropdown";
-import { MultiSelect } from "primereact/multiselect";
-import { Tag } from "primereact/tag";
-import { Chip } from "primereact/chip";
 import { Toast } from "primereact/toast";
 
 import { Avatar, AvatarFallback, initials } from "@/components/ui/avatar";
@@ -112,16 +109,16 @@ type RoleItem = {
 };
 
 const AVATAR_COLORS = [
-  "#6366f1",
-  "#3b82f6",
-  "#10b981",
-  "#f59e0b",
-  "#ec4899",
-  "#8b5cf6",
-  "#ef4444",
-  "#14b8a6",
-  "#f05922",
-  "#251c53",
+  "#F05922",
+  "#3B82F6",
+  "#10B981",
+  "#F59E0B",
+  "#8B5CF6",
+  "#EC4899",
+  "#14B8A6",
+  "#6366F1",
+  "#EF4444",
+  "#06B6D4",
 ];
 
 export default function UsersManagementPage() {
@@ -165,7 +162,7 @@ export default function UsersManagementPage() {
   const [createTitle, setCreateTitle] = useState("");
   const [createRole, setCreateRole] = useState("MEMBER");
   const [createTeamId, setCreateTeamId] = useState<string | null>(null);
-  const [createColor, setCreateColor] = useState("#6366f1");
+  const [createColor, setCreateColor] = useState("#F05922");
   const [creatingUser, setCreatingUser] = useState(false);
 
   const [editUserOpen, setEditUserOpen] = useState(false);
@@ -176,7 +173,7 @@ export default function UsersManagementPage() {
   const [editTitle, setEditTitle] = useState("");
   const [editRole, setEditRole] = useState("MEMBER");
   const [editTeamId, setEditTeamId] = useState<string | null>(null);
-  const [editColor, setEditColor] = useState("#6366f1");
+  const [editColor, setEditColor] = useState("#F05922");
   const [updatingUser, setUpdatingUser] = useState(false);
 
   // ==========================================
@@ -189,9 +186,6 @@ export default function UsersManagementPage() {
   // ==========================================
   // EMAIL CONFIG STATE
   // ==========================================
-  const [emailNotifyAssign, setEmailNotifyAssign] = useState(true);
-  const [emailNotifyStatus, setEmailNotifyStatus] = useState(true);
-  const [emailNotifyComment, setEmailNotifyComment] = useState(true);
   const [smtpSaved, setSmtpSaved] = useState(false);
 
   // Load Initial Data
@@ -502,72 +496,101 @@ export default function UsersManagementPage() {
   });
 
   const selectedRole = roles.find((r) => r.key === selectedRoleKey);
+  const totalTasksCount = users.reduce((sum, u) => sum + (u._count?.assignedTasks || 0), 0);
 
   // User Table Column Templates (PrimeReact)
   const userBodyTemplate = (rowData: UserItem) => (
-    <div className="flex items-center gap-2.5">
-      <Avatar className="h-8 w-8 border border-white/10 shadow-sm">
+    <div className="flex items-center gap-3">
+      <Avatar className="h-9 w-9 border border-white/10 shadow-sm shrink-0">
         <AvatarFallback color={rowData.avatarColor} className="text-xs font-bold">
           {initials(rowData.name)}
         </AvatarFallback>
       </Avatar>
-      <div>
-        <div className="font-bold text-foreground flex items-center gap-1.5 text-xs">
+      <div className="min-w-0">
+        <div className="font-bold text-foreground flex items-center gap-1.5 text-xs truncate">
           <span>{rowData.name}</span>
           {rowData.id === currentUserId && (
-            <span className="rounded bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.2 text-[9px] font-bold text-emerald-400">
+            <span className="rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.2 text-[9px] font-bold text-emerald-400">
               Bạn
             </span>
           )}
         </div>
-        <div className="text-[10px] text-muted font-mono">{rowData.email}</div>
+        <div className="text-[11px] text-muted font-mono truncate">{rowData.email}</div>
       </div>
     </div>
+  );
+
+  const titleBodyTemplate = (rowData: UserItem) => (
+    <span className="text-xs font-medium text-foreground/90">
+      {rowData.title || <span className="text-muted/60 italic">—</span>}
+    </span>
   );
 
   const teamBodyTemplate = (rowData: UserItem) => (
     rowData.team ? (
       <span
-        className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] font-bold"
+        className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold"
         style={{
-          backgroundColor: `${rowData.team.color}15`,
+          backgroundColor: `${rowData.team.color}18`,
           color: rowData.team.color,
           border: `1px solid ${rowData.team.color}35`,
         }}
       >
-        <Building2 className="h-3 w-3" />
+        <Building2 className="h-3.5 w-3.5" />
         {rowData.team.name}
       </span>
     ) : (
-      <span className="text-[11px] text-muted/60 italic font-medium">Chưa phân nhóm</span>
+      <button
+        onClick={() => openEditUser(rowData)}
+        className="inline-flex items-center gap-1 text-[11px] text-muted/70 hover:text-accent font-medium hover:underline cursor-pointer"
+      >
+        <Plus className="h-3 w-3" /> Gán phòng ban
+      </button>
     )
   );
 
   const roleBodyTemplate = (rowData: UserItem) => {
     const r = roles.find((role) => role.key === rowData.role);
+    const color = r?.color || "#6366f1";
     return (
       <span
-        className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold"
+        className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold"
         style={{
-          backgroundColor: `${r?.color || "#6366f1"}20`,
-          color: r?.color || "#6366f1",
-          border: `1px solid ${r?.color || "#6366f1"}40`,
+          backgroundColor: `${color}18`,
+          color: color,
+          border: `1px solid ${color}35`,
         }}
       >
-        <Shield className="h-3 w-3" />
+        <Shield className="h-3.5 w-3.5" />
         {r?.name || rowData.role}
       </span>
     );
   };
 
+  const projectCountTemplate = (rowData: UserItem) => (
+    <div className="text-center">
+      <span className="inline-flex items-center justify-center h-6 min-w-[24px] px-1.5 rounded-md bg-surface-2 border border-line text-xs font-mono font-bold text-foreground">
+        {rowData._count?.memberships || 0}
+      </span>
+    </div>
+  );
+
+  const taskCountTemplate = (rowData: UserItem) => (
+    <div className="text-center">
+      <span className="inline-flex items-center justify-center h-6 min-w-[24px] px-1.5 rounded-md bg-accent/15 border border-accent/30 text-xs font-mono font-bold text-accent">
+        {rowData._count?.assignedTasks || 0}
+      </span>
+    </div>
+  );
+
   const actionBodyTemplate = (rowData: UserItem) => (
-    <div className="flex items-center justify-end gap-1">
+    <div className="flex items-center justify-end gap-1.5">
       <button
         onClick={() => openEditUser(rowData)}
         className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface-2 transition-colors cursor-pointer"
-        title="Chỉnh sửa / Đổi nhóm & vai trò"
+        title="Chỉnh sửa tài khoản / Gán nhóm"
       >
-        <Edit2 className="h-3.5 w-3.5" />
+        <Edit2 className="h-4 w-4" />
       </button>
 
       {rowData.id !== currentUserId && (
@@ -576,7 +599,7 @@ export default function UsersManagementPage() {
           className="p-1.5 rounded-lg text-muted hover:text-red-400 hover:bg-red-950/30 transition-colors cursor-pointer"
           title="Xóa tài khoản"
         >
-          <Trash2 className="h-3.5 w-3.5" />
+          <Trash2 className="h-4 w-4" />
         </button>
       )}
     </div>
@@ -584,10 +607,10 @@ export default function UsersManagementPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-1 items-center justify-center">
+      <div className="flex flex-1 items-center justify-center bg-background">
         <div className="text-xs font-semibold text-muted flex items-center gap-2">
-          <Loader2 className="h-4 w-4 animate-spin text-accent" />
-          Đang tải dữ liệu nhân sự & phòng ban...
+          <Loader2 className="h-5 w-5 animate-spin text-accent" />
+          Đang tải dữ liệu cơ cấu nhân sự & phòng ban...
         </div>
       </div>
     );
@@ -598,19 +621,24 @@ export default function UsersManagementPage() {
       <Toast ref={toast} />
 
       {/* Top Header & Prime Tabs Navigation */}
-      <div className="flex h-14 shrink-0 items-center justify-between border-b border-line px-5 bg-surface/40 backdrop-blur-md">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 font-bold text-foreground text-sm">
-            <Shield className="h-4 w-4 text-accent" />
-            <span>Quản trị Cơ cấu & Phân quyền</span>
+      <div className="flex h-16 shrink-0 items-center justify-between border-b border-line px-6 bg-surface/50 backdrop-blur-md">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2.5 font-bold text-foreground text-sm">
+            <div className="h-8 w-8 rounded-xl bg-accent/15 border border-accent/30 flex items-center justify-center text-accent">
+              <Shield className="h-4 w-4" />
+            </div>
+            <div>
+              <div className="leading-tight">Quản trị Cơ cấu & Phân quyền</div>
+              <div className="text-[10px] text-muted font-normal">Hệ thống phân cấp phòng ban & vai trò KZTEK</div>
+            </div>
           </div>
 
-          <div className="flex items-center rounded-xl bg-surface-2 p-1 border border-line">
+          <div className="hidden md:flex items-center rounded-xl bg-surface-2 p-1 border border-line">
             <button
               onClick={() => setActiveTab("users")}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 activeTab === "users"
-                  ? "bg-accent text-white shadow-sm"
+                  ? "bg-accent text-white shadow-sm shadow-accent/25"
                   : "text-muted hover:text-foreground"
               }`}
             >
@@ -620,9 +648,9 @@ export default function UsersManagementPage() {
 
             <button
               onClick={() => setActiveTab("teams")}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 activeTab === "teams"
-                  ? "bg-accent text-white shadow-sm"
+                  ? "bg-accent text-white shadow-sm shadow-accent/25"
                   : "text-muted hover:text-foreground"
               }`}
             >
@@ -632,9 +660,9 @@ export default function UsersManagementPage() {
 
             <button
               onClick={() => setActiveTab("roles")}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 activeTab === "roles"
-                  ? "bg-accent text-white shadow-sm"
+                  ? "bg-accent text-white shadow-sm shadow-accent/25"
                   : "text-muted hover:text-foreground"
               }`}
             >
@@ -644,9 +672,9 @@ export default function UsersManagementPage() {
 
             <button
               onClick={() => setActiveTab("email")}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 activeTab === "email"
-                  ? "bg-accent text-white shadow-sm"
+                  ? "bg-accent text-white shadow-sm shadow-accent/25"
                   : "text-muted hover:text-foreground"
               }`}
             >
@@ -656,14 +684,14 @@ export default function UsersManagementPage() {
           </div>
         </div>
 
-        <div>
+        <div className="flex items-center gap-2">
           {activeTab === "users" && (
             <Button
               size="sm"
               onClick={() => setCreateUserOpen(true)}
-              className="h-8 text-xs font-bold bg-accent hover:bg-accent/90 text-white shadow-md shadow-accent/25"
+              className="h-9 px-3.5 text-xs font-bold bg-accent hover:bg-accent/90 text-white shadow-md shadow-accent/25 shrink-0"
             >
-              <UserPlus className="h-3.5 w-3.5 mr-1" /> Thêm nhân sự mới
+              <UserPlus className="h-3.5 w-3.5 mr-1.5" /> Thêm nhân sự mới
             </Button>
           )}
 
@@ -678,9 +706,9 @@ export default function UsersManagementPage() {
                 setTeamMemberIds([]);
                 setCreateTeamOpen(true);
               }}
-              className="h-8 text-xs font-bold bg-accent hover:bg-accent/90 text-white shadow-md shadow-accent/25"
+              className="h-9 px-3.5 text-xs font-bold bg-accent hover:bg-accent/90 text-white shadow-md shadow-accent/25 shrink-0"
             >
-              <Plus className="h-3.5 w-3.5 mr-1" /> Thêm nhóm / phòng ban
+              <Plus className="h-3.5 w-3.5 mr-1.5" /> Thêm nhóm / phòng ban
             </Button>
           )}
         </div>
@@ -690,73 +718,124 @@ export default function UsersManagementPage() {
       {/* TAB 1: DANH SÁCH TÀI KHOẢN (PRIMEREACT DATATABLE) */}
       {/* ========================================================================= */}
       {activeTab === "users" && (
-        <div className="flex-1 space-y-4 overflow-y-auto p-5 max-w-7xl mx-auto w-full">
-          {/* Controls Bar */}
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="p-input-icon-left">
-                <InputText
-                  value={globalFilter}
-                  onChange={(e) => setGlobalFilter(e.target.value)}
-                  placeholder="Tìm kiếm nhân sự..."
-                  className="h-8 w-60 text-xs bg-surface border-line rounded-lg"
-                />
-              </span>
-
-              {/* Team Filter */}
-              <select
-                value={teamFilter}
-                onChange={(e) => setTeamFilter(e.target.value)}
-                className="h-8 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none cursor-pointer"
-              >
-                <option value="ALL">🏢 Tất cả phòng ban ({users.length})</option>
-                <option value="NO_TEAM">Chưa phân nhóm</option>
-                {teams.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name} ({t.memberCount})
-                  </option>
-                ))}
-              </select>
-
-              {/* Role Filter */}
-              <select
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
-                className="h-8 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none cursor-pointer"
-              >
-                <option value="ALL">🛡️ Tất cả vai trò ({users.length})</option>
-                {roles.map((r) => (
-                  <option key={r.key} value={r.key}>
-                    {r.name}
-                  </option>
-                ))}
-              </select>
+        <div className="flex-1 overflow-y-auto p-6 space-y-5 w-full max-w-[1600px] mx-auto">
+          {/* KPI Summary Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="rounded-2xl border border-line bg-surface p-4 flex items-center justify-between shadow-sm">
+              <div>
+                <div className="text-[11px] font-bold text-muted uppercase tracking-wider">Tổng nhân sự</div>
+                <div className="text-2xl font-extrabold text-foreground mt-0.5">{users.length}</div>
+              </div>
+              <div className="h-10 w-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+                <Users className="h-5 w-5" />
+              </div>
             </div>
 
-            <div className="text-xs text-muted font-medium">
-              Tổng số: <strong>{filteredUsers.length}</strong> nhân sự
+            <div className="rounded-2xl border border-line bg-surface p-4 flex items-center justify-between shadow-sm">
+              <div>
+                <div className="text-[11px] font-bold text-muted uppercase tracking-wider">Phòng ban nội bộ</div>
+                <div className="text-2xl font-extrabold text-foreground mt-0.5">{teams.length}</div>
+              </div>
+              <div className="h-10 w-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+                <Building2 className="h-5 w-5" />
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-line bg-surface p-4 flex items-center justify-between shadow-sm">
+              <div>
+                <div className="text-[11px] font-bold text-muted uppercase tracking-wider">Vai trò hệ thống</div>
+                <div className="text-2xl font-extrabold text-foreground mt-0.5">{roles.length}</div>
+              </div>
+              <div className="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                <Shield className="h-5 w-5" />
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-line bg-surface p-4 flex items-center justify-between shadow-sm">
+              <div>
+                <div className="text-[11px] font-bold text-muted uppercase tracking-wider">Tasks đang phụ trách</div>
+                <div className="text-2xl font-extrabold text-accent mt-0.5">{totalTasksCount}</div>
+              </div>
+              <div className="h-10 w-10 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent">
+                <CheckSquare className="h-5 w-5" />
+              </div>
             </div>
           </div>
 
-          {/* PrimeReact DataTable (Lag-Free & Optimized) */}
-          <div className="rounded-2xl border border-line bg-surface overflow-hidden shadow-sm">
+          {/* Controls Filter Bar */}
+          <div className="flex items-center justify-between gap-4 flex-wrap bg-surface p-3.5 rounded-2xl border border-line shadow-sm">
+            <div className="flex items-center gap-3 flex-wrap flex-1">
+              {/* Search Box */}
+              <div className="relative min-w-[260px] flex-1 max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
+                <Input
+                  value={globalFilter}
+                  onChange={(e) => setGlobalFilter(e.target.value)}
+                  placeholder="Tìm kiếm tên, email, chức danh..."
+                  className="pl-9 h-9 text-xs bg-surface-2 border-line rounded-xl w-full"
+                />
+              </div>
+
+              {/* Team Filter */}
+              <div className="flex items-center gap-1.5">
+                <Building2 className="h-4 w-4 text-muted" />
+                <select
+                  value={teamFilter}
+                  onChange={(e) => setTeamFilter(e.target.value)}
+                  className="h-9 rounded-xl border border-line bg-surface-2 px-3 text-xs text-foreground focus:outline-none cursor-pointer"
+                >
+                  <option value="ALL">Tất cả phòng ban ({users.length})</option>
+                  <option value="NO_TEAM">Chưa phân nhóm</option>
+                  {teams.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name} ({t.memberCount})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Role Filter */}
+              <div className="flex items-center gap-1.5">
+                <Shield className="h-4 w-4 text-muted" />
+                <select
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value)}
+                  className="h-9 rounded-xl border border-line bg-surface-2 px-3 text-xs text-foreground focus:outline-none cursor-pointer"
+                >
+                  <option value="ALL">Tất cả vai trò ({users.length})</option>
+                  {roles.map((r) => (
+                    <option key={r.key} value={r.key}>
+                      {r.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="text-xs text-muted font-medium pr-2">
+              Hiển thị: <strong className="text-foreground">{filteredUsers.length}</strong> / {users.length} nhân sự
+            </div>
+          </div>
+
+          {/* PrimeReact DataTable (Polished Obsidian Dark Theme) */}
+          <div className="rounded-2xl border border-line bg-surface overflow-hidden shadow-lg">
             <DataTable
               value={filteredUsers}
               paginator
               rows={10}
-              rowsPerPageOptions={[5, 10, 25, 50]}
+              rowsPerPageOptions={[5, 10, 20, 50]}
               globalFilter={globalFilter}
-              emptyMessage="Không tìm thấy nhân sự phù hợp"
-              className="p-datatable-sm text-xs"
+              emptyMessage="Không tìm thấy nhân sự nào phù hợp"
+              className="w-full text-xs"
               tableStyle={{ minWidth: "50rem" }}
             >
-              <Column field="name" header="Nhân sự" body={userBodyTemplate} sortable />
-              <Column field="title" header="Chức danh" sortable />
-              <Column field="team.name" header="Phòng ban / Nhóm" body={teamBodyTemplate} sortable />
-              <Column field="role" header="Vai trò hệ thống" body={roleBodyTemplate} sortable />
-              <Column field="_count.memberships" header="Dự án" sortable className="text-center font-mono" />
-              <Column field="_count.assignedTasks" header="Tasks" sortable className="text-center font-mono text-accent font-bold" />
-              <Column header="Thao tác" body={actionBodyTemplate} className="text-right" />
+              <Column field="name" header="Nhân sự" body={userBodyTemplate} sortable style={{ width: "26%" }} />
+              <Column field="title" header="Chức danh" body={titleBodyTemplate} sortable style={{ width: "18%" }} />
+              <Column field="team.name" header="Phòng ban / Nhóm" body={teamBodyTemplate} sortable style={{ width: "22%" }} />
+              <Column field="role" header="Vai trò hệ thống" body={roleBodyTemplate} sortable style={{ width: "18%" }} />
+              <Column field="_count.memberships" header="Dự án" body={projectCountTemplate} sortable style={{ width: "8%" }} />
+              <Column field="_count.assignedTasks" header="Tasks" body={taskCountTemplate} sortable style={{ width: "8%" }} />
+              <Column header="Thao tác" body={actionBodyTemplate} style={{ width: "8%" }} />
             </DataTable>
           </div>
         </div>
@@ -766,21 +845,21 @@ export default function UsersManagementPage() {
       {/* TAB 2: QUẢN LÝ NHÓM / PHÒNG BAN (TEAMS & DEPARTMENTS) */}
       {/* ========================================================================= */}
       {activeTab === "teams" && (
-        <div className="flex-1 space-y-5 overflow-y-auto p-5 max-w-7xl mx-auto w-full">
+        <div className="flex-1 space-y-6 overflow-y-auto p-6 w-full max-w-[1600px] mx-auto">
           {/* Teams Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {teams.map((team) => (
               <div
                 key={team.id}
-                className="rounded-2xl border border-line bg-surface p-5 shadow-sm hover:border-line-strong transition-all space-y-4 flex flex-col justify-between"
+                className="rounded-2xl border border-line bg-surface p-5 shadow-sm hover:border-line-strong hover:shadow-md transition-all space-y-4 flex flex-col justify-between"
               >
-                <div className="space-y-3">
+                <div className="space-y-3.5">
                   {/* Card Header: Color Tag & Code */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <div
                         className="h-3.5 w-3.5 rounded-full shrink-0 shadow-sm"
-                        style={{ backgroundColor: team.color, boxShadow: `0 0 8px ${team.color}80` }}
+                        style={{ backgroundColor: team.color, boxShadow: `0 0 10px ${team.color}80` }}
                       />
                       <span className="font-mono font-bold text-xs text-muted">
                         [{team.code}]
@@ -790,14 +869,14 @@ export default function UsersManagementPage() {
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => openEditTeam(team)}
-                        className="p-1 rounded-lg text-muted hover:text-foreground hover:bg-surface-2 cursor-pointer transition-colors"
+                        className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface-2 cursor-pointer transition-colors"
                         title="Chỉnh sửa nhóm"
                       >
                         <Edit2 className="h-3.5 w-3.5" />
                       </button>
                       <button
                         onClick={() => handleDeleteTeam(team)}
-                        className="p-1 rounded-lg text-muted hover:text-red-400 hover:bg-red-950/30 cursor-pointer transition-colors"
+                        className="p-1.5 rounded-lg text-muted hover:text-red-400 hover:bg-red-950/30 cursor-pointer transition-colors"
                         title="Xóa nhóm"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -814,65 +893,65 @@ export default function UsersManagementPage() {
                   </div>
 
                   {/* Team Leader Badge */}
-                  <div className="rounded-xl border border-line/60 bg-surface-2/50 p-2.5 flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-muted uppercase flex items-center gap-1">
+                  <div className="rounded-xl border border-line bg-surface-2/60 p-3 flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-muted uppercase flex items-center gap-1.5">
                       <Crown className="h-3.5 w-3.5 text-amber-400" />
                       Trưởng nhóm
                     </span>
                     {team.leader ? (
-                      <div className="flex items-center gap-1.5">
-                        <Avatar className="h-5 w-5 border border-white/10">
-                          <AvatarFallback color={team.leader.avatarColor} className="text-[8px] font-bold">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6 border border-white/10">
+                          <AvatarFallback color={team.leader.avatarColor} className="text-[9px] font-bold">
                             {initials(team.leader.name)}
                           </AvatarFallback>
                         </Avatar>
                         <span className="text-xs font-bold text-foreground">{team.leader.name}</span>
                       </div>
                     ) : (
-                      <span className="text-[11px] text-muted italic">Chưa chỉ định</span>
+                      <span className="text-xs text-muted/70 italic">Chưa chỉ định</span>
                     )}
                   </div>
 
                   {/* Members Stack & Chips */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-[11px] font-medium text-muted">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs font-medium text-muted">
                       <span>Thành viên ({team.memberCount})</span>
                       <span className="font-bold text-accent">{team.taskCount} tasks đang làm</span>
                     </div>
 
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-1.5">
                       {team.members.slice(0, 6).map((m) => (
                         <span
                           key={m.id}
-                          className="inline-flex items-center gap-1 rounded-full bg-surface-2 border border-line px-2 py-0.5 text-[10px] font-medium text-foreground"
+                          className="inline-flex items-center gap-1.5 rounded-full bg-surface-2 border border-line px-2.5 py-1 text-[11px] font-medium text-foreground"
                         >
-                          <Avatar className="h-3.5 w-3.5">
-                            <AvatarFallback color={m.avatarColor} className="text-[7px]">
+                          <Avatar className="h-4 w-4">
+                            <AvatarFallback color={m.avatarColor} className="text-[8px]">
                               {initials(m.name)}
                             </AvatarFallback>
                           </Avatar>
-                          <span className="truncate max-w-[80px]">{m.name}</span>
+                          <span className="truncate max-w-[85px]">{m.name}</span>
                         </span>
                       ))}
                       {team.memberCount > 6 && (
-                        <span className="rounded-full bg-surface-2 border border-line px-2 py-0.5 text-[10px] font-bold text-muted">
+                        <span className="rounded-full bg-surface-2 border border-line px-2 py-0.5 text-[10px] font-bold text-muted flex items-center">
                           +{team.memberCount - 6}
                         </span>
                       )}
                       {team.memberCount === 0 && (
-                        <span className="text-[10px] text-muted/60 italic">Chưa có thành viên</span>
+                        <span className="text-xs text-muted/60 italic">Chưa có thành viên nào</span>
                       )}
                     </div>
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-line/60 flex items-center justify-between text-[11px]">
-                  <span className="text-muted">Cấp bậc: <strong>Phòng ban nội bộ</strong></span>
+                <div className="pt-3 border-t border-line/60 flex items-center justify-between text-xs">
+                  <span className="text-muted">Cấp bậc: <strong>Phòng ban</strong></span>
                   <button
                     onClick={() => openEditTeam(team)}
                     className="font-bold text-accent hover:underline cursor-pointer flex items-center gap-1"
                   >
-                    Phân bổ nhân sự <ChevronRight className="h-3 w-3" />
+                    Phân bổ nhân sự <ChevronRight className="h-3.5 w-3.5" />
                   </button>
                 </div>
               </div>
@@ -885,7 +964,7 @@ export default function UsersManagementPage() {
       {/* TAB 3: MA TRẬN PHÂN QUYỀN (ROLES & RBAC) */}
       {/* ========================================================================= */}
       {activeTab === "roles" && (
-        <div className="flex-1 overflow-hidden grid grid-cols-[280px_1fr] divide-x divide-line">
+        <div className="flex-1 overflow-hidden grid grid-cols-[300px_1fr] divide-x divide-line">
           {/* Left Column: Roles Selector List */}
           <div className="p-4 space-y-3 overflow-y-auto bg-surface/30">
             <div className="flex items-center justify-between px-1">
@@ -894,14 +973,14 @@ export default function UsersManagementPage() {
               </span>
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               {roles.map((r) => {
                 const isSelected = r.key === selectedRoleKey;
                 return (
                   <button
                     key={r.key}
                     onClick={() => setSelectedRoleKey(r.key)}
-                    className={`flex w-full items-center justify-between p-3 rounded-xl border text-left transition-all cursor-pointer group ${
+                    className={`flex w-full items-center justify-between p-3.5 rounded-xl border text-left transition-all cursor-pointer group ${
                       isSelected
                         ? "bg-surface-2 border-accent shadow-md ring-1 ring-accent/40"
                         : "bg-surface/60 border-line hover:border-line-strong hover:bg-surface-2/60"
@@ -909,8 +988,8 @@ export default function UsersManagementPage() {
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div
-                        className="h-3 w-3 rounded-full shrink-0 shadow-sm"
-                        style={{ backgroundColor: r.color, boxShadow: `0 0 6px ${r.color}80` }}
+                        className="h-3.5 w-3.5 rounded-full shrink-0 shadow-sm"
+                        style={{ backgroundColor: r.color, boxShadow: `0 0 8px ${r.color}80` }}
                       />
                       <div className="min-w-0">
                         <div className="font-bold text-xs text-foreground truncate flex items-center gap-1.5">
@@ -926,7 +1005,7 @@ export default function UsersManagementPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <span className="rounded-full bg-surface-3 px-1.5 py-0.5 text-[9px] font-bold text-muted">
+                      <span className="rounded-full bg-surface-3 px-2 py-0.5 text-[9px] font-bold text-muted">
                         {r.permissions.length}
                       </span>
                       <ChevronRight className={`h-3.5 w-3.5 text-muted transition-transform ${isSelected ? "text-accent translate-x-0.5" : ""}`} />

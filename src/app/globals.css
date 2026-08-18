@@ -98,16 +98,184 @@ body {
 .glass-panel {
   background: rgba(17, 21, 32, 0.75);
   backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border);
 }
 
-.card-interactive {
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+.glow-accent {
+  box-shadow: 0 0 20px -5px rgba(240, 89, 34, 0.3);
 }
 
-.card-interactive:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.18);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+/* ========================================================================= */
+/* PRIMEREACT OBSIDIAN DARK THEME OVERRIDES                                  */
+/* ========================================================================= */
+.p-component {
+  font-family: inherit;
+  font-size: 0.8125rem;
+}
+
+/* DataTable Container */
+.p-datatable {
+  background: transparent !important;
+  color: var(--foreground) !important;
+}
+
+.p-datatable .p-datatable-wrapper {
+  border-radius: 0.75rem;
+  background: transparent;
+}
+
+.p-datatable .p-datatable-header {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 0 1rem 0 !important;
+}
+
+/* Table Header */
+.p-datatable .p-datatable-thead > tr > th {
+  background: #151A27 !important;
+  color: #8E98B0 !important;
+  font-size: 0.6875rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  border-top: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  padding: 0.75rem 1rem !important;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.p-datatable .p-datatable-thead > tr > th:hover {
+  background: #1C2335 !important;
+  color: #F1F4F9 !important;
+}
+
+.p-datatable .p-sortable-column.p-highlight {
+  background: #1C2335 !important;
+  color: #F05922 !important;
+}
+
+.p-datatable .p-sortable-column .p-sortable-column-icon {
+  font-size: 0.75rem !important;
+  margin-left: 0.35rem !important;
+  color: #8E98B0 !important;
+}
+
+.p-datatable .p-sortable-column.p-highlight .p-sortable-column-icon {
+  color: #F05922 !important;
+}
+
+/* Table Body */
+.p-datatable .p-datatable-tbody > tr {
+  background: #111520 !important;
+  color: #F1F4F9 !important;
+  transition: all 0.15s ease !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+.p-datatable .p-datatable-tbody > tr:nth-child(even) {
+  background: #141926 !important;
+}
+
+.p-datatable .p-datatable-tbody > tr:hover {
+  background: #1A2133 !important;
+}
+
+.p-datatable .p-datatable-tbody > tr > td {
+  padding: 0.85rem 1rem !important;
+  border: none !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+  vertical-align: middle !important;
+}
+
+/* Paginator */
+.p-paginator {
+  background: transparent !important;
+  border: none !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  padding: 0.75rem 1rem !important;
+  gap: 0.25rem;
+}
+
+.p-paginator .p-paginator-page,
+.p-paginator .p-paginator-first,
+.p-paginator .p-paginator-prev,
+.p-paginator .p-paginator-next,
+.p-paginator .p-paginator-last {
+  background: #181E2E !important;
+  color: #8E98B0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 0.5rem !important;
+  min-width: 2rem !important;
+  height: 2rem !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  transition: all 0.15s ease;
+}
+
+.p-paginator .p-paginator-page:hover,
+.p-paginator .p-paginator-first:hover,
+.p-paginator .p-paginator-prev:hover,
+.p-paginator .p-paginator-next:hover,
+.p-paginator .p-paginator-last:hover {
+  background: #20273D !important;
+  color: #F1F4F9 !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
+}
+
+.p-paginator .p-paginator-page.p-highlight {
+  background: #F05922 !important;
+  color: #FFFFFF !important;
+  border-color: #F05922 !important;
+  box-shadow: 0 0 10px rgba(240, 89, 34, 0.35);
+}
+
+.p-paginator .p-dropdown {
+  background: #181E2E !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 0.5rem !important;
+  height: 2rem !important;
+}
+
+.p-paginator .p-dropdown .p-dropdown-label {
+  padding: 0.25rem 0.6rem !important;
+  font-size: 0.75rem !important;
+  color: #F1F4F9 !important;
+  display: flex;
+  align-items: center;
+}
+
+/* Dialog Styles */
+.p-dialog {
+  background: #111520 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.8), 0 0 20px rgba(240, 89, 34, 0.1) !important;
+  overflow: hidden !important;
+}
+
+.p-dialog .p-dialog-header {
+  background: #151A27 !important;
+  color: #F1F4F9 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  padding: 1rem 1.25rem !important;
+  font-size: 0.9375rem !important;
+  font-weight: 700 !important;
+}
+
+.p-dialog .p-dialog-content {
+  background: #111520 !important;
+  color: #F1F4F9 !important;
+  padding: 1.25rem !important;
+}
+
+.p-dialog .p-dialog-header-icons button {
+  color: #8E98B0 !important;
+  border-radius: 0.375rem !important;
+}
+.p-dialog .p-dialog-header-icons button:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #FFFFFF !important;
 }
