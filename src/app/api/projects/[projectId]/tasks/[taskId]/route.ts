@@ -5,6 +5,8 @@ import { requireUser } from "@/lib/auth";
 import { publish } from "@/lib/bus";
 import { statusMeta } from "@/lib/constants";
 
+import { canEditTask, canDeleteTask } from "@/lib/permissions";
+
 const taskInclude = {
   assignee: { select: { id: true, name: true, avatarColor: true } },
   labels: { include: { label: true } },
@@ -40,6 +42,10 @@ export async function PATCH(
 
   const task = await prisma.task.findFirst({ where: { id: taskId, projectId } });
   if (!task) return NextResponse.json({ error: "Không tìm thấy task" }, { status: 404 });
+
+  if (!canEditTask(member.role, task.creatorId === user.id, task.assigneeId === user.id)) {
+    return NextResponse.json({ error: "Người xem (Viewer) không có quyền chỉnh sửa task" }, { status: 403 });
+  }
 
   const body = await req.json().catch(() => null);
   const parsed = updateSchema.safeParse(body);
@@ -116,6 +122,10 @@ export async function DELETE(
 
   const task = await prisma.task.findFirst({ where: { id: taskId, projectId } });
   if (!task) return NextResponse.json({ error: "Không tìm thấy task" }, { status: 404 });
+
+  if (!canDeleteTask(member.role, task.creatorId === user.id)) {
+    return NextResponse.json({ error: "Bạn không có quyền xóa task này (chỉ Admin/Owner hoặc Người tạo)" }, { status: 403 });
+  }
 
   await prisma.task.delete({ where: { id: taskId } });
   publish(projectId, { type: "TASK_DELETED", taskId, actorId: user.id });

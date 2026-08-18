@@ -87,4 +87,5 @@ export type BoardData = {
   sprints: SprintDto[];
   labels: LabelDto[];
   members: MemberDto[];
+  currentRole?: string;
 };

@@ -16,10 +16,11 @@ export function SortableTaskCard({
     id: task.id,
   });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
+  const style: React.CSSProperties = {
+    transform: CSS.Translate.toString(transform),
     transition,
-    opacity: isDragging ? 0.4 : 1,
+    opacity: isDragging ? 0.3 : 1,
+    touchAction: "none",
   };
 
   return (
@@ -28,8 +29,13 @@ export function SortableTaskCard({
       style={style}
       {...attributes}
       {...listeners}
-      onClick={onClick}
-      className="cursor-grab active:cursor-grabbing"
+      onClick={(e) => {
+        // Only trigger click if not actively dragging
+        if (!isDragging) {
+          onClick();
+        }
+      }}
+      className="cursor-grab active:cursor-grabbing select-none"
     >
       <TaskCard task={task} />
     </div>

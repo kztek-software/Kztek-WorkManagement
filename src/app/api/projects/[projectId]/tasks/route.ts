@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { publish } from "@/lib/bus";
 
+import { canCreateTask } from "@/lib/permissions";
+
 const taskInclude = {
   assignee: { select: { id: true, name: true, avatarColor: true } },
   labels: { include: { label: true } },
@@ -40,7 +42,7 @@ export async function GET(
 
   if (!project) return NextResponse.json({ error: "Không tìm thấy project" }, { status: 404 });
 
-  return NextResponse.json({ project, tasks, sprints, labels, members });
+  return NextResponse.json({ project, tasks, sprints, labels, members, currentRole: member.role });
 }
 
 const createTaskSchema = z.object({
@@ -68,6 +70,9 @@ export async function POST(
     where: { projectId_userId: { projectId, userId: user.id } },
   });
   if (!member) return NextResponse.json({ error: "Không có quyền truy cập" }, { status: 403 });
+  if (!canCreateTask(member.role)) {
+    return NextResponse.json({ error: "Người xem (Viewer) không có quyền tạo task" }, { status: 403 });
+  }
 
   const body = await req.json().catch(() => null);
   const parsed = createTaskSchema.safeParse(body);

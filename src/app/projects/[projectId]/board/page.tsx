@@ -6,17 +6,23 @@ import {
   DndContext,
   DragOverlay,
   PointerSensor,
+  MouseSensor,
+  TouchSensor,
+  KeyboardSensor,
   useSensor,
   useSensors,
   closestCorners,
+  pointerWithin,
+  rectIntersection,
   type DragStartEvent,
   type DragEndEvent,
-  type DragOverEvent,
+  type CollisionDetection,
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
-import { Plus, Search, Wifi, WifiOff, Sparkles, Filter } from "lucide-react";
+import { Plus, Search, Wifi, WifiOff, Sparkles, Filter, Users, Shield, Eye } from "lucide-react";
 import { STATUSES, PRIORITIES } from "@/lib/constants";
 import type { BoardData, TaskDto } from "@/lib/types";
+import { canCreateTask, isViewer } from "@/lib/permissions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { BoardColumn } from "@/components/board/board-column";
@@ -24,6 +30,7 @@ import { TaskCard } from "@/components/board/task-card";
 import { TaskDialog } from "@/components/board/task-dialog";
 import { NewTaskDialog } from "@/components/board/new-task-dialog";
 import { NotionDialog } from "@/components/notion/notion-dialog";
+import { MemberDialog } from "@/components/project/member-dialog";
 
 export default function BoardPage() {
   const params = useParams<{ projectId: string }>();
@@ -40,6 +47,7 @@ export default function BoardPage() {
   const [newTaskOpen, setNewTaskOpen] = useState(false);
   const [newTaskStatus, setNewTaskStatus] = useState("TODO");
   const [notionOpen, setNotionOpen] = useState(false);
+  const [memberOpen, setMemberOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
 
@@ -109,9 +117,32 @@ export default function BoardPage() {
     };
   }, [projectId, loadBoard]);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
-  );
+  const mouseSensor = useSensor(MouseSensor, {
+    activationConstraint: {
+      distance: 5,
+    },
+  });
+  const touchSensor = useSensor(TouchSensor, {
+    activationConstraint: {
+      delay: 200,
+      tolerance: 5,
+    },
+  });
+  const pointerSensor = useSensor(PointerSensor, {
+    activationConstraint: {
+      distance: 5,
+    },
+  });
+  const keyboardSensor = useSensor(KeyboardSensor);
+  const sensors = useSensors(mouseSensor, touchSensor, pointerSensor, keyboardSensor);
+
+  const collisionDetectionStrategy: CollisionDetection = useCallback((args) => {
+    const pointerCollisions = pointerWithin(args);
+    if (pointerCollisions.length > 0) {
+      return pointerCollisions;
+    }
+    return closestCorners(args);
+  }, []);
 
   const tasksByStatus = useMemo(() => {
     const map: Record<string, TaskDto[]> = {};
@@ -136,12 +167,14 @@ export default function BoardPage() {
   );
 
   function handleDragStart(event: DragStartEvent) {
+    if (isViewer(data?.currentRole)) return;
     const task = data?.tasks.find((t) => t.id === event.active.id);
     setActiveTask(task ?? null);
   }
 
   async function handleDragEnd(event: DragEndEvent) {
     setActiveTask(null);
+    if (isViewer(data?.currentRole)) return;
     const { active, over } = event;
     if (!over || !data) return;
 
@@ -152,13 +185,33 @@ export default function BoardPage() {
 
     // over có thể là 1 task khác hoặc 1 column id
     const overTask = data.tasks.find((t) => t.id === overId);
-    const newStatus = overTask ? overTask.status : STATUSES.some((s) => s.id === overId) ? overId : null;
+    const newStatus = overTask
+      ? overTask.status
+      : STATUSES.some((s) => s.id === overId)
+      ? overId
+      : null;
     if (!newStatus) return;
 
     // Tính position mới
     let newPosition = task.position;
     if (overTask && overTask.id !== task.id) {
-      newPosition = overTask.position + 1;
+      const columnTasks = data.tasks
+        .filter((t) => t.status === newStatus && t.id !== taskId)
+        .sort((a, b) => a.position - b.position);
+      const overIndex = columnTasks.findIndex((t) => t.id === overTask.id);
+      if (overIndex >= 0) {
+        const prevTask = columnTasks[overIndex - 1];
+        const prevPos = prevTask ? prevTask.position : overTask.position - 1000;
+        newPosition = (prevPos + overTask.position) / 2;
+      } else {
+        newPosition = overTask.position + 500;
+      }
+    } else if (!overTask) {
+      const columnTasks = data.tasks
+        .filter((t) => t.status === newStatus && t.id !== taskId)
+        .sort((a, b) => a.position - b.position);
+      const lastTask = columnTasks[columnTasks.length - 1];
+      newPosition = lastTask ? lastTask.position + 1000 : 1000;
     }
 
     // Optimistic update
@@ -172,11 +225,16 @@ export default function BoardPage() {
       };
     });
 
-    await fetch(`/api/projects/${projectId}/tasks/${taskId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: newStatus, position: newPosition }),
-    });
+    try {
+      await fetch(`/api/projects/${projectId}/tasks/${taskId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus, position: newPosition }),
+      });
+    } catch (err) {
+      console.error("Lỗi cập nhật task:", err);
+      loadBoard();
+    }
   }
 
   if (loading) {
@@ -195,8 +253,18 @@ export default function BoardPage() {
     );
   }
 
+  const isUserViewer = isViewer(data.currentRole);
+
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
+      {/* Viewer Notice Banner */}
+      {isUserViewer && (
+        <div className="flex items-center justify-center gap-2 bg-slate-900 border-b border-slate-800 py-1.5 px-4 text-xs text-slate-300">
+          <Eye className="h-3.5 w-3.5 text-accent" />
+          <span>Bạn đang xem dự án ở chế độ <strong>Người xem (Viewer)</strong> — không thể thêm, sửa hoặc kéo thả task.</span>
+        </div>
+      )}
+
       {/* Topbar */}
       <div className="flex h-14 shrink-0 items-center justify-between border-b border-line px-4 gap-3">
         <div className="flex items-center gap-3">
@@ -204,6 +272,12 @@ export default function BoardPage() {
           {activeSprint && (
             <span className="rounded-full bg-accent/15 px-2.5 py-0.5 text-xs font-medium text-accent">
               {activeSprint.name}
+            </span>
+          )}
+          {data.currentRole && (
+            <span className="rounded-full bg-surface-2 border border-line px-2.5 py-0.5 text-[11px] font-medium text-foreground flex items-center gap-1.5">
+              <Shield className="h-3 w-3 text-accent" />
+              {data.currentRole}
             </span>
           )}
           <span
@@ -214,7 +288,7 @@ export default function BoardPage() {
           </span>
         </div>
 
-        {/* Filters & Search */}
+        {/* Filters & Search & Actions */}
         <div className="flex items-center gap-2">
           {/* Priority filter */}
           <select
@@ -242,6 +316,18 @@ export default function BoardPage() {
             />
           </div>
 
+          {/* Members & Roles Management Button */}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setMemberOpen(true)}
+            className="h-8 text-xs font-medium border-line hover:bg-surface-2 flex items-center gap-1.5"
+            title="Quản lý thành viên & phân quyền"
+          >
+            <Users className="h-3.5 w-3.5 text-accent" />
+            Thành viên ({data.members.length})
+          </Button>
+
           {/* Notion Hub Button */}
           <Button
             size="sm"
@@ -256,25 +342,31 @@ export default function BoardPage() {
             Notion Hub
           </Button>
 
-          {/* New Task Button */}
-          <Button
-            size="sm"
-            onClick={() => {
-              setNewTaskStatus("TODO");
-              setNewTaskOpen(true);
-            }}
-            className="h-8 text-xs"
-            title="Tạo task mới (Phím C)"
-          >
-            <Plus className="h-3.5 w-3.5" /> Task mới
-          </Button>
+          {/* New Task Button (Hidden for Viewers) */}
+          {canCreateTask(data.currentRole) ? (
+            <Button
+              size="sm"
+              onClick={() => {
+                setNewTaskStatus("TODO");
+                setNewTaskOpen(true);
+              }}
+              className="h-8 text-xs"
+              title="Tạo task mới (Phím C)"
+            >
+              <Plus className="h-3.5 w-3.5" /> Task mới
+            </Button>
+          ) : (
+            <span className="rounded-lg bg-surface-2 px-2.5 py-1.5 text-xs text-muted font-medium flex items-center gap-1 border border-line">
+              <Eye className="h-3.5 w-3.5" /> Chỉ xem
+            </span>
+          )}
         </div>
       </div>
 
       {/* Board */}
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCorners}
+        collisionDetection={collisionDetectionStrategy}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
@@ -285,6 +377,7 @@ export default function BoardPage() {
               status={status}
               tasks={tasksByStatus[status.id] ?? []}
               onAddTask={() => {
+                if (isUserViewer) return;
                 setNewTaskStatus(status.id);
                 setNewTaskOpen(true);
               }}
@@ -330,6 +423,14 @@ export default function BoardPage() {
         open={notionOpen}
         onOpenChange={setNotionOpen}
         onImportSuccess={loadBoard}
+      />
+
+      {/* Member Management & RBAC Dialog */}
+      <MemberDialog
+        projectId={projectId}
+        open={memberOpen}
+        onOpenChange={setMemberOpen}
+        onMembersChanged={loadBoard}
       />
     </div>
   );

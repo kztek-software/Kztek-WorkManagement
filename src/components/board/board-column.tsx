@@ -48,15 +48,15 @@ export function BoardColumn({
         <div
           ref={setNodeRef}
           className={`flex-1 space-y-2 overflow-y-auto px-2 pb-2 transition-colors rounded-lg ${
-            isOver ? "bg-accent/5" : ""
+            isOver ? "bg-accent/10 ring-1 ring-accent/30" : ""
           }`}
-          style={{ minHeight: 100 }}
+          style={{ minHeight: 200 }}
         >
           {tasks.map((task) => (
             <SortableTaskCard key={task.id} task={task} onClick={() => onTaskClick(task.id)} />
           ))}
           {tasks.length === 0 && (
-            <div className="flex h-20 items-center justify-center rounded-lg border border-dashed border-line text-xs text-muted">
+            <div className="flex h-24 items-center justify-center rounded-lg border border-dashed border-line text-xs text-muted">
               Thả task vào đây
             </div>
           )}
