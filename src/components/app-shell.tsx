@@ -10,11 +10,14 @@ import {
   LogOut,
   Plus,
   ChevronDown,
+  ArrowRightLeft,
+  Users,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, initials } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import type { UserLite } from "@/lib/types";
 
 type ProjectInfo = {
@@ -43,6 +46,8 @@ export function AppShell({
     { href: `/projects/${project.id}/board`, label: "Board", icon: KanbanSquare },
     { href: `/projects/${project.id}/sprints`, label: "Sprints", icon: Rocket },
     { href: `/projects/${project.id}/reports`, label: "Báo cáo", icon: BarChart3 },
+    { href: `/projects/${project.id}/notion`, label: "Tích hợp Notion", icon: ArrowRightLeft },
+    { href: `/projects/${project.id}/users`, label: "Người dùng & Email", icon: Users },
   ];
 
   async function logout() {
@@ -159,9 +164,12 @@ export function AppShell({
               <div className="truncate text-[10px] text-muted">{user.email}</div>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={logout} title="Đăng xuất">
-            <LogOut className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <NotificationBell projectId={project.id} />
+            <Button variant="ghost" size="icon" onClick={logout} title="Đăng xuất">
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </aside>
 

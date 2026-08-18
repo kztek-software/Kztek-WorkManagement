@@ -4,8 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { publish } from "@/lib/bus";
 import { statusMeta } from "@/lib/constants";
-
 import { canEditTask, canDeleteTask } from "@/lib/permissions";
+import { sendNotification } from "@/lib/notifications";
 
 const taskInclude = {
   assignee: { select: { id: true, name: true, avatarColor: true } },
@@ -105,6 +105,31 @@ export async function PATCH(
   });
 
   publish(projectId, { type: "TASK_CHANGED", taskId, actorId: user.id });
+
+  // Gửi thông báo nếu có phân công người mới
+  if (d.assigneeId && d.assigneeId !== task.assigneeId && d.assigneeId !== user.id) {
+    sendNotification({
+      userId: d.assigneeId,
+      actorId: user.id,
+      type: "ASSIGNED",
+      title: "Bạn vừa được giao task",
+      message: `${user.name} đã giao task FB-${updated.number}: "${updated.title}" cho bạn`,
+      link: `/projects/${projectId}/board`,
+      projectId,
+    });
+  } else if (d.status && d.status !== task.status && updated.assigneeId && updated.assigneeId !== user.id) {
+    // Thông báo cho người phụ trách khi trạng thái task thay đổi
+    sendNotification({
+      userId: updated.assigneeId,
+      actorId: user.id,
+      type: "STATUS_CHANGED",
+      title: "Trạng thái task đã thay đổi",
+      message: `${user.name} đã chuyển task FB-${updated.number} sang ${d.status}`,
+      link: `/projects/${projectId}/board`,
+      projectId,
+    });
+  }
+
   return NextResponse.json({ task: updated });
 }
 

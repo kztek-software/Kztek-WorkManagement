@@ -20,6 +20,8 @@ export const TASK_TYPES = [
   { id: "EPIC", label: "Epic", color: "#a855f7" },
 ] as const;
 
+export const TYPES = TASK_TYPES;
+
 export const AVATAR_COLORS = [
   "#6366f1",
   "#10b981",

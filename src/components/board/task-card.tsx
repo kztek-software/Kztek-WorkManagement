@@ -16,8 +16,10 @@ export function TaskCard({ task, overlay }: { task: TaskDto; overlay?: boolean }
 
   return (
     <div
-      className={`rounded-lg border border-line bg-surface-2 p-3 shadow-sm transition-colors hover:border-line-strong ${
-        overlay ? "rotate-2 shadow-xl ring-2 ring-accent/40" : ""
+      className={`rounded-xl border bg-surface p-3 transition-all duration-150 ${
+        overlay
+          ? "rotate-2 scale-[1.04] shadow-2xl shadow-black/80 ring-2 ring-accent/80 border-accent/60 bg-surface/95 backdrop-blur-md cursor-grabbing z-50"
+          : "border-line hover:border-line-strong hover:bg-surface-2/60 shadow-sm"
       }`}
     >
       <div className="mb-1.5 flex items-center justify-between">

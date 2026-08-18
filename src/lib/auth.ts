@@ -29,6 +29,7 @@ export type SessionUser = {
   email: string;
   avatarColor: string;
   title: string | null;
+  role?: string;
 };
 
 export async function createSession(userId: string) {
@@ -63,10 +64,11 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     if (!payload.sub) return null;
     const user = await prisma.user.findUnique({
       where: { id: payload.sub },
-      select: { id: true, name: true, email: true, avatarColor: true, title: true },
+      select: { id: true, name: true, email: true, avatarColor: true, title: true, role: true },
     });
     return user;
-  } catch {
+  } catch (err) {
+    console.error("getSessionUser error:", err);
     return null;
   }
 }

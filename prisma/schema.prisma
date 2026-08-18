@@ -14,14 +14,32 @@ model User {
   passwordHash String
   avatarColor  String   @default("#6366f1")
   title        String?
+  role         String   @default("MEMBER") // ADMIN | MEMBER | VIEWER
   createdAt    DateTime @default(now())
 
-  ownedProjects Project[]       @relation("ProjectOwner")
-  memberships   ProjectMember[]
-  assignedTasks Task[]          @relation("TaskAssignee")
-  createdTasks  Task[]          @relation("TaskCreator")
-  comments      Comment[]
-  activities    Activity[]
+  ownedProjects          Project[]       @relation("ProjectOwner")
+  memberships            ProjectMember[]
+  assignedTasks          Task[]          @relation("TaskAssignee")
+  createdTasks           Task[]          @relation("TaskCreator")
+  comments               Comment[]
+  activities             Activity[]
+  receivedNotifications  Notification[]  @relation("UserNotifications")
+  triggeredNotifications Notification[]  @relation("ActorNotifications")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  actorId   String?
+  type      String   // ASSIGNED | STATUS_CHANGED | COMMENTED | DUE_SOON
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+
+  user  User  @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  actor User? @relation("ActorNotifications", fields: [actorId], references: [id], onDelete: SetNull)
 }
 
 model Project {
@@ -43,7 +61,7 @@ model ProjectMember {
   id        String @id @default(cuid())
   projectId String
   userId    String
-  role      String @default("MEMBER") // OWNER | ADMIN | MEMBER
+  role      String @default("MEMBER") // OWNER | ADMIN | MEMBER | VIEWER
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
