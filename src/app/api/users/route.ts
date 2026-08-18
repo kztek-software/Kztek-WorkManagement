@@ -9,7 +9,8 @@ const createUserSchema = z.object({
   password: z.string().min(6),
   title: z.string().max(100).optional().nullable(),
   avatarColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#6366f1"),
-  role: z.enum(["ADMIN", "MEMBER", "VIEWER"]).default("MEMBER"),
+  role: z.string().default("MEMBER"),
+  teamId: z.string().optional().nullable(),
 });
 
 export async function GET() {
@@ -26,6 +27,15 @@ export async function GET() {
       title: true,
       avatarColor: true,
       role: true,
+      teamId: true,
+      team: {
+        select: {
+          id: true,
+          name: true,
+          code: true,
+          color: true,
+        },
+      },
       createdAt: true,
       _count: {
         select: {
@@ -53,7 +63,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Thông tin người dùng không hợp lệ" }, { status: 400 });
   }
 
-  const { name, email, password, title, avatarColor, role } = parsed.data;
+  const { name, email, password, title, avatarColor, role, teamId } = parsed.data;
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
@@ -70,6 +80,7 @@ export async function POST(req: NextRequest) {
       title: title || null,
       avatarColor,
       role,
+      teamId: teamId || null,
     },
     select: {
       id: true,
@@ -78,6 +89,15 @@ export async function POST(req: NextRequest) {
       title: true,
       avatarColor: true,
       role: true,
+      teamId: true,
+      team: {
+        select: {
+          id: true,
+          name: true,
+          code: true,
+          color: true,
+        },
+      },
       createdAt: true,
     },
   });

@@ -9,7 +9,8 @@ const updateUserSchema = z.object({
   password: z.string().min(6).optional(),
   title: z.string().max(100).nullable().optional(),
   avatarColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
-  role: z.enum(["ADMIN", "MEMBER", "VIEWER"]).optional(),
+  role: z.string().optional(),
+  teamId: z.string().nullable().optional(),
 });
 
 export async function PATCH(
@@ -33,7 +34,7 @@ export async function PATCH(
     return NextResponse.json({ error: "Dữ liệu cập nhật không hợp lệ" }, { status: 400 });
   }
 
-  const { name, email, password, title, avatarColor, role } = parsed.data;
+  const { name, email, password, title, avatarColor, role, teamId } = parsed.data;
 
   if (email && email !== target.email) {
     const existing = await prisma.user.findUnique({ where: { email } });
@@ -49,6 +50,7 @@ export async function PATCH(
     title?: string | null;
     avatarColor?: string;
     role?: string;
+    teamId?: string | null;
   } = {};
 
   if (name) updateData.name = name;
@@ -57,6 +59,7 @@ export async function PATCH(
   if (title !== undefined) updateData.title = title;
   if (avatarColor) updateData.avatarColor = avatarColor;
   if (role) updateData.role = role;
+  if (teamId !== undefined) updateData.teamId = teamId;
 
   const updated = await prisma.user.update({
     where: { id: userId },
@@ -68,6 +71,15 @@ export async function PATCH(
       title: true,
       avatarColor: true,
       role: true,
+      teamId: true,
+      team: {
+        select: {
+          id: true,
+          name: true,
+          code: true,
+          color: true,
+        },
+      },
       createdAt: true,
     },
   });

@@ -52,6 +52,7 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   User: 'User',
+  Team: 'Team',
   RoleDefinition: 'RoleDefinition',
   Notification: 'Notification',
   Project: 'Project',
@@ -86,10 +87,25 @@ export const UserScalarFieldEnum = {
   avatarColor: 'avatarColor',
   title: 'title',
   role: 'role',
+  teamId: 'teamId',
   createdAt: 'createdAt'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const TeamScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  code: 'code',
+  description: 'description',
+  color: 'color',
+  leaderId: 'leaderId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TeamScalarFieldEnum = (typeof TeamScalarFieldEnum)[keyof typeof TeamScalarFieldEnum]
 
 
 export const RoleDefinitionScalarFieldEnum = {
