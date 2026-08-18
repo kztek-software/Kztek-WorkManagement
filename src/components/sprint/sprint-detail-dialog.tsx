@@ -889,163 +889,190 @@ export function SprintDetailDialog({
                 </div>
               </div>
 
-              {/* Task Items List */}
-              <div className="space-y-2">
-                {filteredSprintTasks.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center gap-2 py-12 rounded-2xl border border-dashed border-line bg-surface/30 text-center">
-                    <Layers className="h-8 w-8 text-muted" />
-                    <p className="text-xs font-bold text-foreground">
-                      {sprintTasks.length === 0
-                        ? "Sprint này chưa có công việc nào"
-                        : "Không tìm thấy công việc phù hợp bộ lọc"}
-                    </p>
-                    <p className="text-[11px] text-muted">
-                      {sprintTasks.length === 0
-                        ? "Thêm công việc từ Backlog hoặc tạo mới để bắt đầu lập kế hoạch thực hiện"
-                        : "Hãy thử đổi từ khóa tìm kiếm hoặc bỏ chọn bộ lọc"}
-                    </p>
-                    {sprintTasks.length === 0 && (
-                      <div className="flex gap-2 pt-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setAddBacklogOpen(true)}
-                          className="text-xs"
-                        >
-                          <Plus className="h-3.5 w-3.5 mr-1" /> Gán từ Backlog
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={() => setNewTaskOpen(true)}
-                          className="text-xs font-bold"
-                        >
-                          <Plus className="h-3.5 w-3.5 mr-1" /> Tạo công việc mới
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  filteredSprintTasks.map((t) => {
-                    const isDone = t.status === "DONE";
-                    const isOverdue =
-                      t.dueDate &&
-                      !isDone &&
-                      isBefore(new Date(t.dueDate), new Date(new Date().setHours(0, 0, 0, 0)));
+              {/* Task Items List Table */}
+              <div className="rounded-2xl border border-line bg-surface/50 overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                  <div className="min-w-[800px]">
+                    {/* Table Header */}
+                    <div className="grid grid-cols-[105px_1fr_120px_65px_85px_130px_130px_28px] items-center gap-3 px-4 py-2.5 text-[11px] font-bold text-muted uppercase tracking-wider border-b border-line bg-surface-2/60">
+                      <span className="flex items-center gap-1">Mã task</span>
+                      <span>Tiêu đề công việc</span>
+                      <span>Nhãn</span>
+                      <span className="text-center">Points</span>
+                      <span className="text-center">Hạn chót</span>
+                      <span>Phụ trách</span>
+                      <span>Trạng thái</span>
+                      <span></span>
+                    </div>
 
-                    return (
-                      <div
-                        key={t.id}
-                        onClick={() => onSelectTask(t.id)}
-                        className={`group flex items-center justify-between gap-3 rounded-xl border p-3 transition-all cursor-pointer ${
-                          isDone
-                            ? "bg-surface/50 border-line opacity-85 hover:opacity-100 hover:border-line-strong"
-                            : "bg-surface border-line hover:border-accent/60 hover:shadow-md hover:bg-surface-2/60"
-                        }`}
-                      >
-                        {/* Left Info */}
-                        <div className="flex items-center gap-3 min-w-0 flex-1">
-                          {/* Type Icon */}
-                          <div className="shrink-0 p-1.5 rounded-lg bg-surface-2 border border-line">
-                            <TypeIcon type={t.type} />
-                          </div>
-
-                          {/* Task Code */}
-                          <span className="font-mono text-xs font-bold text-accent shrink-0">
-                            #{projectKey}-{t.number}
-                          </span>
-
-                          {/* Priority */}
-                          <div className="shrink-0" title={`Độ ưu tiên: ${t.priority}`}>
-                            <PriorityIcon priority={t.priority} />
-                          </div>
-
-                          {/* Title */}
-                          <span
-                            className={`text-xs font-semibold text-foreground truncate min-w-0 flex-1 ${
-                              isDone ? "line-through text-muted" : ""
-                            }`}
+                    {/* Table Body */}
+                    <div className="divide-y divide-line">
+                  {filteredSprintTasks.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center gap-2 py-12 px-4 text-center">
+                      <Layers className="h-8 w-8 text-muted" />
+                      <p className="text-xs font-bold text-foreground">
+                        {sprintTasks.length === 0
+                          ? "Sprint này chưa có công việc nào"
+                          : "Không tìm thấy công việc phù hợp bộ lọc"}
+                      </p>
+                      <p className="text-[11px] text-muted">
+                        {sprintTasks.length === 0
+                          ? "Thêm công việc từ Backlog hoặc tạo mới để bắt đầu lập kế hoạch thực hiện"
+                          : "Hãy thử đổi từ khóa tìm kiếm hoặc bỏ chọn bộ lọc"}
+                      </p>
+                      {sprintTasks.length === 0 && (
+                        <div className="flex gap-2 pt-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setAddBacklogOpen(true)}
+                            className="text-xs"
                           >
-                            {t.title}
-                          </span>
+                            <Plus className="h-3.5 w-3.5 mr-1" /> Gán từ Backlog
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => setNewTaskOpen(true)}
+                            className="text-xs font-bold"
+                          >
+                            <Plus className="h-3.5 w-3.5 mr-1" /> Tạo công việc mới
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    filteredSprintTasks.map((t) => {
+                      const isDone = t.status === "DONE";
+                      const isOverdue =
+                        t.dueDate &&
+                        !isDone &&
+                        isBefore(new Date(t.dueDate), new Date(new Date().setHours(0, 0, 0, 0)));
 
-                          {/* Checklist indicator */}
-                          {t.subtasks && t.subtasks.length > 0 && (
-                            <span className="text-[10px] font-mono text-muted flex items-center gap-0.5 shrink-0 bg-surface-2 px-1.5 py-0.5 rounded border border-line">
-                              <CheckSquare className="h-3 w-3 text-accent" />
-                              {t.subtasks.filter((s) => s.done).length}/{t.subtasks.length}
+                      return (
+                        <div
+                          key={t.id}
+                          onClick={() => onSelectTask(t.id)}
+                          className={`group grid grid-cols-[105px_1fr_130px_70px_85px_135px_130px_28px] items-center gap-3 px-4 py-2.5 transition-all cursor-pointer ${
+                            isDone
+                              ? "bg-surface/30 opacity-80 hover:opacity-100 hover:bg-surface-2/40"
+                              : "bg-surface hover:bg-surface-2/70"
+                          }`}
+                        >
+                          {/* Col 1: Type + Task Code + Priority */}
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <div className="shrink-0 p-1 rounded bg-surface-2 border border-line">
+                              <TypeIcon type={t.type} />
+                            </div>
+                            <span className="font-mono text-xs font-bold text-accent shrink-0">
+                              #{projectKey}-{t.number}
                             </span>
-                          )}
+                            <div className="shrink-0 ml-0.5" title={`Độ ưu tiên: ${t.priority}`}>
+                              <PriorityIcon priority={t.priority} />
+                            </div>
+                          </div>
 
-                          {/* Labels */}
-                          {t.labels && t.labels.length > 0 && (
-                            <div className="hidden md:flex items-center gap-1 shrink-0">
-                              {t.labels.slice(0, 2).map((l) => (
+                          {/* Col 2: Title & Checklist */}
+                          <div className="flex items-center gap-2 min-w-0 pr-2">
+                            <span
+                              className={`text-xs font-semibold text-foreground truncate min-w-0 ${
+                                isDone ? "line-through text-muted" : "group-hover:text-accent transition-colors"
+                              }`}
+                              title={t.title}
+                            >
+                              {t.title}
+                            </span>
+
+                            {t.subtasks && t.subtasks.length > 0 && (
+                              <span className="text-[10px] font-mono text-muted flex items-center gap-0.5 shrink-0 bg-surface-2 px-1.5 py-0.5 rounded border border-line">
+                                <CheckSquare className="h-3 w-3 text-accent" />
+                                {t.subtasks.filter((s) => s.done).length}/{t.subtasks.length}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Col 3: Labels */}
+                          <div className="hidden sm:flex items-center gap-1 min-w-0 overflow-hidden">
+                            {t.labels && t.labels.length > 0 ? (
+                              t.labels.slice(0, 2).map((l) => (
                                 <span
                                   key={l.label.id}
-                                  className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                                  className="text-[10px] font-semibold px-2 py-0.5 rounded-full truncate max-w-[60px]"
                                   style={{
                                     backgroundColor: `${l.label.color}15`,
                                     color: l.label.color,
                                     border: `1px solid ${l.label.color}30`,
                                   }}
+                                  title={l.label.name}
                                 >
                                   {l.label.name}
                                 </span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
+                              ))
+                            ) : (
+                              <span className="text-[11px] text-muted/30">—</span>
+                            )}
+                          </div>
 
-                        {/* Right Meta & Actions */}
-                        <div className="flex items-center gap-3 shrink-0">
-                          {/* Story Points */}
-                          {t.storyPoints !== null && t.storyPoints !== undefined && (
-                            <span className="rounded-md bg-surface-2 border border-line px-2 py-0.5 text-[11px] font-mono font-bold text-foreground">
-                              {t.storyPoints} pts
-                            </span>
-                          )}
-
-                          {/* Due Date */}
-                          {t.dueDate && (
-                            <span
-                              className={`text-[11px] font-medium flex items-center gap-1 px-2 py-0.5 rounded-md ${
-                                isOverdue
-                                  ? "bg-red-500/15 text-red-400 border border-red-500/30"
-                                  : "text-muted bg-surface-2"
-                              }`}
-                            >
-                              <Calendar className="h-3 w-3" />
-                              {format(new Date(t.dueDate), "dd/MM")}
-                            </span>
-                          )}
-
-                          {/* Assignee Avatar */}
-                          {t.assignee ? (
-                            <div className="flex items-center gap-1.5" title={`Phụ trách: ${t.assignee.name}`}>
-                              <Avatar className="h-6 w-6 border border-white/10">
-                                <AvatarFallback
-                                  color={t.assignee.avatarColor}
-                                  className="text-[9px] font-bold"
-                                >
-                                  {initials(t.assignee.name)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="text-xs text-muted font-medium hidden lg:inline max-w-[80px] truncate">
-                                {t.assignee.name}
+                          {/* Col 4: Story Points */}
+                          <div className="flex items-center justify-center">
+                            {t.storyPoints !== null && t.storyPoints !== undefined ? (
+                              <span className="rounded-md bg-surface-2 border border-line px-2 py-0.5 text-[11px] font-mono font-bold text-foreground">
+                                {t.storyPoints} pts
                               </span>
-                            </div>
-                          ) : (
-                            <span className="text-[11px] text-muted/60 italic hidden lg:inline">
-                              Chưa giao
-                            </span>
-                          )}
+                            ) : (
+                              <span className="text-[11px] text-muted/40 font-mono">—</span>
+                            )}
+                          </div>
 
-                          {/* Status Badge & Fast Change Dropdown */}
-                          <div onClick={(e) => e.stopPropagation()}>
+                          {/* Col 5: Due Date */}
+                          <div className="flex items-center justify-center">
+                            {t.dueDate ? (
+                              <span
+                                className={`text-[11px] font-medium flex items-center gap-1 px-2 py-0.5 rounded-md ${
+                                  isOverdue
+                                    ? "bg-red-500/15 text-red-400 border border-red-500/30"
+                                    : "text-muted bg-surface-2 border border-line/60"
+                                }`}
+                              >
+                                <Calendar className="h-3 w-3 shrink-0" />
+                                {format(new Date(t.dueDate), "dd/MM")}
+                              </span>
+                            ) : (
+                              <span className="text-[11px] text-muted/40">—</span>
+                            )}
+                          </div>
+
+                          {/* Col 6: Assignee */}
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            {t.assignee ? (
+                              <>
+                                <Avatar className="h-5 w-5 shrink-0 border border-white/10">
+                                  <AvatarFallback
+                                    color={t.assignee.avatarColor}
+                                    className="text-[8px] font-bold"
+                                  >
+                                    {initials(t.assignee.name)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span
+                                  className="text-xs text-muted font-medium truncate max-w-[100px]"
+                                  title={t.assignee.name}
+                                >
+                                  {t.assignee.name}
+                                </span>
+                              </>
+                            ) : (
+                              <span className="text-[11px] text-muted/50 italic">
+                                Chưa giao
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Col 7: Status Dropdown */}
+                          <div onClick={(e) => e.stopPropagation()} className="w-full">
                             <select
                               value={t.status}
                               onChange={(e) => handleQuickStatusChange(t.id, e.target.value, e as any)}
-                              className="h-7 text-[11px] font-bold rounded-lg border border-line bg-surface-2 px-2 text-foreground focus:outline-none cursor-pointer hover:border-accent"
+                              className="w-full h-7 text-[11px] font-bold rounded-lg border border-line bg-surface-2 px-2 text-foreground focus:outline-none cursor-pointer hover:border-accent"
                             >
                               {STATUSES.map((s) => (
                                 <option key={s.id} value={s.id}>
@@ -1055,22 +1082,25 @@ export function SprintDetailDialog({
                             </select>
                           </div>
 
-                          {/* Remove from Sprint Button */}
-                          <button
-                            onClick={(e) => handleRemoveTaskFromSprint(t.id, e)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-muted hover:text-red-400 p-1 rounded hover:bg-surface-2 cursor-pointer"
-                            title="Gỡ khỏi Sprint (chuyển về Backlog)"
-                          >
-                            <X className="h-3.5 w-3.5" />
-                          </button>
+                          {/* Col 8: Action Remove */}
+                          <div className="flex items-center justify-end">
+                            <button
+                              onClick={(e) => handleRemoveTaskFromSprint(t.id, e)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-muted hover:text-red-400 p-1 rounded hover:bg-surface-2 cursor-pointer"
+                              title="Gỡ khỏi Sprint (chuyển về Backlog)"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })
-                )}
+                      );
+                    })
+                  )}
+                </div>
               </div>
             </div>
           </div>
+        </div>
 
           {/* Footer */}
           <div className="flex items-center justify-between border-t border-line bg-surface-2/60 px-6 py-3 text-xs text-muted">

@@ -212,7 +212,7 @@ export function NotificationBell({
           <div
             className={`absolute right-0 ${
               placement === "bottom" ? "top-[calc(100%+8px)]" : "bottom-full mb-2"
-            } w-84 sm:w-[420px] rounded-2xl border border-line bg-surface-2 p-0 shadow-2xl z-50 animate-fade-in-up overflow-hidden ring-1 ring-black/50`}
+            } w-[92vw] sm:w-[500px] rounded-2xl border border-line bg-surface-2 p-0 shadow-2xl z-50 animate-fade-in-up overflow-hidden ring-1 ring-black/50`}
           >
             {/* Header */}
             <div className="border-b border-line p-3 bg-surface/90">
@@ -252,11 +252,11 @@ export function NotificationBell({
               </div>
 
               {/* Category Tabs */}
-              <div className="flex items-center gap-1 pt-2.5 mt-1 overflow-x-auto no-scrollbar border-t border-line/60">
+              <div className="flex items-center justify-between gap-1 pt-2.5 mt-1 border-t border-line/60">
                 <button
                   type="button"
                   onClick={() => setActiveTab("ALL")}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all shrink-0 cursor-pointer ${
+                  className={`flex-1 px-2 py-1 rounded-lg text-[11px] font-bold transition-all text-center justify-center cursor-pointer ${
                     activeTab === "ALL"
                       ? "bg-accent text-white shadow-sm shadow-accent/20"
                       : "text-muted hover:text-foreground hover:bg-surface"
@@ -268,14 +268,14 @@ export function NotificationBell({
                 <button
                   type="button"
                   onClick={() => setActiveTab("ASSIGNED")}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1 ${
+                  className={`flex-1 px-1.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1 ${
                     activeTab === "ASSIGNED"
                       ? "bg-emerald-600 text-white shadow-sm"
                       : "text-muted hover:text-foreground hover:bg-surface"
                   }`}
                 >
-                  <ClipboardList className="h-3 w-3" />
-                  Việc giao
+                  <ClipboardList className="h-3 w-3 shrink-0" />
+                  <span className="truncate">Việc giao</span>
                   {assignedCount > 0 && (
                     <span className="ml-0.5 rounded-full bg-emerald-400/30 px-1 text-[9px]">
                       {assignedCount}
@@ -286,14 +286,14 @@ export function NotificationBell({
                 <button
                   type="button"
                   onClick={() => setActiveTab("MENTIONED")}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1 ${
+                  className={`flex-1 px-1.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1 ${
                     activeTab === "MENTIONED"
                       ? "bg-amber-600 text-white shadow-sm"
                       : "text-muted hover:text-foreground hover:bg-surface"
                   }`}
                 >
-                  <AtSign className="h-3 w-3" />
-                  Gắn thẻ
+                  <AtSign className="h-3 w-3 shrink-0" />
+                  <span className="truncate">Gắn thẻ</span>
                   {mentionCount > 0 && (
                     <span className="ml-0.5 rounded-full bg-amber-400/30 px-1 text-[9px]">
                       {mentionCount}
@@ -304,14 +304,14 @@ export function NotificationBell({
                 <button
                   type="button"
                   onClick={() => setActiveTab("COMMENTED")}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1 ${
+                  className={`flex-1 px-1.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1 ${
                     activeTab === "COMMENTED"
                       ? "bg-blue-600 text-white shadow-sm"
                       : "text-muted hover:text-foreground hover:bg-surface"
                   }`}
                 >
-                  <MessageSquare className="h-3 w-3" />
-                  Bình luận
+                  <MessageSquare className="h-3 w-3 shrink-0" />
+                  <span className="truncate">Bình luận</span>
                   {commentCount > 0 && (
                     <span className="ml-0.5 rounded-full bg-blue-400/30 px-1 text-[9px]">
                       {commentCount}
@@ -322,14 +322,14 @@ export function NotificationBell({
                 <button
                   type="button"
                   onClick={() => setActiveTab("STATUS_CHANGED")}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1 ${
+                  className={`flex-1 px-1.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1 ${
                     activeTab === "STATUS_CHANGED"
                       ? "bg-purple-600 text-white shadow-sm"
                       : "text-muted hover:text-foreground hover:bg-surface"
                   }`}
                 >
-                  <ArrowRightLeft className="h-3 w-3" />
-                  Trạng thái
+                  <ArrowRightLeft className="h-3 w-3 shrink-0" />
+                  <span className="truncate">Trạng thái</span>
                   {statusCount > 0 && (
                     <span className="ml-0.5 rounded-full bg-purple-400/30 px-1 text-[9px]">
                       {statusCount}
