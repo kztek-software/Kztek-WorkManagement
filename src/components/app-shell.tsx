@@ -445,8 +445,24 @@ export function AppShell({
                 )}
               </div>
 
-              {/* Quick Action: Create New Project */}
-              <div className="border-t border-line/60 pt-1.5 mt-1">
+              {/* Quick Actions: All Projects & Create New Project */}
+              <div className="border-t border-line/60 pt-1.5 mt-1 space-y-1">
+                {user.role === "ADMIN" && (
+                  <Link
+                    href={`/projects/${project.id}/all-projects`}
+                    onClick={() => setProjectMenuOpen(false)}
+                    className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-xs font-bold text-foreground hover:bg-surface-2 hover:text-accent transition-all cursor-pointer border border-line/60 bg-surface/50"
+                  >
+                    <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-accent/15 text-accent">
+                      <FolderKanban className="h-3.5 w-3.5" />
+                    </div>
+                    <span>Quản lý tất cả dự án</span>
+                    <span className="ml-auto text-[9px] font-bold text-accent bg-accent/15 px-1.5 py-0.2 rounded">
+                      ADMIN
+                    </span>
+                  </Link>
+                )}
+
                 <button
                   type="button"
                   onClick={() => {

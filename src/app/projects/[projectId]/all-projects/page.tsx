@@ -40,6 +40,7 @@ import { Dialog } from "primereact/dialog";
 import { Toast } from "primereact/toast";
 import { PROJECT_STATUSES, projectStatusMeta } from "@/lib/constants";
 import { MemberDialog } from "@/components/project/member-dialog";
+import { Tooltip } from "@/components/ui/tooltip";
 
 type AdminProjectItem = {
   id: string;
@@ -442,14 +443,16 @@ export default function AllProjectsManagementPage() {
         </div>
 
         <div className="flex items-center gap-2.5 shrink-0">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={loadProjectsData}
-            className="h-8.5 text-xs font-semibold border-line bg-surface hover:bg-surface-2"
-          >
-            <RefreshCw className="h-3.5 w-3.5 mr-1 text-muted" /> Làm mới
-          </Button>
+          <Tooltip content="Làm mới và tải lại danh sách dự án" side="bottom">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={loadProjectsData}
+              className="h-8.5 text-xs font-semibold border-line bg-surface hover:bg-surface-2"
+            >
+              <RefreshCw className="h-3.5 w-3.5 mr-1 text-muted" /> Làm mới
+            </Button>
+          </Tooltip>
         </div>
       </div>
 
@@ -538,12 +541,14 @@ export default function AllProjectsManagementPage() {
                 className="w-full h-9 rounded-xl border border-line bg-surface-2 pl-9 pr-3 text-xs text-foreground placeholder:text-muted/60 focus:outline-none focus:border-accent"
               />
               {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-foreground cursor-pointer"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
+                <Tooltip content="Xóa từ khóa tìm kiếm" side="left">
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-foreground cursor-pointer"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </Tooltip>
               )}
             </div>
 
@@ -789,61 +794,66 @@ export default function AllProjectsManagementPage() {
                       <td className="px-5 py-4 text-right">
                         <div className="flex items-center justify-end gap-1">
                           {/* Dashboard Link */}
-                          <Link href={`/projects/${p.id}/dashboard`}>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-7.5 w-7.5 p-0 text-muted hover:text-accent hover:bg-accent/15 cursor-pointer"
-                              title="Mở Dashboard Dự Án"
-                            >
-                              <LayoutDashboard className="h-3.5 w-3.5" />
-                            </Button>
-                          </Link>
+                          <Tooltip content="Mở Dashboard phân tích & chỉ số" side="top">
+                            <Link href={`/projects/${p.id}/dashboard`}>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7.5 w-7.5 p-0 text-muted hover:text-accent hover:bg-accent/15 cursor-pointer"
+                              >
+                                <LayoutDashboard className="h-3.5 w-3.5" />
+                              </Button>
+                            </Link>
+                          </Tooltip>
 
                           {/* Board Link */}
-                          <Link href={`/projects/${p.id}/board`}>
+                          <Tooltip content="Mở bảng công việc (Board Kanban)" side="top">
+                            <Link href={`/projects/${p.id}/board`}>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7.5 w-7.5 p-0 text-muted hover:text-accent hover:bg-accent/15 cursor-pointer"
+                              >
+                                <KanbanSquare className="h-3.5 w-3.5" />
+                              </Button>
+                            </Link>
+                          </Tooltip>
+
+                          {/* Manage Members Modal Button */}
+                          <Tooltip content="Quản lý thành viên & phân quyền" side="top">
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="h-7.5 w-7.5 p-0 text-muted hover:text-accent hover:bg-accent/15 cursor-pointer"
-                              title="Mở Board Công Việc"
+                              onClick={() => setMemberDialogProjectId(p.id)}
+                              className="h-7.5 w-7.5 p-0 text-muted hover:text-emerald-400 hover:bg-emerald-950/20 cursor-pointer"
                             >
-                              <KanbanSquare className="h-3.5 w-3.5" />
+                              <Users className="h-3.5 w-3.5" />
                             </Button>
-                          </Link>
-
-                          {/* Manage Members Modal Button */}
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setMemberDialogProjectId(p.id)}
-                            className="h-7.5 w-7.5 p-0 text-muted hover:text-emerald-400 hover:bg-emerald-950/20 cursor-pointer"
-                            title="Quản lý thành viên & phân quyền"
-                          >
-                            <Users className="h-3.5 w-3.5" />
-                          </Button>
+                          </Tooltip>
 
                           {/* Edit Project Button */}
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => openEditModal(p)}
-                            className="h-7.5 w-7.5 p-0 text-muted hover:text-blue-400 hover:bg-blue-950/20 cursor-pointer"
-                            title="Chỉnh sửa thông tin & chuyển chủ dự án"
-                          >
-                            <Edit2 className="h-3.5 w-3.5" />
-                          </Button>
+                          <Tooltip content="Chỉnh sửa thông tin & chuyển giao chủ dự án" side="top">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => openEditModal(p)}
+                              className="h-7.5 w-7.5 p-0 text-muted hover:text-blue-400 hover:bg-blue-950/20 cursor-pointer"
+                            >
+                              <Edit2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </Tooltip>
 
                           {/* Delete Project Button */}
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => openDeleteModal(p)}
-                            className="h-7.5 w-7.5 p-0 text-muted hover:text-red-400 hover:bg-red-950/20 cursor-pointer"
-                            title="Xóa dự án khỏi hệ thống"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
+                          <Tooltip content="Xóa dự án khỏi hệ thống" side="top">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => openDeleteModal(p)}
+                              className="h-7.5 w-7.5 p-0 text-muted hover:text-red-400 hover:bg-red-950/20 cursor-pointer"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </Tooltip>
                         </div>
                       </td>
                     </tr>

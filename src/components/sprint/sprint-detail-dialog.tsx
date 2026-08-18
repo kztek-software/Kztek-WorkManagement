@@ -1101,8 +1101,9 @@ export function SprintDetailDialog({
             </div>
           </div>
         </div>
+      </div>
 
-          {/* Footer */}
+      {/* Footer */}
           <div className="flex items-center justify-between border-t border-line bg-surface-2/60 px-6 py-3 text-xs text-muted">
             <div className="flex items-center gap-2">
               <span className="font-semibold text-foreground">
