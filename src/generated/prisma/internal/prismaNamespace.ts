@@ -398,6 +398,7 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 export const ModelName = {
   User: 'User',
+  RoleDefinition: 'RoleDefinition',
   Notification: 'Notification',
   Project: 'Project',
   ProjectMember: 'ProjectMember',
@@ -423,7 +424,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "notification" | "project" | "projectMember" | "sprint" | "task" | "label" | "taskLabel" | "subtask" | "comment" | "activity"
+    modelProps: "user" | "roleDefinition" | "notification" | "project" | "projectMember" | "sprint" | "task" | "label" | "taskLabel" | "subtask" | "comment" | "activity"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -498,6 +499,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.UserCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.UserCountAggregateOutputType> | number
+        }
+      }
+    }
+    RoleDefinition: {
+      payload: Prisma.$RoleDefinitionPayload<ExtArgs>
+      fields: Prisma.RoleDefinitionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.RoleDefinitionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RoleDefinitionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.RoleDefinitionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RoleDefinitionPayload>
+        }
+        findFirst: {
+          args: Prisma.RoleDefinitionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RoleDefinitionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.RoleDefinitionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RoleDefinitionPayload>
+        }
+        findMany: {
+          args: Prisma.RoleDefinitionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RoleDefinitionPayload>[]
+        }
+        create: {
+          args: Prisma.RoleDefinitionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RoleDefinitionPayload>
+        }
+        createMany: {
+          args: Prisma.RoleDefinitionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.RoleDefinitionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RoleDefinitionPayload>[]
+        }
+        delete: {
+          args: Prisma.RoleDefinitionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RoleDefinitionPayload>
+        }
+        update: {
+          args: Prisma.RoleDefinitionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RoleDefinitionPayload>
+        }
+        deleteMany: {
+          args: Prisma.RoleDefinitionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.RoleDefinitionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.RoleDefinitionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RoleDefinitionPayload>[]
+        }
+        upsert: {
+          args: Prisma.RoleDefinitionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RoleDefinitionPayload>
+        }
+        aggregate: {
+          args: Prisma.RoleDefinitionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateRoleDefinition>
+        }
+        groupBy: {
+          args: Prisma.RoleDefinitionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RoleDefinitionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.RoleDefinitionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RoleDefinitionCountAggregateOutputType> | number
         }
       }
     }
@@ -1291,6 +1366,21 @@ export const UserScalarFieldEnum = {
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
+export const RoleDefinitionScalarFieldEnum = {
+  id: 'id',
+  key: 'key',
+  name: 'name',
+  description: 'description',
+  color: 'color',
+  isSystem: 'isSystem',
+  permissions: 'permissions',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type RoleDefinitionScalarFieldEnum = (typeof RoleDefinitionScalarFieldEnum)[keyof typeof RoleDefinitionScalarFieldEnum]
+
+
 export const NotificationScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -1624,6 +1714,7 @@ export interface PrismaClientOptionsWithAdapter extends PrismaClientBaseOptions 
 export type PrismaClientOptions = PrismaClientOptionsWithAccelerateUrl | PrismaClientOptionsWithAdapter
 export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
+  roleDefinition?: Prisma.RoleDefinitionOmit
   notification?: Prisma.NotificationOmit
   project?: Prisma.ProjectOmit
   projectMember?: Prisma.ProjectMemberOmit

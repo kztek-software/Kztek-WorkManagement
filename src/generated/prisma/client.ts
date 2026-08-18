@@ -47,6 +47,11 @@ export { Prisma }
  */
 export type User = Prisma.UserModel
 /**
+ * Model RoleDefinition
+ * 
+ */
+export type RoleDefinition = Prisma.RoleDefinitionModel
+/**
  * Model Notification
  * 
  */

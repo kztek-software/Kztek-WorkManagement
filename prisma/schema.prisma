@@ -27,6 +27,18 @@ model User {
   triggeredNotifications Notification[]  @relation("ActorNotifications")
 }
 
+model RoleDefinition {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  name        String
+  description String?
+  color       String   @default("#6366f1")
+  isSystem    Boolean  @default(false)
+  permissions String   // JSON Array string
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 model Notification {
   id        String   @id @default(cuid())
   userId    String

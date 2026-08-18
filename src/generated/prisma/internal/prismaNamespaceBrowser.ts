@@ -52,6 +52,7 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   User: 'User',
+  RoleDefinition: 'RoleDefinition',
   Notification: 'Notification',
   Project: 'Project',
   ProjectMember: 'ProjectMember',
@@ -89,6 +90,21 @@ export const UserScalarFieldEnum = {
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const RoleDefinitionScalarFieldEnum = {
+  id: 'id',
+  key: 'key',
+  name: 'name',
+  description: 'description',
+  color: 'color',
+  isSystem: 'isSystem',
+  permissions: 'permissions',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type RoleDefinitionScalarFieldEnum = (typeof RoleDefinitionScalarFieldEnum)[keyof typeof RoleDefinitionScalarFieldEnum]
 
 
 export const NotificationScalarFieldEnum = {
