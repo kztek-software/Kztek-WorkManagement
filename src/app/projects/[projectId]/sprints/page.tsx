@@ -16,8 +16,11 @@ import {
   Check,
   AlertCircle,
   Loader2,
+  ExternalLink,
+  Flame,
+  ArrowRight,
 } from "lucide-react";
-import type { SprintDto, TaskDto } from "@/lib/types";
+import type { SprintDto, TaskDto, MemberDto, LabelDto } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +32,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { SprintDetailDialog } from "@/components/sprint/sprint-detail-dialog";
+import { TaskDialog } from "@/components/board/task-dialog";
 
 export default function SprintsPage() {
   const params = useParams<{ projectId: string }>();
@@ -36,8 +41,19 @@ export default function SprintsPage() {
 
   const [sprints, setSprints] = useState<SprintDto[]>([]);
   const [tasks, setTasks] = useState<TaskDto[]>([]);
+  const [labels, setLabels] = useState<LabelDto[]>([]);
+  const [members, setMembers] = useState<MemberDto[]>([]);
   const [projectName, setProjectName] = useState("");
+  const [projectKey, setProjectKey] = useState("TASK");
   const [loading, setLoading] = useState(true);
+
+  // Selected Sprint for Detail Inspector
+  const [selectedSprintId, setSelectedSprintId] = useState<string | null>(null);
+
+  // Task Dialog for direct inspection
+  const [openTaskId, setOpenTaskId] = useState<string | null>(null);
+
+  // Create Sprint Dialog
   const [createOpen, setCreateOpen] = useState(false);
   const [name, setName] = useState("");
   const [goal, setGoal] = useState("");
@@ -53,7 +69,10 @@ export default function SprintsPage() {
         const data = await res.json();
         setSprints(data.sprints || []);
         setTasks(data.tasks || []);
+        setLabels(data.labels || []);
+        setMembers(data.members || []);
         setProjectName(data.project?.name || "Dự án");
+        setProjectKey(data.project?.key || "TASK");
       }
     } finally {
       setLoading(false);
@@ -91,7 +110,10 @@ export default function SprintsPage() {
       setGoal("");
       setStartDate("");
       setEndDate("");
-      load();
+      await load();
+      if (data.sprint?.id) {
+        setSelectedSprintId(data.sprint.id);
+      }
     } catch {
       setError("Lỗi kết nối máy chủ");
     } finally {
@@ -99,7 +121,8 @@ export default function SprintsPage() {
     }
   }
 
-  async function updateSprintStatus(sprintId: string, status: string) {
+  async function updateSprintStatus(sprintId: string, status: string, e?: React.MouseEvent) {
+    if (e) e.stopPropagation();
     try {
       await fetch(`/api/projects/${projectId}/sprints/${sprintId}`, {
         method: "PATCH",
@@ -121,6 +144,8 @@ export default function SprintsPage() {
     const doneCount = sprintTasks.filter((t) => t.status === "DONE").length;
     return { count: sprintTasks.length, doneCount, total, done };
   }
+
+  const selectedSprint = sprints.find((s) => s.id === selectedSprintId);
 
   if (loading) {
     return (
@@ -167,7 +192,7 @@ export default function SprintsPage() {
               <p className="text-sm font-bold text-foreground">Chưa có sprint nào trong dự án</p>
               <p className="text-xs text-muted mt-0.5">Tạo sprint mới để phân bổ công việc theo chu kỳ 1-2 tuần</p>
             </div>
-            <Button size="sm" onClick={() => setCreateOpen(true)} className="mt-2 text-xs">
+            <Button size="sm" onClick={() => setCreateOpen(true)} className="mt-2 text-xs font-bold">
               <Plus className="h-3.5 w-3.5 mr-1" /> Tạo sprint đầu tiên
             </Button>
           </div>
@@ -180,12 +205,15 @@ export default function SprintsPage() {
             return (
               <div
                 key={sprint.id}
-                className="rounded-2xl border border-line bg-surface p-5 shadow-sm hover:border-line-strong transition-all space-y-4"
+                onClick={() => setSelectedSprintId(sprint.id)}
+                className="group relative rounded-2xl border border-line bg-surface p-5 shadow-sm hover:border-accent/60 hover:shadow-lg hover:bg-surface-2/40 transition-all space-y-4 cursor-pointer"
               >
                 <div className="flex items-start justify-between gap-4">
-                  <div className="space-y-1.5 min-w-0">
+                  <div className="space-y-1.5 min-w-0 flex-1">
                     <div className="flex items-center gap-2.5 flex-wrap">
-                      <h3 className="text-base font-bold text-foreground">{sprint.name}</h3>
+                      <h3 className="text-base font-bold text-foreground group-hover:text-accent transition-colors flex items-center gap-1.5">
+                        <span>{sprint.name}</span>
+                      </h3>
 
                       {sprint.status === "ACTIVE" && (
                         <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 text-[11px] font-bold text-emerald-400">
@@ -234,11 +262,23 @@ export default function SprintsPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
+                    {/* View Details Button */}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setSelectedSprintId(sprint.id)}
+                      className="h-8 text-xs font-bold border-line bg-surface hover:bg-surface-2 text-foreground group-hover:border-accent group-hover:text-accent"
+                    >
+                      <Layers className="h-3.5 w-3.5 mr-1" />
+                      Chi tiết Sprint
+                      <ArrowRight className="h-3 w-3 ml-1 opacity-60 group-hover:translate-x-0.5 transition-transform" />
+                    </Button>
+
                     {sprint.status === "PLANNING" && (
                       <Button
                         size="sm"
-                        onClick={() => updateSprintStatus(sprint.id, "ACTIVE")}
+                        onClick={(e) => updateSprintStatus(sprint.id, "ACTIVE", e)}
                         className="h-8 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-900/40"
                       >
                         <Play className="h-3.5 w-3.5 mr-1" /> Kích hoạt Sprint
@@ -248,7 +288,7 @@ export default function SprintsPage() {
                     {sprint.status === "ACTIVE" && (
                       <Button
                         size="sm"
-                        onClick={() => updateSprintStatus(sprint.id, "COMPLETED")}
+                        onClick={(e) => updateSprintStatus(sprint.id, "COMPLETED", e)}
                         className="h-8 text-xs font-semibold bg-accent hover:bg-accent/90 text-white shadow-md shadow-accent/25"
                       >
                         <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Đóng Sprint
@@ -281,6 +321,38 @@ export default function SprintsPage() {
           })
         )}
       </div>
+
+      {/* SPRINT DETAIL DIALOG */}
+      {selectedSprint && (
+        <SprintDetailDialog
+          projectId={projectId}
+          projectName={projectName}
+          projectKey={projectKey}
+          sprint={selectedSprint}
+          tasks={tasks}
+          members={members}
+          labels={labels}
+          sprints={sprints}
+          open={!!selectedSprintId}
+          onOpenChange={(open) => !open && setSelectedSprintId(null)}
+          onChanged={load}
+          onSelectTask={(taskId) => setOpenTaskId(taskId)}
+        />
+      )}
+
+      {/* TASK DETAIL DIALOG */}
+      {openTaskId && (
+        <TaskDialog
+          projectId={projectId}
+          taskId={openTaskId}
+          tasks={tasks}
+          members={members}
+          labels={labels}
+          sprints={sprints}
+          onClose={() => setOpenTaskId(null)}
+          onChanged={load}
+        />
+      )}
 
       {/* CREATE SPRINT MODAL */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>

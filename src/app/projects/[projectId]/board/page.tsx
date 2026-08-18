@@ -74,6 +74,7 @@ export default function BoardPage() {
 
   const searchParams = useSearchParams();
   const urlTaskId = searchParams.get("taskId");
+  const urlSprintId = searchParams.get("sprintId");
 
   const [data, setData] = useState<BoardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -81,6 +82,7 @@ export default function BoardPage() {
 
   // Filters State
   const [search, setSearch] = useState("");
+  const [sprintFilter, setSprintFilter] = useState<string>(urlSprintId || "ALL");
   const [assigneeFilter, setAssigneeFilter] = useState<string>("ALL");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [priorityFilter, setPriorityFilter] = useState<string>("ALL");
@@ -107,6 +109,12 @@ export default function BoardPage() {
       setOpenTaskId(urlTaskId);
     }
   }, [urlTaskId]);
+
+  useEffect(() => {
+    if (urlSprintId) {
+      setSprintFilter(urlSprintId);
+    }
+  }, [urlSprintId]);
 
   const loadBoard = useCallback(async () => {
     try {
@@ -213,6 +221,11 @@ export default function BoardPage() {
         if (!matchKey && !matchTitle && !matchDesc) return false;
       }
 
+      if (sprintFilter !== "ALL") {
+        if (sprintFilter === "NONE" && t.sprintId) return false;
+        if (sprintFilter !== "NONE" && t.sprintId !== sprintFilter) return false;
+      }
+
       if (statusFilter !== "ALL" && t.status !== statusFilter) return false;
 
       if (assigneeFilter !== "ALL") {
@@ -272,11 +285,12 @@ export default function BoardPage() {
     }
 
     return map;
-  }, [data, search, statusFilter, assigneeFilter, priorityFilter, timeFilter, typeFilter, sortBy, sortOrder]);
+  }, [data, search, sprintFilter, statusFilter, assigneeFilter, priorityFilter, timeFilter, typeFilter, sortBy, sortOrder]);
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (search.trim()) count++;
+    if (sprintFilter !== "ALL") count++;
     if (statusFilter !== "ALL") count++;
     if (assigneeFilter !== "ALL") count++;
     if (priorityFilter !== "ALL") count++;
@@ -284,10 +298,11 @@ export default function BoardPage() {
     if (typeFilter !== "ALL") count++;
     if (sortBy !== "MANUAL") count++;
     return count;
-  }, [search, statusFilter, assigneeFilter, priorityFilter, timeFilter, typeFilter, sortBy]);
+  }, [search, sprintFilter, statusFilter, assigneeFilter, priorityFilter, timeFilter, typeFilter, sortBy]);
 
   function resetFilters() {
     setSearch("");
+    setSprintFilter("ALL");
     setStatusFilter("ALL");
     setAssigneeFilter("ALL");
     setPriorityFilter("ALL");
@@ -537,6 +552,21 @@ export default function BoardPage() {
               className="h-8 w-56 pl-8 text-xs bg-surface border-line focus:border-accent"
             />
           </div>
+
+          {/* Sprint Filter */}
+          <select
+            value={sprintFilter}
+            onChange={(e) => setSprintFilter(e.target.value)}
+            className="h-8 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none cursor-pointer hover:border-line-strong transition-colors"
+          >
+            <option value="ALL">🚀 Tất cả Sprint</option>
+            <option value="NONE">Chưa gán Sprint (Backlog)</option>
+            {data.sprints.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name} ({s.status === "ACTIVE" ? "Đang chạy" : s.status === "COMPLETED" ? "Đã xong" : "Kế hoạch"})
+              </option>
+            ))}
+          </select>
 
           {/* Assignee Filter */}
           <select

@@ -57,6 +57,7 @@ Workspace điều phối AI agents cho KZTEK — Multi-Agent Orchestration Frame
 
 | Module | Path | Mục đích | Files quan trọng |
 |--------|------|----------|-----------------|
+| Sprint Detail Hub & Management | `src/components/sprint/sprint-detail-dialog.tsx`, `src/app/projects/[projectId]/sprints/page.tsx`, `src/app/api/projects/[projectId]/sprints/[sprintId]/` | Trung tâm Chi tiết Sprint, xem Story Points Burn, danh sách việc trong sprint, đổi trạng thái, gán từ backlog, xoá và điều hướng sang Board | `src/components/sprint/sprint-detail-dialog.tsx`, `src/app/projects/[projectId]/sprints/page.tsx`, `src/app/api/projects/[projectId]/sprints/[sprintId]/route.ts` |
 | Comment & Tag Mentions | `src/components/board/mention-comment-input.tsx`, `src/app/api/projects/[projectId]/tasks/[taskId]/comments/` | Bình luận có gắn thẻ (@mention), gợi ý autocomplete thành viên, highlight badge và gửi email tự động | `src/components/board/mention-comment-input.tsx`, `src/app/api/projects/[projectId]/tasks/[taskId]/comments/route.ts` |
 | Attachment & Bug Media Gallery | `src/components/board/task-attachment-gallery.tsx`, `src/app/api/upload/`, `src/app/api/projects/[projectId]/tasks/[taskId]/attachments/` | Kéo thả upload ảnh chụp màn hình, video quay lỗi (MP4/WebM), tệp logs/tài liệu và xem trước đa phương tiện | `src/components/board/task-attachment-gallery.tsx`, `src/app/api/upload/route.ts`, `src/app/api/projects/[projectId]/tasks/[taskId]/attachments/route.ts` |
 | Notification Center & Mail Service | `src/components/notifications/notification-bell.tsx`, `src/lib/mail.ts`, `src/lib/notifications.ts` | Trung tâm thông báo đa năng với Tabs phân loại (Giao việc, Tag @, Bình luận, Trạng thái), Deep-linking mở task và gửi HTML Email tự động | `src/components/notifications/notification-bell.tsx`, `src/lib/mail.ts`, `src/lib/notifications.ts`, `src/app/api/notifications/email-logs/route.ts` |
@@ -171,6 +172,7 @@ Workspace điều phối AI agents cho KZTEK — Multi-Agent Orchestration Frame
 
 | Ngày | File/Module | Loại | Mô tả ngắn | Agent |
 |------|------------|------|------------|-------|
+| 2026-08-18 | `sprint-detail-dialog.tsx`, `src/app/projects/[projectId]/sprints/page.tsx`, `sprints/[sprintId]/route.ts` | Add | Xây dựng Trung tâm Xem Chi Tiết Sprint, Thống kê Story Points, Danh sách việc, Đổi trạng thái, Gán việc từ Backlog | senior-developer |
 | 2026-08-18 | `mention-comment-input.tsx`, `task-attachment-gallery.tsx`, `notification-bell.tsx`, `mail.ts` | Add | Bổ sung Comment gắn thẻ (@mention), Gửi Email khi được tag, Upload ảnh/video lỗi cạnh mô tả & Notification Center | senior-developer |
 | 2026-08-18 | `src/app/projects/[projectId]/settings/`, `system-config.ts` | Add | Xây dựng Trung tâm Cấu hình Hệ thống (Admin Config) & Chuyển thông tin tài khoản lên góc trên phải | senior-developer |
 | 2026-08-18 | `src/lib/mail.ts`, `notifications.ts`, `email-log-modal.tsx` | Add | Xây dựng Notify & Email Service, Branded HTML templates, Email Logs Modal | senior-developer |

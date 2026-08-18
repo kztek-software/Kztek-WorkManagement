@@ -502,29 +502,31 @@ export function AppShell({
             <div className="px-2.5 text-[10px] font-bold uppercase tracking-wider text-muted">
               Hệ thống & Tích hợp
             </div>
-            {systemNav.map((item) => {
-              const active = pathname.startsWith(item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold transition-all group",
-                    active
-                      ? "bg-accent text-white shadow-md shadow-accent/25 font-bold"
-                      : "text-muted hover:bg-surface-2 hover:text-foreground"
-                  )}
-                >
-                  <item.icon
+            {systemNav
+              .filter((item) => !item.adminOnly || user.role === "ADMIN")
+              .map((item) => {
+                const active = pathname.startsWith(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
                     className={cn(
-                      "h-4 w-4 shrink-0 transition-transform group-hover:scale-110",
-                      active ? "text-white" : "text-muted group-hover:text-foreground"
+                      "flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold transition-all group",
+                      active
+                        ? "bg-accent text-white shadow-md shadow-accent/25 font-bold"
+                        : "text-muted hover:bg-surface-2 hover:text-foreground"
                     )}
-                  />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
+                  >
+                    <item.icon
+                      className={cn(
+                        "h-4 w-4 shrink-0 transition-transform group-hover:scale-110",
+                        active ? "text-white" : "text-muted group-hover:text-foreground"
+                      )}
+                    />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
           </div>
 
           {/* Project Members List */}

@@ -40,9 +40,11 @@ type FilterCategory = "ALL" | "ASSIGNED" | "MENTIONED" | "COMMENTED" | "STATUS_C
 export function NotificationBell({
   projectId,
   currentUserEmail,
+  placement = "bottom",
 }: {
   projectId?: string;
   currentUserEmail?: string;
+  placement?: "top" | "bottom";
 }) {
   const [open, setOpen] = useState(false);
   const [emailModalOpen, setEmailModalOpen] = useState(false);
@@ -207,7 +209,11 @@ export function NotificationBell({
         </Button>
 
         {open && (
-          <div className="absolute right-0 bottom-full mb-2 w-84 sm:w-[420px] rounded-2xl border border-line bg-surface-2 p-0 shadow-2xl z-50 animate-fade-in-up overflow-hidden">
+          <div
+            className={`absolute right-0 ${
+              placement === "bottom" ? "top-[calc(100%+8px)]" : "bottom-full mb-2"
+            } w-84 sm:w-[420px] rounded-2xl border border-line bg-surface-2 p-0 shadow-2xl z-50 animate-fade-in-up overflow-hidden ring-1 ring-black/50`}
+          >
             {/* Header */}
             <div className="border-b border-line p-3 bg-surface/90">
               <div className="flex items-center justify-between">

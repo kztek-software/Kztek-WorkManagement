@@ -27,6 +27,7 @@ export function NewTaskDialog({
   projectId,
   open,
   defaultStatus,
+  defaultSprintId,
   members,
   labels,
   sprints,
@@ -36,6 +37,7 @@ export function NewTaskDialog({
   projectId: string;
   open: boolean;
   defaultStatus: string;
+  defaultSprintId?: string;
   members: MemberDto[];
   labels: LabelDto[];
   sprints: SprintDto[];
@@ -49,7 +51,7 @@ export function NewTaskDialog({
   const [priority, setPriority] = useState("MEDIUM");
   const [storyPoints, setStoryPoints] = useState("");
   const [assigneeId, setAssigneeId] = useState("");
-  const [sprintId, setSprintId] = useState("");
+  const [sprintId, setSprintId] = useState(defaultSprintId || "");
   const [labelIds, setLabelIds] = useState<string[]>([]);
   const [subtasks, setSubtasks] = useState<string[]>([]);
   const [error, setError] = useState("");
@@ -62,6 +64,7 @@ export function NewTaskDialog({
   if (open && !prevOpen) {
     setPrevOpen(true);
     setStatus(defaultStatus);
+    setSprintId(defaultSprintId || "");
   }
   if (!open && prevOpen) {
     setPrevOpen(false);

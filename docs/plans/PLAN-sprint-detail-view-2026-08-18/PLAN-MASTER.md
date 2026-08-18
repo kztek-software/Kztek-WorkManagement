@@ -2,7 +2,7 @@
 task: sprint-detail-view
 created: 2026-08-18
 updated: 2026-08-18
-status: in_progress
+status: done
 workflow: WF-FEATURE
 priority: P2
 ---
@@ -14,14 +14,14 @@ priority: P2
 ## Mô tả
 Xây dựng tính năng Xem Chi Tiết Sprint tương tác toàn diện cho trang **Kế hoạch Sprint** (`/projects/[projectId]/sprints`):
 1. **Tương tác trực quan trên danh sách Sprint**:
-   - Thẻ Sprint có trạng thái hover rõ nét, cho phép bấm trực tiếp vào thẻ hoặc nút "Xem chi tiết Sprint" để mở Modal/Inspector chi tiết.
+   - Thẻ Sprint có trạng thái hover rõ nét, cho phép bấm trực tiếp vào thẻ hoặc nút "Chi tiết Sprint" để mở Modal/Inspector chi tiết.
 2. **Trung tâm Chi tiết Sprint (Sprint Detail Hub)**:
    - **Header & Thông tin cốt lõi**: Tên Sprint, Trạng thái (Đang chạy, Lên kế hoạch, Hoàn thành), Mục tiêu (Goal) với chỉnh sửa nhanh, Thời gian bắt đầu/kết thúc và đếm ngược số ngày.
    - **Thanh tác vụ nhanh (Quick Actions)**:
      - Kích hoạt / Đóng hoàn thành / Mở lại Sprint.
      - Chỉnh sửa thông tin Sprint (Tên, Mục tiêu, Thời hạn).
      - Xóa Sprint (hoàn trả các task về Backlog an toàn).
-     - Nút "Xem trên Board" (chuyển sang Board với bộ lọc theo Sprint này).
+     - Nút "Mở trên Board" (chuyển sang Board với bộ lọc theo Sprint này).
      - Nút "Thêm công việc vào Sprint" (tạo task mới hoặc gán nhanh từ Backlog).
    - **Thống kê & Chỉ số tiến độ (Metrics Overview)**:
      - Story Points hoàn thành / tổng số points, thanh tiến độ trực quan (Burn progress).
@@ -47,27 +47,28 @@ Xây dựng tính năng Xem Chi Tiết Sprint tương tác toàn diện cho tran
 ### Phase 1: Backend API Sprints Enhancement
 | # | Bước | Agent | Status | Step file | Hoàn thành lúc |
 |---|------|-------|--------|-----------|-----------------|
-| 1.1 | Bổ sung API DELETE và hoàn thiện cập nhật Sprint trong `/api/projects/[projectId]/sprints/[sprintId]` | Senior Developer | 🔄 | `steps/STEP-1.1-sprint-api.md` | |
+| 1.1 | Bổ sung API DELETE và hoàn thiện cập nhật Sprint trong `/api/projects/[projectId]/sprints/[sprintId]` | Senior Developer | ✅ | `steps/STEP-1.1-sprint-api.md` | 2026-08-18 15:38 |
 
 ### Phase 2: Sprint Detail Dialog & Management Components
 | # | Bước | Agent | Status | Step file | Hoàn thành lúc |
 |---|------|-------|--------|-----------|-----------------|
-| 2.1 | Xây dựng component `SprintDetailDialog` với đầy đủ Dashboard chỉ số, danh sách task, đổi trạng thái nhanh, gỡ task và tích hợp `TaskDialog` | Senior Developer | ⬜ | `steps/STEP-2.1-sprint-detail-dialog.md` | |
-| 2.2 | Xây dựng dialog/tab chọn và gán nhanh công việc từ Backlog vào Sprint | Junior Developer | ⬜ | `steps/STEP-2.2-add-backlog-tasks-dialog.md` | |
-| 2.3 | Tích hợp sự kiện click mở Sprint Detail, hover effects và action buttons vào trang `SprintsPage` | Junior Developer | ⬜ | `steps/STEP-2.3-sprints-page-integration.md` | |
+| 2.1 | Xây dựng component `SprintDetailDialog` với đầy đủ Dashboard chỉ số, danh sách task, đổi trạng thái nhanh, gỡ task và tích hợp `TaskDialog` | Senior Developer | ✅ | `steps/STEP-2.1-sprint-detail-dialog.md` | 2026-08-18 15:39 |
+| 2.2 | Xây dựng dialog/tab chọn và gán nhanh công việc từ Backlog vào Sprint | Junior Developer | ✅ | `steps/STEP-2.2-add-backlog-tasks-dialog.md` | 2026-08-18 15:39 |
+| 2.3 | Tích hợp sự kiện click mở Sprint Detail, hover effects và action buttons vào trang `SprintsPage` | Junior Developer | ✅ | `steps/STEP-2.3-sprints-page-integration.md` | 2026-08-18 15:40 |
 
 ### Phase 3: Board Filter Integration & Verification
 | # | Bước | Agent | Status | Step file | Hoàn thành lúc |
 |---|------|-------|--------|-----------|-----------------|
-| 3.1 | Tích hợp bộ lọc Sprint trên trang Board (`?sprintId=...`) và nút điều hướng từ Sprint Detail sang Board | Junior Developer | ⬜ | `steps/STEP-3.1-board-sprint-filter.md` | |
-| 3.2 | Tech Lead Review, UX/UI Review và QA Verification kiểm thử toàn bộ luồng xem chi tiết sprint, cập nhật sprint, gán task và mở task | QA Engineer | ⬜ | `steps/STEP-3.2-verification.md` | |
+| 3.1 | Tích hợp bộ lọc Sprint trên trang Board (`?sprintId=...`) và nút điều hướng từ Sprint Detail sang Board | Junior Developer | ✅ | `steps/STEP-3.1-board-sprint-filter.md` | 2026-08-18 15:42 |
+| 3.2 | Tech Lead Review, UX/UI Review và QA Verification kiểm thử toàn bộ luồng xem chi tiết sprint, cập nhật sprint, gán task và mở task | QA Engineer | ✅ | `steps/STEP-3.2-verification.md` | 2026-08-18 15:43 |
 
 ## Artifacts hoàn thành (tổng)
-- [ ] `src/app/api/projects/[projectId]/sprints/[sprintId]/route.ts`
-- [ ] `src/components/sprint/sprint-detail-dialog.tsx`
-- [ ] `src/app/projects/[projectId]/sprints/page.tsx`
-- [ ] `src/app/projects/[projectId]/board/page.tsx`
-- [ ] `code-graph/CODE-GRAPH.md`
+- [x] `src/app/api/projects/[projectId]/sprints/[sprintId]/route.ts`
+- [x] `src/components/sprint/sprint-detail-dialog.tsx`
+- [x] `src/components/board/new-task-dialog.tsx`
+- [x] `src/app/projects/[projectId]/sprints/page.tsx`
+- [x] `src/app/projects/[projectId]/board/page.tsx`
+- [x] `code-graph/CODE-GRAPH.md`
 
 ## Blockers
 Không có
