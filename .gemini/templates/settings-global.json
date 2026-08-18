@@ -1,0 +1,29 @@
+{
+  "//": "CẢNH BÁO (2026-08-05): bản cũ của file này copy nguyên schema settings.json của Claude Code (permissions.allow với Bash(...)/PowerShell(...), hooks.PreToolUse) — Antigravity KHÔNG đọc schema đó, nên gần như vô tác dụng. Nội dung dưới đây là schema THẬT của Antigravity (VS Code-based). Xem docs/research/RESEARCH-antigravity-permissions-2026-08-05.md nếu có.",
+  "//_vi_tri_thuc_te": [
+    "File này KHÔNG merge vào ~/.gemini/settings.json (đó là config của Gemini CLI, khác Antigravity IDE).",
+    "Mở đúng chỗ: trong Antigravity, Ctrl+Shift+P -> 'Preferences: Open User Settings (JSON)'.",
+    "Merge 5 khoá dưới đây vào file JSON đó — giữ nguyên mọi khoá khác đã có sẵn."
+  ],
+  "//_con_thieu_khong_the_bu_bang_settings_json": [
+    "Terminal Auto Execution -> 'Always Proceed' và Browser Javascript Execution -> 'Always Proceed'",
+    "chỉ đổi được qua UI Settings -> Agent/Permissions, KHÔNG có khoá JSON tương đương — phải bật tay 1 lần.",
+    "config-protection.js (hooks.PreToolUse của Claude Code) KHÔNG có cơ chế tương đương trong Antigravity",
+    "tại thời điểm 2026-08 — Antigravity không hỗ trợ hook chặn Edit/Write như Claude Code.",
+    "Google chưa có 'YOLO mode' chính thức; một số action vẫn có thể bị hỏi lại do bug đã biết.",
+    "CẬP NHẬT 2026-08-06: cơ chế permission THẬT không phải settings.json này nữa — mà là",
+    "~/.gemini/config/config.json -> userSettings.globalPermissionGrants.allow, mảng string phẳng",
+    "dạng command(<text>)/write_file(<path>)/read_file(<path>). Field sai schema (như",
+    "antigravity.commands.alwaysAllow/deny đã thử trước đây) bị app tự âm thầm xoá khi regenerate.",
+    "Dấu * cuối 1 pattern trong allow KHÔNG đảm bảo hoạt động như wildcard/prefix-match — nhiều biến",
+    "thể lệnh (node -c, node -e, powershell -Command...) vẫn bị hỏi lại dù đã có rule cha rộng hơn.",
+    "Cách chắc chắn duy nhất: bấm 'Yes, and always allow <câu lệnh chính xác> in this project' trên",
+    "dialog khi nó hiện ra — exact match, không phải wildcard. Xem lesson windows-tooling/",
+    "cross-tool-sync-script-clobbers-hand-forked-variant.md để biết chi tiết đầy đủ."
+  ],
+  "chat.tools.autoApprove": true,
+  "chat.agent.autoApprove": true,
+  "chat.agent.maxRequests": 999,
+  "security.workspace.trust.enabled": false,
+  "terminal.integrated.confirmOnKill": "never"
+}
