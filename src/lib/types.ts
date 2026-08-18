@@ -41,6 +41,12 @@ export type TaskDto = {
   assignee: UserLite | null;
   labels: { label: LabelDto }[];
   subtasks: SubtaskDto[];
+  customerTicket?: {
+    id: string;
+    trackingCode: string;
+    customerName: string;
+    customerEmail: string;
+  } | null;
   _count: { comments: number };
 };
 
@@ -79,6 +85,48 @@ export type ActivityDto = {
   detail: string | null;
   createdAt: string;
   actor: UserLite;
+};
+
+export type TicketCommentDto = {
+  id: string;
+  ticketId: string;
+  authorName: string;
+  authorEmail?: string | null;
+  isStaff: boolean;
+  isInternalOnly: boolean;
+  message: string;
+  createdAt: string;
+};
+
+export type CustomerTicketDto = {
+  id: string;
+  trackingCode: string;
+  projectId: string;
+  title: string;
+  description: string;
+  type: string; // BUG | SUPPORT | INQUIRY | FEATURE_REQ
+  status: string; // OPEN | TRIAGED | IN_PROGRESS | RESOLVED | CLOSED | REJECTED
+  priority: string; // LOW | MEDIUM | HIGH | URGENT
+  customerName: string;
+  customerEmail: string;
+  customerPhone?: string | null;
+  customerCompany?: string | null;
+  environment?: string | null;
+  convertedTaskId?: string | null;
+  convertedTask?: {
+    id: string;
+    number: number;
+    title: string;
+    status: string;
+    type: string;
+  } | null;
+  internalNotes?: string | null;
+  resolutionNotes?: string | null;
+  resolvedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  comments?: TicketCommentDto[];
+  _count?: { comments: number };
 };
 
 export type BoardData = {

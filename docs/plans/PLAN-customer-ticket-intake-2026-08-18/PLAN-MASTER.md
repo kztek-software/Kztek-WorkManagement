@@ -29,18 +29,18 @@ Xây dựng hệ thống tiếp nhận báo lỗi / ticket từ khách hàng và
 ### Phase 1: Database Schema & Core Ticket API
 | # | Bước | Agent | Status | Step file | Hoàn thành lúc |
 |---|------|-------|--------|-----------|-----------------|
-| 1.1 | Thiết kế Prisma Schema: Model `CustomerTicket` & `TicketComment`, quan hệ với Project & Task | Senior Developer | ⬜ | `steps/STEP-1.1-prisma-schema.md` | - |
-| 1.2 | Xây dựng REST API tiếp nhận ticket public, tra cứu tracking code, API quản lý nội bộ & SSE events | Senior Developer | ⬜ | `steps/STEP-1.2-ticket-api.md` | - |
+| 1.1 | Thiết kế Prisma Schema: Model `CustomerTicket` & `TicketComment`, quan hệ với Project & Task | Senior Developer | ✅ | `steps/STEP-1.1-prisma-schema.md` | 2026-08-18 13:45 |
+| 1.2 | Xây dựng REST API tiếp nhận ticket public, tra cứu tracking code, API quản lý nội bộ & SSE events | Senior Developer | ✅ | `steps/STEP-1.2-ticket-api.md` | 2026-08-18 13:46 |
 
 ### Phase 2: Public Customer Portal (Giao diện khách hàng)
 | # | Bước | Agent | Status | Step file | Hoàn thành lúc |
 |---|------|-------|--------|-----------|-----------------|
-| 2.1 | Xây dựng trang gửi báo lỗi công khai (`/portal` / `/portal/[projectKey]`) và trang tra cứu ticket (`/portal/tickets/[trackingCode]`) | Junior Developer | ⬜ | `steps/STEP-2.1-customer-portal.md` | - |
+| 2.1 | Xây dựng trang gửi báo lỗi công khai (`/portal` / `/portal/[projectKey]`) và trang tra cứu ticket (`/portal/tickets/[trackingCode]`) | Junior Developer | ✅ | `steps/STEP-2.1-customer-portal.md` | 2026-08-18 13:48 |
 
 ### Phase 3: Internal Ticket Management & Board Integration (Giao diện nội bộ)
 | # | Bước | Agent | Status | Step file | Hoàn thành lúc |
 |---|------|-------|--------|-----------|-----------------|
-| 3.1 | Xây dựng Trung tâm Quản lý Ticket trong dự án (`/projects/[projectId]/tickets`), menu Sidebar, bộ lọc và Drawer chi tiết ticket | Senior Developer | ⬜ | `steps/STEP-3.1-internal-ticket-inbox.md` | - |
+| 3.1 | Xây dựng Trung tâm Quản lý Ticket trong dự án (`/projects/[projectId]/tickets`), menu Sidebar, bộ lọc và Drawer chi tiết ticket | Senior Developer | 🔄 | `steps/STEP-3.1-internal-ticket-inbox.md` | - |
 | 3.2 | Tích hợp tính năng 1-Click Convert Ticket -> Task/Bug trên Kanban Board, đồng bộ trạng thái & gửi notification realtime | Senior Developer | ⬜ | `steps/STEP-3.2-convert-to-task.md` | - |
 
 ### Phase 4: Review, Kiểm thử & Hoàn thiện

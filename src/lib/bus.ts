@@ -1,6 +1,7 @@
 export type BoardEvent = {
-  type: "TASK_CHANGED" | "TASK_CREATED" | "TASK_DELETED" | "SPRINT_CHANGED" | "MEMBER_CHANGED";
+  type: "TASK_CHANGED" | "TASK_CREATED" | "TASK_DELETED" | "SPRINT_CHANGED" | "MEMBER_CHANGED" | "TICKET_CREATED" | "TICKET_UPDATED";
   taskId?: string;
+  ticketId?: string;
   actorId?: string;
   at: number;
 };
