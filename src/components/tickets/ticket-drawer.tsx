@@ -57,13 +57,11 @@ export function TicketDrawer({
   onClose,
   onTicketUpdated,
 }: TicketDrawerProps) {
-  if (!ticket) return null;
-
-  const [status, setStatus] = useState(ticket.status);
-  const [priority, setPriority] = useState(ticket.priority);
-  const [type, setType] = useState(ticket.type);
-  const [internalNotes, setInternalNotes] = useState(ticket.internalNotes || "");
-  const [resolutionNotes, setResolutionNotes] = useState(ticket.resolutionNotes || "");
+  const [status, setStatus] = useState(ticket?.status || "OPEN");
+  const [priority, setPriority] = useState(ticket?.priority || "MEDIUM");
+  const [type, setType] = useState(ticket?.type || "ISSUE");
+  const [internalNotes, setInternalNotes] = useState(ticket?.internalNotes || "");
+  const [resolutionNotes, setResolutionNotes] = useState(ticket?.resolutionNotes || "");
   const [savingNotes, setSavingNotes] = useState(false);
 
   // Comment state
@@ -92,6 +90,8 @@ export function TicketDrawer({
       setConvertCustomTitle(`[${ticket.trackingCode}] ${ticket.title}`);
     }
   }, [ticket]);
+
+  if (!isOpen || !ticket) return null;
 
   async function handleQuickUpdate(newStatus?: string, newPriority?: string, newType?: string) {
     try {

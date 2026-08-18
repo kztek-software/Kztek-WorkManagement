@@ -62,16 +62,23 @@ export default function ProjectDashboardPage() {
 
   const [data, setData] = useState<ProjectDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
 
   const loadDashboard = useCallback(async () => {
+    setLoading(true);
+    setErrorMsg(null);
     try {
       const res = await fetch(`/api/projects/${projectId}/dashboard`);
-      if (res.ok) {
-        const json = await res.json();
+      const json = await res.json().catch(() => null);
+      if (res.ok && json) {
         setData(json);
+      } else {
+        setErrorMsg(json?.error || "Không thể tải dữ liệu Dashboard dự án");
       }
+    } catch {
+      setErrorMsg("Lỗi kết nối máy chủ");
     } finally {
       setLoading(false);
     }
@@ -110,19 +117,41 @@ export default function ProjectDashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-1 items-center justify-center bg-background">
-        <div className="text-xs font-semibold text-muted flex items-center gap-2">
-          <div className="h-4 w-4 rounded-full border-2 border-accent border-t-transparent animate-spin" />
+      <div className="flex flex-1 flex-col items-center justify-center bg-background gap-3">
+        <div className="h-6 w-6 rounded-full border-2 border-accent border-t-transparent animate-spin" />
+        <div className="text-xs font-semibold text-muted">
           Đang tổng hợp dữ liệu Dashboard dự án...
         </div>
       </div>
     );
   }
 
-  if (!data) {
+  if (!data || errorMsg) {
     return (
-      <div className="flex flex-1 items-center justify-center bg-background">
-        <div className="text-xs text-muted">Không thể tải dữ liệu Dashboard dự án.</div>
+      <div className="flex flex-1 flex-col items-center justify-center bg-background p-6 gap-3">
+        <div className="rounded-2xl border border-red-500/30 bg-red-950/20 p-6 max-w-md text-center space-y-3">
+          <AlertTriangle className="h-8 w-8 text-red-400 mx-auto" />
+          <div className="text-sm font-bold text-foreground">
+            {errorMsg || "Không thể tải dữ liệu Dashboard dự án"}
+          </div>
+          <div className="text-xs text-muted">
+            Vui lòng kiểm tra quyền truy cập dự án hoặc nhấn nút bên dưới để thử lại.
+          </div>
+          <div className="flex items-center justify-center gap-2 pt-2">
+            <Button
+              size="sm"
+              onClick={loadDashboard}
+              className="text-xs font-bold bg-accent hover:bg-accent/90 text-white"
+            >
+              <RefreshCw className="h-3.5 w-3.5 mr-1" /> Thử lại
+            </Button>
+            <Link href={`/projects/${projectId}/board`}>
+              <Button size="sm" variant="outline" className="text-xs font-semibold border-line">
+                <KanbanSquare className="h-3.5 w-3.5 mr-1" /> Mở Board Công Việc
+              </Button>
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }

@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Chuyển dev indicator (Next.js badge) sang góc dưới bên phải để không che khuất sidebar
+  devIndicators: {
+    position: "bottom-right",
+  },
+
   // Cho phép kết nối WebSocket HMR và truy cập từ mọi máy trong mạng nội bộ (LAN / Wi-Fi)
   allowedDevOrigins: [
     "localhost:3000",

@@ -53,3 +53,31 @@ export async function PATCH(
   publish(projectId, { type: "SPRINT_CHANGED", actorId: user.id });
   return NextResponse.json({ sprint });
 }
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ projectId: string; sprintId: string }> }
+) {
+  const user = await requireUser();
+  const { projectId, sprintId } = await params;
+
+  const member = await prisma.projectMember.findUnique({
+    where: { projectId_userId: { projectId, userId: user.id } },
+  });
+  if (!member) return NextResponse.json({ error: "Không có quyền truy cập" }, { status: 403 });
+
+  // Gỡ liên kết sprint khỏi các task liên quan (chuyển về Backlog)
+  await prisma.task.updateMany({
+    where: { projectId, sprintId },
+    data: { sprintId: null },
+  });
+
+  await prisma.sprint.delete({
+    where: { id: sprintId },
+  });
+
+  publish(projectId, { type: "SPRINT_CHANGED", actorId: user.id });
+  publish(projectId, { type: "TASK_CHANGED", actorId: user.id });
+
+  return NextResponse.json({ ok: true });
+}

@@ -116,20 +116,24 @@ export function AppShell({
   const [availableUsers, setAvailableUsers] = useState<UserData[]>([]);
   const [loadingModalData, setLoadingModalData] = useState(false);
 
-  // Close dropdown on outside click
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdowns on outside click
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setProjectMenuOpen(false);
       }
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
     }
-    if (projectMenuOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [projectMenuOpen]);
+  }, []);
 
   // Load teams and users when create modal is opened
   useEffect(() => {
@@ -157,8 +161,9 @@ export function AppShell({
   ];
 
   const systemNav = [
+    { href: `/projects/${project.id}/all-projects`, label: "Tất Cả Dự Án", icon: FolderKanban, adminOnly: true },
     { href: `/projects/${project.id}/notion`, label: "Tích Hợp Notion", icon: ArrowRightLeft },
-    { href: `/projects/${project.id}/users`, label: "Người Dùng & Email", icon: Users },
+    { href: `/projects/${project.id}/users`, label: "Người Dùng & Email", icon: Users, adminOnly: true },
   ];
 
   async function logout() {
@@ -558,47 +563,154 @@ export function AppShell({
           </div>
         </div>
 
-        {/* User Footer */}
-        <div className="border-t border-line p-3 bg-surface/95">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <Avatar className="h-8 w-8 shrink-0 border border-white/15 shadow-sm">
-                <AvatarFallback color={user.avatarColor} className="font-bold text-xs">
-                  {initials(user.name)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="min-w-0">
-                <div className="truncate text-xs font-bold text-foreground flex items-center gap-1">
-                  {user.name}
-                  {user.role === "ADMIN" && (
-                    <span className="rounded bg-accent/20 px-1 py-0.1 text-[8px] font-black text-accent">
-                      ADMIN
-                    </span>
-                  )}
-                </div>
-                <div className="truncate text-[10px] text-muted font-mono">{user.email}</div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-1">
-              <NotificationBell projectId={project.id} />
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={logout}
-                className="h-8 w-8 text-muted hover:text-red-400 hover:bg-red-950/20 cursor-pointer transition-colors"
-                title="Đăng xuất khỏi hệ thống"
-              >
-                <LogOut className="h-4 w-4" />
-              </Button>
-            </div>
+        {/* Sidebar Status Footer */}
+        <div className="border-t border-line/60 p-3 bg-surface/40 flex items-center justify-between text-[11px] text-muted">
+          <div className="flex items-center gap-2 font-medium">
+            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shadow-sm shadow-emerald-500/50" />
+            <span className="text-foreground/80 font-semibold">KZTEK Work</span>
           </div>
+          <span className="font-mono text-[10px] text-muted/70 bg-surface-2 px-1.5 py-0.5 rounded border border-line">
+            v2.4
+          </span>
         </div>
       </aside>
 
-      {/* Main App Content Viewport */}
+      {/* Main App Content Viewport with Global Top-Right Header */}
       <main className="flex min-w-0 flex-1 flex-col overflow-hidden bg-background">
-        {children}
+        {/* Global Top-Right Navigation Bar */}
+        <header className="h-14 shrink-0 border-b border-line bg-surface/70 backdrop-blur-md px-5 flex items-center justify-between z-20">
+          {/* Left Context & Project Info */}
+          <div className="flex items-center gap-2 text-xs font-semibold">
+            <Link
+              href={`/projects/${project.id}/dashboard`}
+              className="text-muted hover:text-foreground flex items-center gap-1.5 transition-colors"
+            >
+              <FolderKanban className="h-3.5 w-3.5 text-accent" />
+              <span>{project.name}</span>
+            </Link>
+            <span className="text-muted/40">/</span>
+            <span className="text-foreground font-bold">
+              {pathname.endsWith("/board") && "Board Công Việc"}
+              {pathname.endsWith("/sprints") && "Sprints & Kế Hoạch"}
+              {pathname.endsWith("/reports") && "Báo Cáo & KPI"}
+              {pathname.endsWith("/tickets") && "Tickets Khách Hàng"}
+              {pathname.endsWith("/notion") && "Tích Hợp Notion Hub"}
+              {pathname.endsWith("/users") && "Người Dùng & Phân Quyền"}
+              {pathname.endsWith("/settings") && "Cài Đặt Dự Án"}
+              {(pathname.endsWith("/dashboard") || pathname === `/projects/${project.id}`) && "Tổng Quan Dự Án"}
+            </span>
+          </div>
+
+          {/* Right Top-Bar: Notifications & User Account Profile Card */}
+          <div className="flex items-center gap-3">
+            {/* Notification Bell */}
+            <NotificationBell projectId={project.id} currentUserEmail={user.email} />
+
+            <div className="h-4 w-[1px] bg-line/80" />
+
+            {/* Top-Right User Profile Widget */}
+            <div className="relative" ref={userMenuRef}>
+              <button
+                type="button"
+                onClick={() => setUserMenuOpen((v) => !v)}
+                className={cn(
+                  "flex items-center gap-2.5 rounded-xl border py-1.5 px-2.5 transition-all cursor-pointer shadow-sm group",
+                  userMenuOpen
+                    ? "bg-surface-3 border-accent ring-2 ring-accent/30 shadow-md"
+                    : "bg-surface-2/80 border-line hover:border-line-strong hover:bg-surface-3"
+                )}
+              >
+                <Avatar className="h-7 w-7 shrink-0 border border-white/15 shadow-sm">
+                  <AvatarFallback color={user.avatarColor} className="font-bold text-[11px] text-white">
+                    {initials(user.name)}
+                  </AvatarFallback>
+                </Avatar>
+
+                <div className="min-w-0 text-left hidden sm:block">
+                  <div className="truncate text-xs font-bold text-foreground group-hover:text-white flex items-center gap-1.5">
+                    <span>{user.name}</span>
+                    {user.role === "ADMIN" ? (
+                      <span className="px-1.5 py-0.1 rounded text-[8px] font-black bg-accent/20 text-accent border border-accent/30 font-mono">
+                        ADMIN
+                      </span>
+                    ) : (
+                      <span className="px-1.5 py-0.1 rounded text-[8px] font-semibold bg-blue-500/15 text-blue-400 border border-blue-500/25 font-mono">
+                        {user.role}
+                      </span>
+                    )}
+                  </div>
+                  <div className="truncate text-[10px] text-muted font-mono">{user.email}</div>
+                </div>
+
+                <ChevronDown
+                  className={cn(
+                    "h-3.5 w-3.5 text-muted transition-transform ml-0.5 group-hover:text-foreground",
+                    userMenuOpen && "rotate-180 text-accent"
+                  )}
+                />
+              </button>
+
+              {/* User Profile Flyout Dropdown Menu */}
+              {userMenuOpen && (
+                <div className="absolute right-0 top-[calc(100%+6px)] z-50 w-72 rounded-2xl border border-white/15 bg-[#131826] p-3 shadow-2xl backdrop-blur-2xl animate-fade-in-up ring-1 ring-black/50 space-y-3">
+                  {/* User Info Header Card */}
+                  <div className="flex items-center gap-3 p-2.5 rounded-xl bg-surface-2/80 border border-line">
+                    <Avatar className="h-10 w-10 shrink-0 border border-white/20 shadow-md">
+                      <AvatarFallback color={user.avatarColor} className="font-bold text-sm text-white">
+                        {initials(user.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <div className="font-bold text-sm text-foreground truncate">{user.name}</div>
+                      <div className="text-[11px] text-muted font-mono truncate">{user.email}</div>
+                      {user.title && (
+                        <div className="text-[10px] text-accent font-semibold truncate mt-0.5">{user.title}</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Quick Navigation Links */}
+                  <div className="space-y-1">
+                    <Link
+                      href={`/projects/${project.id}/users`}
+                      onClick={() => setUserMenuOpen(false)}
+                      className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-foreground hover:bg-surface-2 transition-colors"
+                    >
+                      <Users className="h-4 w-4 text-accent" />
+                      <span>Quản trị Cơ cấu & Phân quyền</span>
+                    </Link>
+
+                    <Link
+                      href={`/projects/${project.id}/settings`}
+                      onClick={() => setUserMenuOpen(false)}
+                      className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-foreground hover:bg-surface-2 transition-colors"
+                    >
+                      <Settings className="h-4 w-4 text-blue-400" />
+                      <span>Cài đặt Dự án & Cấu hình</span>
+                    </Link>
+                  </div>
+
+                  {/* Logout Button */}
+                  <div className="border-t border-line/60 pt-2">
+                    <button
+                      type="button"
+                      onClick={logout}
+                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-red-400 hover:bg-red-950/30 transition-colors cursor-pointer"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span>Đăng xuất khỏi hệ thống</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </header>
+
+        {/* Page Content Body */}
+        <div className="flex-1 overflow-hidden flex flex-col">
+          {children}
+        </div>
       </main>
 
       {/* ========================================================================= */}

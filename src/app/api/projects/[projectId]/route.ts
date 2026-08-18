@@ -60,8 +60,10 @@ export async function GET(
 
 const updateProjectSchema = z.object({
   name: z.string().min(2).max(100).optional(),
+  key: z.string().min(2).max(6).regex(/^[A-Z][A-Z0-9]*$/, "Key phải viết hoa, bắt đầu bằng chữ").optional(),
   description: z.string().max(1000).optional().nullable(),
   status: z.enum(["PLANNING", "IN_PROGRESS", "ON_HOLD", "COMPLETED", "CANCELLED"]).optional(),
+  ownerId: z.string().optional(),
 });
 
 export async function PATCH(
@@ -89,16 +91,45 @@ export async function PATCH(
     );
   }
 
+  const { name, key, description, status, ownerId } = parsed.data;
+
+  // Kiểm tra trùng Key nếu có thay đổi key
+  if (key) {
+    const existing = await prisma.project.findFirst({
+      where: { key, NOT: { id: projectId } },
+    });
+    if (existing) {
+      return NextResponse.json({ error: `Mã Key "${key}" đã tồn tại trên dự án khác` }, { status: 409 });
+    }
+  }
+
+  // Nếu chuyển giao Owner
+  if (ownerId) {
+    const targetUser = await prisma.user.findUnique({ where: { id: ownerId } });
+    if (!targetUser) {
+      return NextResponse.json({ error: "Người dùng được chọn làm Chủ dự án không tồn tại" }, { status: 400 });
+    }
+
+    // Đảm bảo user mới có mặt trong projectMembers với role OWNER
+    await prisma.projectMember.upsert({
+      where: { projectId_userId: { projectId, userId: ownerId } },
+      update: { role: "OWNER" },
+      create: { projectId, userId: ownerId, role: "OWNER" },
+    });
+  }
+
   const updatedProject = await prisma.project.update({
     where: { id: projectId },
     data: {
-      ...(parsed.data.name ? { name: parsed.data.name.trim() } : {}),
-      ...(parsed.data.description !== undefined ? { description: parsed.data.description?.trim() || null } : {}),
-      ...(parsed.data.status ? { status: parsed.data.status } : {}),
+      ...(name ? { name: name.trim() } : {}),
+      ...(key ? { key: key.trim().toUpperCase() } : {}),
+      ...(description !== undefined ? { description: description?.trim() || null } : {}),
+      ...(status ? { status } : {}),
+      ...(ownerId ? { ownerId } : {}),
     },
     include: {
-      owner: { select: { id: true, name: true, email: true, avatarColor: true } },
-      _count: { select: { tasks: true, members: true } },
+      owner: { select: { id: true, name: true, email: true, avatarColor: true, title: true } },
+      _count: { select: { tasks: true, members: true, customerTickets: true } },
     },
   });
 
