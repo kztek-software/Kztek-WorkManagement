@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { verifyPassword, createSession } from "@/lib/auth";
 
 const schema = z.object({
-  email: z.string().email(),
+  email: z.string().min(1),
   password: z.string().min(1),
 });
 
@@ -12,14 +12,27 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Email và mật khẩu là bắt buộc" }, { status: 400 });
+    return NextResponse.json({ error: "Tài khoản và mật khẩu là bắt buộc" }, { status: 400 });
   }
 
-  const user = await prisma.user.findUnique({
-    where: { email: parsed.data.email.toLowerCase().trim() },
+  const input = parsed.data.email.toLowerCase().trim();
+  const password = parsed.data.password;
+
+  // Hỗ trợ đăng nhập bằng username ("admin") hoặc email ("admin@kztek.net", v.v.)
+  const user = await prisma.user.findFirst({
+    where: {
+      OR: [
+        { email: input },
+        { email: input === "admin" ? "admin@kztek.net" : input },
+        { email: `${input}@kztek.net` },
+        { email: `${input}@demo.dev` },
+        { name: { equals: input } },
+      ],
+    },
   });
-  if (!user || !verifyPassword(parsed.data.password, user.passwordHash)) {
-    return NextResponse.json({ error: "Email hoặc mật khẩu không đúng" }, { status: 401 });
+
+  if (!user || !verifyPassword(password, user.passwordHash)) {
+    return NextResponse.json({ error: "Tài khoản hoặc mật khẩu không đúng" }, { status: 401 });
   }
 
   await createSession(user.id);
@@ -30,6 +43,7 @@ export async function POST(req: NextRequest) {
       email: user.email,
       avatarColor: user.avatarColor,
       title: user.title,
+      role: user.role,
     },
   });
 }

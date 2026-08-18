@@ -27,8 +27,19 @@ async function main() {
   await prisma.user.deleteMany();
 
   const passwordHash = hashPassword("demo123");
+  const adminPasswordHash = hashPassword("Kztek@2026");
 
-  const [alice, binh, chi] = await Promise.all([
+  const [admin, alice, binh, chi] = await Promise.all([
+    prisma.user.create({
+      data: {
+        name: "Quản trị viên KZTEK",
+        email: "admin@kztek.net",
+        passwordHash: adminPasswordHash,
+        avatarColor: "#f05922",
+        title: "System Administrator",
+        role: "ADMIN",
+      },
+    }),
     prisma.user.create({
       data: {
         name: "Alice Nguyen",
@@ -36,6 +47,7 @@ async function main() {
         passwordHash,
         avatarColor: "#6366f1",
         title: "Product Manager",
+        role: "ADMIN",
       },
     }),
     prisma.user.create({
@@ -45,6 +57,7 @@ async function main() {
         passwordHash,
         avatarColor: "#10b981",
         title: "Backend Engineer",
+        role: "MEMBER",
       },
     }),
     prisma.user.create({
@@ -54,6 +67,7 @@ async function main() {
         passwordHash,
         avatarColor: "#f59e0b",
         title: "Frontend Engineer",
+        role: "MEMBER",
       },
     }),
   ]);

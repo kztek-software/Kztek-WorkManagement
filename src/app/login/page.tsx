@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Zap } from "lucide-react";
+import { Shield, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,23 +39,26 @@ export default function LoginPage() {
     }
   }
 
-  async function fillDemo(userEmail: string) {
-    setEmail(userEmail);
-    setPassword("demo123");
+  async function quickLogin(account: string, pass: string) {
+    setEmail(account);
+    setPassword(pass);
     setError("");
     setLoading(true);
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: userEmail, password: "demo123" }),
+        body: JSON.stringify({ email: account, password: pass }),
       });
       if (res.ok) {
         router.push("/");
         router.refresh();
       } else {
-        setError("Không đăng nhập được tài khoản demo");
+        const d = await res.json().catch(() => ({}));
+        setError(d.error ?? "Không đăng nhập được tài khoản");
       }
+    } catch {
+      setError("Lỗi kết nối máy chủ");
     } finally {
       setLoading(false);
     }
@@ -63,72 +66,116 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="w-full max-w-sm">
-        <div className="mb-8 flex flex-col items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent">
-            <Zap className="h-6 w-6 text-white" />
+      <div className="w-full max-w-sm space-y-6">
+        {/* Logo & Header */}
+        <div className="flex flex-col items-center gap-2.5 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F05922] font-black text-white text-xl shadow-lg shadow-[#F05922]/20">
+            KZ
           </div>
-          <div className="text-center">
-            <h1 className="text-2xl font-bold">FlowBoard</h1>
-            <p className="mt-1 text-sm text-muted">Quản lý công việc nhanh hơn Jira</p>
+          <div>
+            <h1 className="text-xl font-bold tracking-tight text-white">KZTEK Work Management</h1>
+            <p className="text-xs text-muted mt-0.5">Hệ thống điều hành & quản lý công việc nội bộ</p>
           </div>
         </div>
 
-        <div className="rounded-xl border border-line bg-surface p-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Login Card */}
+        <div className="rounded-2xl border border-line bg-surface p-6 shadow-xl space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3.5">
             <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-xs font-semibold">Tài khoản hoặc Email</Label>
               <Input
                 id="email"
-                type="email"
-                placeholder="ban@congty.com"
+                type="text"
+                placeholder="admin hoặc email@kztek.net"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                className="text-xs h-9 bg-surface-2"
                 required
               />
             </div>
+
             <div className="space-y-1.5">
-              <Label htmlFor="password">Mật khẩu</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password" className="text-xs font-semibold">Mật khẩu</Label>
+                <span className="text-[11px] text-muted">Admin: Kztek@2026</span>
+              </div>
               <Input
                 id="password"
                 type="password"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                className="text-xs h-9 bg-surface-2 font-mono"
                 required
               />
             </div>
+
             {error && (
-              <p className="rounded-md bg-red-500/10 px-3 py-2 text-sm text-red-400">{error}</p>
+              <p className="rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-400 border border-red-500/20">
+                {error}
+              </p>
             )}
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Đang đăng nhập..." : "Đăng nhập"}
+
+            <Button type="submit" className="w-full h-9 text-xs font-bold" disabled={loading}>
+              {loading ? "Đang xử lý..." : "Đăng nhập hệ thống"}
             </Button>
           </form>
 
-          <div className="my-5 flex items-center gap-3">
-            <div className="h-px flex-1 bg-line" />
-            <span className="text-xs text-muted">Tài khoản demo</span>
-            <div className="h-px flex-1 bg-line" />
-          </div>
+          {/* Quick Login Section */}
+          <div className="space-y-2 pt-2 border-t border-line">
+            <div className="text-[11px] font-medium text-muted text-center">Đăng nhập nhanh 1-Click:</div>
 
-          <div className="grid grid-cols-3 gap-2">
-            <Button variant="outline" size="sm" onClick={() => fillDemo("alice@demo.dev")} disabled={loading}>
-              Alice
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => fillDemo("binh@demo.dev")} disabled={loading}>
-              Bình
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => fillDemo("chi@demo.dev")} disabled={loading}>
-              Chi
-            </Button>
+            {/* Default Admin Button */}
+            <button
+              type="button"
+              onClick={() => quickLogin("admin", "Kztek@2026")}
+              disabled={loading}
+              className="w-full flex items-center justify-between p-2.5 rounded-xl border border-orange-500/30 bg-orange-950/20 hover:bg-orange-950/40 text-orange-300 text-xs font-semibold transition-all cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
+                <Shield className="h-4 w-4 text-orange-400" />
+                <span>Admin Mặc Định (admin / Kztek@2026)</span>
+              </div>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+
+            {/* Demo Members */}
+            <div className="grid grid-cols-3 gap-1.5 pt-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => quickLogin("alice@demo.dev", "demo123")}
+                disabled={loading}
+                className="h-7 text-[11px] border-line hover:bg-surface-2"
+              >
+                Alice (PM)
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => quickLogin("binh@demo.dev", "demo123")}
+                disabled={loading}
+                className="h-7 text-[11px] border-line hover:bg-surface-2"
+              >
+                Bình (Dev)
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => quickLogin("chi@demo.dev", "demo123")}
+                disabled={loading}
+                className="h-7 text-[11px] border-line hover:bg-surface-2"
+              >
+                Chi (Dev)
+              </Button>
+            </div>
           </div>
         </div>
 
-        <p className="mt-6 text-center text-sm text-muted">
+        <p className="text-center text-xs text-muted">
           Chưa có tài khoản?{" "}
-          <Link href="/register" className="font-medium text-accent hover:underline">
-            Đăng ký
+          <Link href="/register" className="font-semibold text-accent hover:underline">
+            Đăng ký tài khoản mới
           </Link>
         </p>
       </div>
