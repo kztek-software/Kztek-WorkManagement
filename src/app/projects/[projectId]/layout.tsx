@@ -15,11 +15,11 @@ export default async function ProjectLayout({
   const user = await getSessionUser();
   if (!user) redirect("/login");
 
-  const [project, projects, permCtx] = await Promise.all([
+  let [project, projects] = await Promise.all([
     prisma.project.findFirst({
       where: user.role === "ADMIN"
-        ? { id: projectId }
-        : { id: projectId, members: { some: { userId: user.id } } },
+        ? { OR: [{ id: projectId }, { key: projectId }] }
+        : { OR: [{ id: projectId }, { key: projectId }], members: { some: { userId: user.id } } },
       include: {
         members: {
           include: {
@@ -41,11 +41,33 @@ export default async function ProjectLayout({
       select: { id: true, name: true, key: true },
       orderBy: { createdAt: "asc" },
     }),
-    // Truyền user.role đã có sẵn để tránh query DB lần 2
-    getUserPermissionContext(user.id, projectId, user.role),
   ]);
 
+  if (!project) {
+    project = await prisma.project.findFirst({
+      where: user.role === "ADMIN" ? {} : { members: { some: { userId: user.id } } },
+      include: {
+        members: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                avatarColor: true,
+                title: true,
+                team: { select: { id: true, name: true, code: true, color: true } },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: "asc" },
+    });
+  }
+
   if (!project) redirect("/");
+
+  const permCtx = await getUserPermissionContext(user.id, project.id, user.role);
 
   return (
     <PermissionsProvider

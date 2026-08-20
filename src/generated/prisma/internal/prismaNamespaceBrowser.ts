@@ -66,7 +66,8 @@ export const ModelName = {
   Activity: 'Activity',
   CustomerTicket: 'CustomerTicket',
   TicketComment: 'TicketComment',
-  Attachment: 'Attachment'
+  Attachment: 'Attachment',
+  SystemSetting: 'SystemSetting'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -310,6 +311,32 @@ export const AttachmentScalarFieldEnum = {
 } as const
 
 export type AttachmentScalarFieldEnum = (typeof AttachmentScalarFieldEnum)[keyof typeof AttachmentScalarFieldEnum]
+
+
+export const SystemSettingScalarFieldEnum = {
+  id: 'id',
+  smtpHost: 'smtpHost',
+  smtpPort: 'smtpPort',
+  smtpUser: 'smtpUser',
+  smtpPass: 'smtpPass',
+  smtpSecure: 'smtpSecure',
+  smtpFrom: 'smtpFrom',
+  smtpFromName: 'smtpFromName',
+  systemName: 'systemName',
+  companyName: 'companyName',
+  hotline: 'hotline',
+  supportEmail: 'supportEmail',
+  website: 'website',
+  appUrl: 'appUrl',
+  notifyOnAssign: 'notifyOnAssign',
+  notifyOnStatusChange: 'notifyOnStatusChange',
+  notifyOnComment: 'notifyOnComment',
+  enableRealtimeSse: 'enableRealtimeSse',
+  updatedAt: 'updatedAt',
+  updatedBy: 'updatedBy'
+} as const
+
+export type SystemSettingScalarFieldEnum = (typeof SystemSettingScalarFieldEnum)[keyof typeof SystemSettingScalarFieldEnum]
 
 
 export const SortOrder = {

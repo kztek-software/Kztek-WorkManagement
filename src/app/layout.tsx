@@ -47,7 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body
         suppressHydrationWarning
-        className="h-full flex flex-col bg-background text-foreground selection:bg-accent/30 overflow-hidden"
+        className="min-h-full flex flex-col bg-background text-foreground selection:bg-accent/30"
       >
         {/* Inline no-FOUC script: chạy đồng bộ trước khi React hydrate,
             đặt data-theme="light" nếu user đã lưu light theme trong localStorage.

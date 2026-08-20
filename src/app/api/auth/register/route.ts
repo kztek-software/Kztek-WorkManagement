@@ -37,8 +37,17 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  await createSession(user.id);
-  return NextResponse.json({
+  const token = await createSession(user.id);
+  const res = NextResponse.json({
+    token,
     user: { id: user.id, name: user.name, email: user.email, avatarColor: user.avatarColor },
   });
+  res.cookies.set("flowboard_session", token, {
+    httpOnly: false,
+    sameSite: "lax",
+    secure: process.env.COOKIE_SECURE === "true",
+    maxAge: 7 * 24 * 60 * 60,
+    path: "/",
+  });
+  return res;
 }

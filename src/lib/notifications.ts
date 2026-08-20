@@ -72,7 +72,7 @@ export async function notifyTaskAssigned(params: {
   projectId: string;
 }) {
   try {
-    if (!params.assigneeId || params.assigneeId === params.actorId) {
+    if (!params.assigneeId) {
       return;
     }
 
@@ -110,15 +110,18 @@ export async function notifyTaskAssigned(params: {
 
     const taskCode = `${project.key}-${task.number}`;
     const directTaskUrl = `${getAppBaseUrl()}/projects/${project.id}/board?taskId=${task.id}`;
+    const isSelf = assignee.id === actor.id;
 
-    // 1. Tạo In-App Notification trong Database
+    // 1. Tạo In-App Notification trong Database cho người nhận
     await prisma.notification.create({
       data: {
         userId: assignee.id,
         actorId: actor.id,
         type: "ASSIGNED",
-        title: "Giao việc mới",
-        message: `${actor.name} đã giao việc ${taskCode}: "${task.title}" cho bạn`,
+        title: isSelf ? "Tự nhận việc" : "Giao việc mới",
+        message: isSelf
+          ? `Bạn đã tự nhận việc ${taskCode}: "${task.title}"`
+          : `${actor.name} đã giao việc ${taskCode}: "${task.title}" cho bạn`,
         link: `/projects/${project.id}/board?taskId=${task.id}`,
       },
     });
@@ -142,7 +145,7 @@ export async function notifyTaskAssigned(params: {
       projectKey: project.key,
       projectId: project.id,
       taskId: task.id,
-      assignorName: actor.name,
+      assignorName: isSelf ? "Chính bạn" : actor.name,
       assigneeName: assignee.name,
       assigneeEmail: assignee.email,
       taskUrl: directTaskUrl,

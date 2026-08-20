@@ -36,10 +36,42 @@
 | G006 | Tool "graphify" tên package PyPI thật là `graphifyy` (2 chữ y) — `pip install graphify` báo lỗi | `[CONFIG]` | 2026-07-29 |
 | G007 | Edit tool báo "updated successfully" nhưng **không ghi vào disk** trên Windows trong 1 số branch context | `[AGENT-LOOP]` | 2026-08-04 |
 | G008 | Next.js 16 App Router — 2 thư mục dynamic param cùng cấp (`[code]` và `[ticketId]`) gây lỗi Ambiguous Routes → Internal Server Error | `[CONFIG]` | 2026-08-18 |
+| G009 | Next.js 16 Turbopack — Lỗi `Jest worker encountered 2 child process exceptions` do lồng thẻ `<button>` trong `<Link>` hoặc lock file dev | `[CONFIG]` | 2026-08-20 |
+| G010 | Prisma singleton trong Next.js dev runtime không tự nhận model mới sau `prisma generate` nếu giữ nguyên `globalThis.prisma` | `[CONFIG]` | 2026-08-20 |
 
 **Category hiện có:** `[SCRIPT]` (lỗi Python script/tool) · `[ENCODING]` (lỗi mã hóa ký tự) · `[UI-BINDING]` (lỗi Avalonia/WinForms binding) · `[CONFIG]` (cài đặt sai, tên package sai, cấu hình routing) · `[GIT]` (git workflow) · `[AGENT-LOOP]` (agent bị stuck/loop)
 
 ---
+
+## G010 — PrismaClient singleton trong Next.js dev runtime không tự nhận model mới
+**Category:** `[CONFIG]`
+
+**Ngày phát hiện:** 2026-08-20
+**Môi trường:** Next.js 16 (App Router), Prisma 7, `@prisma/adapter-mssql`
+**Vấn đề:** Sau khi thêm model mới (ví dụ `SystemSetting`) vào `schema.prisma`, chạy `prisma db push` và `prisma generate`, nhưng API route gọi `prisma.systemSetting` trên dev server đang chạy lại báo `undefined` hoặc rơi vào catch block làm API không ghi được vào DB.
+**Nguyên nhân:** File `src/lib/prisma.ts` lưu `prisma` vào `globalThis.prisma` để chống mở nhiều connection pool khi hot-reload. Nhưng khi schema thêm model mới, instance cũ trong `globalThis.prisma` không có delegate của model mới.
+**Cách xử lý:** Kiểm tra `(globalForPrisma.prisma as any)?.systemSetting` trong `getPrismaClient()`. Nếu instance hiện tại thiếu model mới, tự động khởi tạo lại `createClient()` và cập nhật `globalThis.prisma`.
+**Lần đầu gặp:** Khi lưu cấu hình `SystemSetting` trên trang Admin Settings (2026-08-20).
+**Không cần làm lại:** Luôn guard bằng `getPrismaClient()` kiểm tra sự tồn tại của model trước khi trả về singleton.
+
+---
+
+## G009 — Next.js 16 Turbopack: Lỗi "Jest worker encountered 2 child process exceptions, exceeding retry limit"
+**Category:** `[CONFIG]`
+
+**Ngày phát hiện:** 2026-08-20
+**Môi trường:** Next.js 16.3.1 (Turbopack), React 19, Windows 11
+**Vấn đề:** Trình duyệt / Next.js dev server báo lỗi `Runtime Error: Jest worker encountered 2 child process exceptions, exceeding retry limit`.
+**Nguyên nhân:**
+1. **Lồng thẻ tương tác không hợp lệ**: Thẻ `<button>` hoặc component `<Button>` được bọc trực tiếp bên trong thẻ `<Link>` mà không dùng `asChild` hoặc style trực tiếp trên `<Link>`, khiến parser/SSR của React 19 & Turbopack bị lỗi hydration / worker thread crash.
+2. **Recharts SSR calculation**: `ResponsiveContainer` trong `recharts` được evaluate trên server worker thread mà không có kích thước trình duyệt thật, gây unhandled exception làm chết Jest worker.
+3. **File khóa / Zombie workers**: File khóa `.next/lock` hoặc các worker node cũ bị kẹt sau crash.
+**Cách xử lý:**
+1. Luôn dùng `<Link className="...">` trực tiếp thay vì lồng `<Link><button>...</button></Link>`.
+2. Bọc các component biểu đồ Recharts bằng điều kiện `mounted` (`useEffect(() => setMounted(true), [])`) để chỉ render ở client.
+3. Khởi động lại dev server: Nhấn `Ctrl+C` ở terminal dev server. Nếu Turbopack worker trên Windows vẫn bị lỗi process exception, có thể chạy qua Webpack: `npm run dev:webpack`.
+**Lần đầu gặp:** Khi tinh chỉnh giao diện DashboardView (2026-08-20).
+**Không cần làm lại:** Không bao giờ lồng `<button>` vào trong `<Link>`, luôn guard Recharts bằng `mounted`.
 
 ## G008 — Next.js 16 App Router: Trùng dynamic route cùng cấp (`[code]` vs `[ticketId]`) gây Ambiguous Routes & Internal Server Error
 **Category:** `[CONFIG]`

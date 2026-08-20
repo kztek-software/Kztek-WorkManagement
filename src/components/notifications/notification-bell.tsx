@@ -69,7 +69,11 @@ export function NotificationBell({
 
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 8000); // 8s poll
+    const interval = setInterval(() => {
+      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+        fetchNotifications();
+      }
+    }, 15000); // 15s poll when tab is visible
     return () => clearInterval(interval);
   }, []);
 

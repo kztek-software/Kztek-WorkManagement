@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
+import Link from "next/link";
 import {
   Trash2,
   CheckSquare,
@@ -20,6 +21,9 @@ import {
   MoreHorizontal,
   UserPlus,
   ChevronRight,
+  Pencil,
+  Eye,
+  FileText,
 } from "lucide-react";
 import { STATUSES, PRIORITIES, TASK_TYPES } from "@/lib/constants";
 import { TaskAttachmentGallery } from "./task-attachment-gallery";
@@ -57,6 +61,79 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { TypeIcon } from "./type-icon";
 
+function renderInlineMarkdown(text: string): React.ReactNode {
+  const parts = text.split(/(\*\*.*?\*\*|\*.*?\*|`.*?`)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**") && part.length >= 4) {
+      return <strong key={i} className="font-bold text-foreground">{part.slice(2, -2)}</strong>;
+    }
+    if (part.startsWith("*") && part.endsWith("*") && part.length >= 2) {
+      return <em key={i} className="italic text-foreground/90">{part.slice(1, -1)}</em>;
+    }
+    if (part.startsWith("`") && part.endsWith("`") && part.length >= 2) {
+      return (
+        <code key={i} className="px-1.5 py-0.5 rounded bg-surface-3 border border-line font-mono text-[11px] text-accent">
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
+    return part;
+  });
+}
+
+function RenderMarkdownDescription({ content }: { content: string }) {
+  if (!content) return null;
+
+  const lines = content.split("\n");
+  return (
+    <div className="space-y-1.5 text-xs leading-relaxed text-foreground">
+      {lines.map((line, idx) => {
+        const trimmed = line.trim();
+        if (!trimmed) {
+          return <div key={idx} className="h-1" />;
+        }
+        if (trimmed === "---" || trimmed === "***" || trimmed === "___") {
+          return <hr key={idx} className="my-2 border-line" />;
+        }
+        if (trimmed.startsWith("### ")) {
+          return (
+            <h4 key={idx} className="text-xs font-bold text-foreground mt-2 mb-0.5 flex items-center gap-1.5">
+              {trimmed.slice(4)}
+            </h4>
+          );
+        }
+        if (trimmed.startsWith("## ")) {
+          return (
+            <h3 key={idx} className="text-sm font-bold text-foreground mt-2.5 mb-1 flex items-center gap-1.5">
+              {trimmed.slice(3)}
+            </h3>
+          );
+        }
+        if (trimmed.startsWith("# ")) {
+          return (
+            <h2 key={idx} className="text-base font-bold text-foreground mt-3 mb-1.5">
+              {trimmed.slice(2)}
+            </h2>
+          );
+        }
+        if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
+          return (
+            <div key={idx} className="flex items-start gap-2 pl-2">
+              <span className="text-accent text-[10px] mt-0.5 select-none">•</span>
+              <span className="flex-1 text-muted-light">{renderInlineMarkdown(trimmed.slice(2))}</span>
+            </div>
+          );
+        }
+        return (
+          <p key={idx} className="text-muted-light">
+            {renderInlineMarkdown(line)}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 // Compact pill look shared by the quick-property bar triggers — same Select,
 // just restyled so switching Status/Priority/Assignee/Type doesn't need a full-width row.
 const PILL_TRIGGER =
@@ -93,9 +170,14 @@ export function TaskDialog({
   const [title, setTitle] = useState(task?.title ?? "");
   const [currentUser, setCurrentUser] = useState<{ id: string; name: string } | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [descriptionValue, setDescriptionValue] = useState(task?.description ?? "");
 
   useEffect(() => {
-    if (task) setTitle(task.title);
+    if (task) {
+      setTitle(task.title);
+      setDescriptionValue(task.description ?? "");
+    }
   }, [task]);
 
   useEffect(() => {
@@ -213,9 +295,9 @@ export function TaskDialog({
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="w-[96vw] max-w-5xl p-0 overflow-hidden border border-line bg-surface shadow-2xl rounded-2xl">
+      <DialogContent className="w-[96vw] max-w-5xl p-0 overflow-hidden border border-line bg-surface shadow-2xl rounded-2xl flex flex-col h-[90vh] max-h-[90vh]">
         {/* ============ Header ============ */}
-        <div className="border-b border-line bg-surface-2/70">
+        <div className="shrink-0 border-b border-line bg-surface-2/70">
           {/* Breadcrumb */}
           <div className="flex items-center gap-1.5 px-4 sm:px-6 pt-3 text-[11px] font-semibold text-muted">
             {projectName && (
@@ -365,10 +447,10 @@ export function TaskDialog({
         </div>
 
         {/* ============ Body: Responsive 2 Columns ============ */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] divide-y lg:divide-y-0 lg:divide-x divide-line max-h-[85vh] lg:max-h-[78vh] overflow-y-auto lg:overflow-hidden">
-          {/* Left Column: Description, Subtasks, Comments */}
-          <div className="flex flex-col min-w-0 lg:max-h-full lg:overflow-hidden">
-            <div className="flex-1 min-h-0 p-3.5 sm:p-6 space-y-4 sm:space-y-5 lg:overflow-y-auto">
+        <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[1fr_320px] divide-y lg:divide-y-0 lg:divide-x divide-line overflow-hidden">
+          {/* Left Column: Description, Attachments, Subtasks, Comments */}
+          <div className="flex flex-col min-w-0 h-full overflow-hidden bg-surface">
+            <div className="flex-1 min-h-0 p-4 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto">
               {/* Customer Ticket Origin Banner */}
               {(task.title.startsWith("[TK-") || task.description?.includes("🎫 Nguồn: Báo lỗi từ khách hàng")) && (
                 <div className="p-3 rounded-xl border border-accent/40 bg-accent/10 flex items-center justify-between gap-2 text-xs text-accent">
@@ -378,30 +460,100 @@ export function TaskDialog({
                       Công việc này được tạo từ <strong>Ticket Báo lỗi Khách hàng</strong>
                     </span>
                   </div>
-                  <a
+                  <Link
                     href={`/projects/${projectId}/tickets`}
                     className="text-xs font-bold text-accent hover:underline flex items-center gap-1 shrink-0"
                   >
                     <span>Mở Hộp Thư Ticket</span>
                     <ExternalLink className="w-3 h-3" />
-                  </a>
+                  </Link>
                 </div>
               )}
 
-              {/* Description */}
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-muted">Mô tả chi tiết</Label>
-                <Textarea
-                  defaultValue={task.description ?? ""}
-                  rows={4}
-                  placeholder="Thêm mô tả, tài liệu yêu cầu hoặc ghi chú kỹ thuật..."
-                  onBlur={(e) => {
-                    if (e.target.value !== (task.description ?? "")) {
-                      patchTask({ description: e.target.value });
-                    }
-                  }}
-                  className="text-xs bg-surface-2/60 border-line leading-relaxed focus:border-accent"
-                />
+              {/* Description Section with Markdown Render & Edit */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                    <FileText className="h-3.5 w-3.5 text-accent" />
+                    Mô tả chi tiết
+                  </Label>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingDescription(!isEditingDescription)}
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-accent hover:underline cursor-pointer"
+                  >
+                    {isEditingDescription ? (
+                      <>
+                        <Eye className="h-3 w-3" />
+                        <span>Xem trước</span>
+                      </>
+                    ) : (
+                      <>
+                        <Pencil className="h-3 w-3" />
+                        <span>Chỉnh sửa</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {isEditingDescription ? (
+                  <div className="space-y-2 animate-fade-in-up">
+                    <Textarea
+                      value={descriptionValue}
+                      onChange={(e) => setDescriptionValue(e.target.value)}
+                      rows={6}
+                      placeholder="Thêm mô tả, tài liệu yêu cầu hoặc ghi chú kỹ thuật... (Hỗ trợ Markdown)"
+                      className="text-xs bg-surface-2/80 border-line leading-relaxed focus:border-accent font-sans min-h-[120px]"
+                    />
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-muted">Hỗ trợ Markdown: **in đậm**, ### tiêu đề, - danh sách</span>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setDescriptionValue(task.description ?? "");
+                            setIsEditingDescription(false);
+                          }}
+                          className="h-7 px-2.5 text-xs text-muted hover:text-foreground cursor-pointer"
+                        >
+                          Hủy
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => {
+                            patchTask({ description: descriptionValue });
+                            setIsEditingDescription(false);
+                          }}
+                          className="h-7 px-3 text-xs font-bold bg-accent hover:bg-accent/90 text-white shadow-sm cursor-pointer"
+                        >
+                          <Check className="h-3 w-3 mr-1" /> Lưu mô tả
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => setIsEditingDescription(true)}
+                    className="p-3.5 rounded-xl bg-surface-2/50 border border-line hover:border-line-strong transition-all min-h-[70px] cursor-pointer group relative"
+                    title="Nhấp để chỉnh sửa mô tả"
+                  >
+                    {task.description?.trim() ? (
+                      <RenderMarkdownDescription content={task.description} />
+                    ) : (
+                      <p className="text-xs text-muted italic">
+                        Chưa có mô tả chi tiết. Nhấp vào đây để thêm nội dung...
+                      </p>
+                    )}
+                    <div className="absolute right-2.5 top-2.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold bg-surface-3 text-muted border border-line">
+                        <Pencil className="h-2.5 w-2.5" /> Sửa
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Media Gallery, Attachments, Bug Videos & Files */}
@@ -547,9 +699,9 @@ export function TaskDialog({
               </div>
             </div>
 
-            {/* Composer pinned to the bottom on desktop — stays reachable on long threads */}
+            {/* Composer pinned to the bottom on desktop — stays reachable and never cut off */}
             {tab === "comments" && (
-              <div className="shrink-0 px-3.5 sm:px-6 py-3 border-t border-line bg-surface/95 backdrop-blur-sm">
+              <div className="shrink-0 px-4 sm:px-6 py-3 border-t border-line bg-surface/95 backdrop-blur-sm shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
                 <MentionCommentInput
                   members={members}
                   onSubmit={handleAddComment}
@@ -560,7 +712,7 @@ export function TaskDialog({
           </div>
 
           {/* Right Column: secondary properties, grouped */}
-          <div className="p-3.5 sm:p-5 space-y-4 bg-surface-2/30 overflow-y-auto">
+          <div className="h-full overflow-y-auto p-4 sm:p-5 space-y-4 bg-surface-2/30">
             {!task.assigneeId && currentUser && (
               <button
                 onClick={() => patchTask({ assigneeId: currentUser.id })}
@@ -571,39 +723,45 @@ export function TaskDialog({
             )}
 
             <div className="rounded-xl border border-line bg-surface p-3.5 space-y-3">
-              <div className="text-[10px] font-extrabold uppercase tracking-wider text-muted">Phân loại</div>
-              <div className="grid grid-cols-2 gap-2.5">
-                <div className="space-y-1">
-                  <Label className="text-[10.5px] font-semibold text-muted">Điểm ước lượng</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    defaultValue={task.storyPoints ?? ""}
-                    className="h-8 text-xs bg-surface-2 font-mono"
-                    placeholder="—"
-                    onBlur={(e) => {
-                      const val = e.target.value === "" ? null : Number(e.target.value);
-                      if (val !== task.storyPoints) patchTask({ storyPoints: val });
-                    }}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-[10.5px] font-semibold text-muted">Hạn chót</Label>
-                  <Input
-                    type="date"
-                    defaultValue={task.dueDate ? task.dueDate.slice(0, 10) : ""}
-                    className={`h-8 text-xs bg-surface-2 ${isOverdue ? "text-accent font-bold border-accent/40" : ""}`}
-                    onChange={(e) => {
-                      patchTask({ dueDate: e.target.value || null });
-                    }}
-                  />
-                </div>
+              <div className="text-[10px] font-extrabold uppercase tracking-wider text-muted">
+                Thông số &amp; Thời hạn
               </div>
-              {isOverdue && (
-                <span className="inline-flex items-center gap-1 text-[10.5px] font-bold text-accent">
-                  <AlertTriangle className="h-3 w-3" /> Đã quá hạn xử lý
-                </span>
-              )}
+
+              <div className="space-y-1">
+                <Label className="text-[10.5px] font-semibold text-muted flex items-center justify-between">
+                  <span>Hạn chót hoàn thành</span>
+                  {isOverdue && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-accent">
+                      <AlertTriangle className="h-3 w-3" /> Quá hạn
+                    </span>
+                  )}
+                </Label>
+                <Input
+                  type="date"
+                  defaultValue={task.dueDate ? task.dueDate.slice(0, 10) : ""}
+                  className={`h-8.5 text-xs bg-surface-2 px-3 w-full cursor-pointer ${
+                    isOverdue ? "text-accent font-bold border-accent/40" : ""
+                  }`}
+                  onChange={(e) => {
+                    patchTask({ dueDate: e.target.value || null });
+                  }}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-[10.5px] font-semibold text-muted">Điểm ước lượng (Story points)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  defaultValue={task.storyPoints ?? ""}
+                  className="h-8.5 text-xs bg-surface-2 font-mono px-3 w-full"
+                  placeholder="Chưa ước lượng (—)"
+                  onBlur={(e) => {
+                    const val = e.target.value === "" ? null : Number(e.target.value);
+                    if (val !== task.storyPoints) patchTask({ storyPoints: val });
+                  }}
+                />
+              </div>
             </div>
 
             <div className="rounded-xl border border-line bg-surface p-3.5 space-y-2">

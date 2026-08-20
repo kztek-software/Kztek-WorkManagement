@@ -29,7 +29,7 @@ export function BoardColumn({
   return (
     <div
       id={`board-col-${status.id}`}
-      className="flex w-[84vw] sm:w-80 sm:flex-1 sm:min-w-80 shrink-0 snap-center flex-col h-full max-h-full rounded-2xl border border-line bg-surface/40 p-2 sm:p-2.5 backdrop-blur-sm shadow-sm transition-all overflow-hidden"
+      className="flex w-[84vw] sm:w-auto sm:flex-1 sm:min-w-[240px] md:min-w-[260px] shrink-0 sm:shrink-0 lg:shrink flex-col h-full max-h-full rounded-2xl border border-line bg-surface/40 p-2 sm:p-2.5 backdrop-blur-sm shadow-sm transition-all overflow-hidden"
     >
       {/* Column Header */}
       <div className="flex items-center justify-between px-2 py-1.5 mb-1 shrink-0">

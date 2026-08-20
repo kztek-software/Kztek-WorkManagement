@@ -34,18 +34,50 @@ import {
 } from "@/components/ui/dialog";
 import { SprintDetailDialog } from "@/components/sprint/sprint-detail-dialog";
 import { TaskDialog } from "@/components/board/task-dialog";
+import { useTabCache } from "@/lib/tab-cache";
 
 export default function SprintsPage() {
   const params = useParams<{ projectId: string }>();
   const projectId = params.projectId;
 
-  const [sprints, setSprints] = useState<SprintDto[]>([]);
-  const [tasks, setTasks] = useState<TaskDto[]>([]);
-  const [labels, setLabels] = useState<LabelDto[]>([]);
-  const [members, setMembers] = useState<MemberDto[]>([]);
-  const [projectName, setProjectName] = useState("");
-  const [projectKey, setProjectKey] = useState("TASK");
-  const [loading, setLoading] = useState(true);
+  const tasksApiUrl = projectId ? `/api/projects/${projectId}/tasks` : null;
+
+  const fetchTasks = useCallback(async () => {
+    if (!projectId) throw new Error("No project ID");
+    const headers: Record<string, string> = {};
+    try {
+      const token = localStorage.getItem("flowboard_session");
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+    } catch {}
+
+    const res = await fetch(`/api/projects/${projectId}/tasks`, {
+      credentials: "same-origin",
+      headers,
+    });
+    if (!res.ok) throw new Error("Failed to load sprints data");
+    return await res.json();
+  }, [projectId]);
+
+  const {
+    data: tabData,
+    loading,
+    revalidate: load,
+  } = useTabCache<{
+    sprints?: SprintDto[];
+    tasks?: TaskDto[];
+    labels?: LabelDto[];
+    members?: MemberDto[];
+    project?: { name: string; key: string };
+  }>(tasksApiUrl, fetchTasks, {
+    staleTime: 15000,
+  });
+
+  const sprints = tabData?.sprints || [];
+  const tasks = tabData?.tasks || [];
+  const labels = tabData?.labels || [];
+  const members = tabData?.members || [];
+  const projectName = tabData?.project?.name || "Dự án";
+  const projectKey = tabData?.project?.key || "TASK";
 
   // Selected Sprint for Detail Inspector
   const [selectedSprintId, setSelectedSprintId] = useState<string | null>(null);
@@ -61,27 +93,6 @@ export default function SprintsPage() {
   const [endDate, setEndDate] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-
-  const load = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/projects/${projectId}/tasks`);
-      if (res.ok) {
-        const data = await res.json();
-        setSprints(data.sprints || []);
-        setTasks(data.tasks || []);
-        setLabels(data.labels || []);
-        setMembers(data.members || []);
-        setProjectName(data.project?.name || "Dự án");
-        setProjectKey(data.project?.key || "TASK");
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [projectId]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
 
   async function createSprint(e: React.FormEvent) {
     e.preventDefault();

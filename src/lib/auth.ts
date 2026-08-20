@@ -46,9 +46,9 @@ export async function createSession(userId: string): Promise<string> {
   try {
     const store = await cookies();
     store.set(COOKIE_NAME, token, {
-      httpOnly: true,
+      httpOnly: false,
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.COOKIE_SECURE === "true",
       maxAge: SESSION_DAYS * 24 * 60 * 60,
       path: "/",
     });
@@ -62,7 +62,13 @@ export async function createSession(userId: string): Promise<string> {
 export async function destroySession() {
   try {
     const store = await cookies();
-    store.delete(COOKIE_NAME);
+    store.set(COOKIE_NAME, "", {
+      httpOnly: false,
+      sameSite: "lax",
+      secure: false,
+      maxAge: 0,
+      path: "/",
+    });
   } catch {
     // Ignore error if cookie store cannot be modified
   }

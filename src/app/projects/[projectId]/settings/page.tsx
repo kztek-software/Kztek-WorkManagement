@@ -126,8 +126,10 @@ export default function AdminSettingsPage() {
     fetchConfig();
   }, []);
 
-  async function handleSaveConfig(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSaveConfig(e?: React.FormEvent | React.MouseEvent) {
+    if (e && typeof e.preventDefault === "function") {
+      e.preventDefault();
+    }
     setSaving(true);
     setSuccessMessage("");
     setErrorMessage("");
@@ -142,13 +144,16 @@ export default function AdminSettingsPage() {
       const data = await res.json();
       if (res.ok) {
         setSuccessMessage("✓ Lưu cấu hình hệ thống thành công!");
-        setConfig(data.config);
+        if (data.config) {
+          setConfig(data.config);
+        }
         setTimeout(() => setSuccessMessage(""), 5000);
       } else {
         setErrorMessage(data.error || "Lỗi khi lưu cấu hình");
       }
-    } catch {
-      setErrorMessage("Không thể kết nối máy chủ để lưu cấu hình");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setErrorMessage("Không thể kết nối máy chủ để lưu cấu hình: " + msg);
     } finally {
       setSaving(false);
     }
@@ -393,7 +398,7 @@ export default function AdminSettingsPage() {
             </div>
           </div>
 
-          <form onSubmit={handleSaveConfig} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <form onSubmit={(e) => { e.preventDefault(); handleSaveConfig(e); }} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="rounded-2xl border border-line bg-surface p-5 space-y-4 shadow-sm">
               <div className="font-bold text-xs text-foreground flex items-center gap-1.5 border-b border-line/60 pb-2">
                 <Server className="h-3.5 w-3.5 text-accent" /> Thông Số Kết Nối Máy Chủ SMTP
@@ -457,7 +462,7 @@ export default function AdminSettingsPage() {
                   <Input
                     type={showPassword ? "text" : "password"}
                     placeholder="Nhập mật khẩu ứng dụng..."
-                    value={config.smtp.pass}
+                    value={config.smtp.pass || ""}
                     onChange={(e) =>
                       setConfig({ ...config, smtp: { ...config.smtp, pass: e.target.value } })
                     }
@@ -466,7 +471,8 @@ export default function AdminSettingsPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted hover:text-foreground cursor-pointer"
+                    title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted hover:text-foreground cursor-pointer transition-colors"
                   >
                     {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                   </button>
@@ -571,11 +577,12 @@ export default function AdminSettingsPage() {
 
               <div className="pt-4 border-t border-line flex justify-end">
                 <Button
-                  type="submit"
+                  type="button"
+                  onClick={handleSaveConfig}
                   disabled={saving}
                   className="font-bold text-xs gap-1.5 bg-accent hover:bg-accent/90 text-white cursor-pointer"
                 >
-                  <Save className="h-3.5 w-3.5" /> Lưu Cấu Hình SMTP
+                  <Save className="h-3.5 w-3.5" /> {saving ? "Đang lưu..." : "Lưu Cấu Hình SMTP"}
                 </Button>
               </div>
             </div>
@@ -585,7 +592,7 @@ export default function AdminSettingsPage() {
 
       {/* Tab 2: Cấu hình Thương hiệu & Đơn vị */}
       {activeTab === "branding" && (
-        <form onSubmit={handleSaveConfig} className="rounded-2xl border border-line bg-surface p-6 space-y-4 shadow-sm max-w-2xl">
+        <form onSubmit={(e) => { e.preventDefault(); handleSaveConfig(e); }} className="rounded-2xl border border-line bg-surface p-6 space-y-4 shadow-sm max-w-2xl">
           <div className="font-bold text-xs text-foreground flex items-center gap-1.5 border-b border-line/60 pb-2">
             <Building2 className="h-4 w-4 text-accent" /> Nhận Diện Thương Hiệu & Thông Tin Doanh Nghiệp
           </div>
@@ -677,11 +684,12 @@ export default function AdminSettingsPage() {
 
           <div className="pt-4 border-t border-line flex justify-end">
             <Button
-              type="submit"
+              type="button"
+              onClick={handleSaveConfig}
               disabled={saving}
               className="font-bold text-xs gap-1.5 bg-accent hover:bg-accent/90 text-white cursor-pointer"
             >
-              <Save className="h-3.5 w-3.5" /> Lưu Thông Tin Thương Hiệu & Địa Chỉ App
+              <Save className="h-3.5 w-3.5" /> {saving ? "Đang lưu..." : "Lưu Thông Tin Thương Hiệu & Địa Chỉ App"}
             </Button>
           </div>
         </form>
@@ -689,7 +697,7 @@ export default function AdminSettingsPage() {
 
       {/* Tab 3: Quy tắc Thông báo */}
       {activeTab === "notifications" && (
-        <form onSubmit={handleSaveConfig} className="rounded-2xl border border-line bg-surface p-6 space-y-4 shadow-sm max-w-2xl">
+        <form onSubmit={(e) => { e.preventDefault(); handleSaveConfig(e); }} className="rounded-2xl border border-line bg-surface p-6 space-y-4 shadow-sm max-w-2xl">
           <div className="font-bold text-xs text-foreground flex items-center gap-1.5 border-b border-line/60 pb-2">
             <BellRing className="h-4 w-4 text-accent" /> Quy Tắc Kích Hoạt Thông Báo Tự Động
           </div>
@@ -778,11 +786,12 @@ export default function AdminSettingsPage() {
 
           <div className="pt-4 border-t border-line flex justify-end">
             <Button
-              type="submit"
+              type="button"
+              onClick={handleSaveConfig}
               disabled={saving}
               className="font-bold text-xs gap-1.5 bg-accent hover:bg-accent/90 text-white cursor-pointer"
             >
-              <Save className="h-3.5 w-3.5" /> Lưu Quy Tắc Thông Báo
+              <Save className="h-3.5 w-3.5" /> {saving ? "Đang lưu..." : "Lưu Quy Tắc Thông Báo"}
             </Button>
           </div>
         </form>

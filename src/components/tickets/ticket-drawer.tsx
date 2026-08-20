@@ -378,8 +378,8 @@ export function TicketDrawer({
                       <span>{ticket.project.name}</span>
                     </span>
                   ) : (
-                    <span className="h-8 px-2.5 rounded-lg border border-amber-500/30 bg-amber-500/15 text-xs font-bold text-amber-600 flex items-center gap-1.5 animate-pulse">
-                      <AlertTriangle className="w-3.5 h-3.5" />
+                    <span className="h-8 px-2.5 rounded-lg border border-amber-400/50 dark:border-amber-500/40 bg-amber-500/15 dark:bg-amber-500/20 text-xs font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                      <AlertTriangle className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
                       <span>Chờ điều phối</span>
                     </span>
                   )}

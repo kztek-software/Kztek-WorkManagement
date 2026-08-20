@@ -283,3 +283,33 @@ model Attachment {
   @@index([taskId])
   @@index([ticketId])
 }
+
+model SystemSetting {
+  id                   String   @id @default("default")
+  // SMTP Settings
+  smtpHost             String?  @default("")
+  smtpPort             Int      @default(587)
+  smtpUser             String?  @default("")
+  smtpPass             String?  @default("")
+  smtpSecure           Boolean  @default(false)
+  smtpFrom             String   @default("no-reply@kztek.net")
+  smtpFromName         String   @default("KZTEK Work Management")
+
+  // Branding Settings
+  systemName           String   @default("KZTEK Work Management")
+  companyName          String   @default("CÔNG TY CỔ PHẦN CÔNG NGHỆ KZTEK")
+  hotline              String   @default("024 3782 2288")
+  supportEmail         String   @default("support@kztek.net")
+  website              String   @default("https://kztek.net")
+  appUrl               String   @default("http://localhost:3000")
+
+  // Notification Rules
+  notifyOnAssign       Boolean  @default(true)
+  notifyOnStatusChange Boolean  @default(true)
+  notifyOnComment      Boolean  @default(true)
+  enableRealtimeSse    Boolean  @default(true)
+
+  updatedAt            DateTime @default(now()) @updatedAt
+  updatedBy            String?  @default("Hệ thống (Mặc định)")
+}
+

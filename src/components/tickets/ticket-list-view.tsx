@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import {
   LifeBuoy,
@@ -33,6 +33,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog } from "primereact/dialog";
+import { Paginator, type PaginatorPageChangeEvent } from "primereact/paginator";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
@@ -84,6 +85,10 @@ export function TicketListView({
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [priorityFilter, setPriorityFilter] = useState("ALL");
   const [typeFilter, setTypeFilter] = useState("ALL");
+
+  // Pagination State
+  const [first, setFirst] = useState(0);
+  const [rows, setRows] = useState(10);
 
   // Selected Ticket for Drawer
   const [selectedTicket, setSelectedTicket] = useState<CustomerTicketDto | null>(null);
@@ -138,6 +143,16 @@ export function TicketListView({
     }
     fetchTickets();
   }, [scopeFilter, statusFilter, priorityFilter, typeFilter]);
+
+  // Reset trang về 1 khi thay đổi bộ lọc hoặc tìm kiếm
+  useEffect(() => {
+    setFirst(0);
+  }, [scopeFilter, statusFilter, priorityFilter, typeFilter, search]);
+
+  // Cắt lát danh sách ticket theo trang hiện tại
+  const paginatedTickets = useMemo(() => {
+    return tickets.slice(first, first + rows);
+  }, [tickets, first, rows]);
 
   function handleSearchSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -337,14 +352,14 @@ export function TicketListView({
           onClick={() => setScopeFilter("UNASSIGNED")}
           className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
             scopeFilter === "UNASSIGNED"
-              ? "border-amber-400 text-amber-400 bg-surface/50 rounded-t-lg"
-              : "border-transparent text-muted hover:text-amber-300"
+              ? "border-amber-500 text-amber-700 dark:text-amber-400 bg-surface/50 rounded-t-lg"
+              : "border-transparent text-muted hover:text-amber-700 dark:hover:text-amber-300"
           }`}
         >
-          <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+          <AlertTriangle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
           <span>Chờ Admin Điều Phối</span>
           {typeof stats.unassigned === "number" && stats.unassigned > 0 && (
-            <span className="px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-mono font-black border border-amber-500/30">
+            <span className="px-1.5 py-0.2 rounded-full bg-amber-500/15 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 text-[10px] font-mono font-black border border-amber-400/50 dark:border-amber-500/30">
               {stats.unassigned}
             </span>
           )}
@@ -471,7 +486,7 @@ export function TicketListView({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line/60">
-                  {tickets.map((t) => {
+                  {paginatedTickets.map((t) => {
                     const statusMeta = statusBadges[t.status] || statusBadges.OPEN;
                     const priorityMeta = priorityBadges[t.priority] || priorityBadges.MEDIUM;
                     const TypeIcon = typeIcons[t.type] || Bug;
@@ -513,8 +528,8 @@ export function TicketListView({
                               <span>{t.project.name}</span>
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 animate-pulse">
-                              <AlertTriangle className="w-3 h-3" />
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-400/50 dark:border-amber-500/40">
+                              <AlertTriangle className="w-3 h-3 text-amber-700 dark:text-amber-400" />
                               <span>Chờ điều phối</span>
                             </span>
                           )}
@@ -565,6 +580,26 @@ export function TicketListView({
                   })}
                 </tbody>
               </table>
+            </div>
+
+            {/* Pagination Controls */}
+            <div className="p-3.5 border-t border-line bg-surface-2/40 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="text-xs text-muted font-medium">
+                Hiển thị <strong className="text-foreground">{tickets.length > 0 ? first + 1 : 0}</strong> -{" "}
+                <strong className="text-foreground">{Math.min(first + rows, tickets.length)}</strong> trên tổng số{" "}
+                <strong className="text-foreground">{tickets.length}</strong> ticket
+              </div>
+              <Paginator
+                first={first}
+                rows={rows}
+                totalRecords={tickets.length}
+                rowsPerPageOptions={[5, 10, 20, 50]}
+                onPageChange={(e: PaginatorPageChangeEvent) => {
+                  setFirst(e.first);
+                  setRows(e.rows);
+                }}
+                className="!bg-transparent !p-0 !border-0"
+              />
             </div>
           </div>
         )}

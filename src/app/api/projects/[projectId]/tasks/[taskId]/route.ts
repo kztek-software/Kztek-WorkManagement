@@ -108,7 +108,7 @@ export async function PATCH(
   publish(projectId, { type: "TASK_CHANGED", taskId, actorId: user.id });
 
   // Gửi thông báo & Email nếu có phân công người mới
-  if (d.assigneeId && d.assigneeId !== task.assigneeId && d.assigneeId !== user.id) {
+  if (d.assigneeId && d.assigneeId !== task.assigneeId) {
     notifyTaskAssigned({
       taskId,
       assigneeId: d.assigneeId,

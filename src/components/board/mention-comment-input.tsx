@@ -274,21 +274,54 @@ export function RenderCommentContent({
   body: string;
   members?: MemberDto[];
 }) {
-  // Regex to match mentions like @Name or @email
-  const mentionRegex = /(@[a-zA-Z0-9_\u00C0-\u1EF9\s]+?)(?=[.,!?;:\s]|$)/g;
+  if (!body) return null;
 
-  // Build member name map for quick lookup
-  const memberNames = new Set(members.map((m) => m.user.name.toLowerCase()));
+  // Lấy danh sách tên thành viên (sắp xếp theo độ dài giảm dần để match tên dài trước)
+  const sortedNames = members
+    .map((m) => m.user.name.trim())
+    .filter(Boolean)
+    .sort((a, b) => b.length - a.length);
 
-  const parts = body.split(mentionRegex);
+  if (sortedNames.length > 0) {
+    // Escape regex special characters in names
+    const escapedNames = sortedNames.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+    // Match @FullName (chính xác nguyên cụm họ và tên có dấu cách)
+    const regex = new RegExp(`(@(?:${escapedNames}))(?=[.,!?;:\\s]|$)`, "gi");
+
+    const parts = body.split(regex);
+
+    return (
+      <p className="whitespace-pre-wrap text-xs text-muted-light leading-relaxed">
+        {parts.map((part, i) => {
+          if (part && part.startsWith("@")) {
+            const rawName = part.slice(1).trim();
+            const isMatch = sortedNames.some((n) => n.toLowerCase() === rawName.toLowerCase());
+            if (isMatch) {
+              return (
+                <span
+                  key={i}
+                  className="inline-flex items-center gap-0.5 rounded-md bg-accent/15 px-1.5 py-0.2 text-[11px] font-bold text-accent border border-accent/25 mx-0.5 align-middle"
+                >
+                  <AtSign className="h-2.5 w-2.5 inline" />
+                  {rawName}
+                </span>
+              );
+            }
+          }
+          return <span key={i}>{part}</span>;
+        })}
+      </p>
+    );
+  }
+
+  // Fallback regex nếu không truyền danh sách thành viên
+  const fallbackRegex = /(@[a-zA-Z0-9_\u00C0-\u1EF9]+(?:\s+[a-zA-Z0-9_\u00C0-\u1EF9]+)*)(?=[.,!?;:]|\s|$)/g;
+  const parts = body.split(fallbackRegex);
 
   return (
     <p className="whitespace-pre-wrap text-xs text-muted-light leading-relaxed">
       {parts.map((part, i) => {
-        if (part.startsWith("@")) {
-          const nameWithoutAt = part.slice(1).trim().toLowerCase();
-          const isKnownMember = memberNames.size === 0 || memberNames.has(nameWithoutAt);
-
+        if (part && part.startsWith("@")) {
           return (
             <span
               key={i}

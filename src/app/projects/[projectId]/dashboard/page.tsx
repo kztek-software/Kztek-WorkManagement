@@ -48,6 +48,7 @@ import { PROJECT_STATUSES, projectStatusMeta } from "@/lib/constants";
 import { canManageMembers } from "@/lib/permissions";
 import { Tooltip } from "@/components/ui/tooltip";
 import type { ProjectDashboardData } from "@/lib/types";
+import { useTabCache } from "@/lib/tab-cache";
 
 const tooltipStyle = {
   backgroundColor: "#181E2E",
@@ -70,12 +71,15 @@ export default function ProjectDashboardPage() {
     if (match) projectId = match[1];
   }
 
-  const [data, setData] = useState<ProjectDashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const [leftTab, setLeftTab] = useState<"MEMBERS" | "TEAMS">("MEMBERS");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Project Settings & Delete State
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -183,37 +187,38 @@ export default function ProjectDashboardPage() {
     }
   }
 
-  const loadDashboard = useCallback(async () => {
-    if (!projectId) return;
-    setLoading(true);
-    setErrorMsg(null);
-    try {
-      const headers: Record<string, string> = {};
-      try {
-        const token = localStorage.getItem("flowboard_session");
-        if (token) headers["Authorization"] = `Bearer ${token}`;
-      } catch {}
+  const dashboardApiUrl = projectId ? `/api/projects/${projectId}/dashboard` : null;
 
-      const res = await fetch(`/api/projects/${projectId}/dashboard`, {
-        credentials: "same-origin",
-        headers,
-      });
-      const json = await res.json().catch(() => null);
-      if (res.ok && json) {
-        setData(json);
-      } else {
-        setErrorMsg(json?.error || "Không thể tải dữ liệu Dashboard dự án");
-      }
-    } catch {
-      setErrorMsg("Lỗi kết nối máy chủ");
-    } finally {
-      setLoading(false);
+  const fetchDashboard = useCallback(async (): Promise<ProjectDashboardData> => {
+    if (!projectId) throw new Error("No project ID");
+    const headers: Record<string, string> = {};
+    try {
+      const token = localStorage.getItem("flowboard_session");
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+    } catch {}
+
+    const res = await fetch(`/api/projects/${projectId}/dashboard`, {
+      credentials: "same-origin",
+      headers,
+    });
+    const json = await res.json().catch(() => null);
+    if (res.ok && json) {
+      return json;
     }
+    throw new Error(json?.error || "Không thể tải dữ liệu Dashboard dự án");
   }, [projectId]);
 
-  useEffect(() => {
-    loadDashboard();
-  }, [loadDashboard]);
+  const {
+    data,
+    loading,
+    mutate: setData,
+    revalidate: loadDashboard,
+  } = useTabCache<ProjectDashboardData>(dashboardApiUrl, fetchDashboard, {
+    staleTime: 15000,
+    onError: (err) => {
+      setErrorMsg(err instanceof Error ? err.message : "Lỗi kết nối máy chủ");
+    },
+  });
 
   async function handleStatusChange(newStatus: string) {
     if (!data) return;
@@ -268,10 +273,11 @@ export default function ProjectDashboardPage() {
             >
               <RefreshCw className="h-3.5 w-3.5 mr-1" /> Thử lại
             </Button>
-            <Link href={`/projects/${projectId}/board`}>
-              <Button size="sm" variant="outline" className="text-xs font-semibold border-line">
-                <KanbanSquare className="h-3.5 w-3.5 mr-1" /> Mở Board
-              </Button>
+            <Link
+              href={`/projects/${projectId}/board`}
+              className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-md border border-line bg-surface hover:bg-surface-2 text-xs font-semibold text-foreground transition-colors cursor-pointer"
+            >
+              <KanbanSquare className="h-3.5 w-3.5" /> Mở Board
             </Link>
           </div>
         </div>
@@ -298,22 +304,22 @@ export default function ProjectDashboardPage() {
   return (
     <div className="flex h-full flex-1 flex-col overflow-hidden bg-background">
       {/* Top Header Controls Bar */}
-      <div className="flex flex-col sm:flex-row min-h-12 shrink-0 sm:items-center justify-between border-b border-line px-3 sm:px-4 py-2 sm:py-0 bg-surface/50 backdrop-blur-md gap-2">
+      <div className="flex flex-col sm:flex-row min-h-13 shrink-0 sm:items-center justify-between border-b border-line px-3 sm:px-4 py-2 sm:py-0 bg-surface/50 backdrop-blur-md gap-2">
         {/* Left Project Info */}
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent/15 border border-accent/30 text-accent font-bold text-xs shrink-0">
-            <LayoutDashboard className="h-3.5 w-3.5" />
+          <div className="flex h-8.5 w-8.5 sm:h-9 sm:w-9 items-center justify-center rounded-lg bg-accent/15 border border-accent/30 text-accent font-bold text-xs shrink-0">
+            <LayoutDashboard className="h-4 w-4" />
           </div>
           <div className="flex items-center gap-2 min-w-0">
-            <h1 className="text-xs font-bold text-foreground truncate">{project.name}</h1>
-            <span className="text-[10px] font-mono text-muted bg-surface-2 px-1.5 py-0.2 rounded border border-line shrink-0">
+            <h1 className="text-xs sm:text-sm font-bold text-foreground truncate">{project.name}</h1>
+            <span className="text-[10px] sm:text-xs font-mono text-muted bg-surface-2 px-1.5 py-0.5 rounded border border-line shrink-0">
               {project.key}
             </span>
           </div>
         </div>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-0.5 max-w-full">
+        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-1 max-w-full">
           {/* Status Dropdown Selector */}
           <div className="relative shrink-0">
             {hasManageRight ? (
@@ -322,16 +328,16 @@ export default function ProjectDashboardPage() {
                   type="button"
                   onClick={() => setStatusMenuOpen((v) => !v)}
                   disabled={updatingStatus}
-                  className="flex h-7.5 items-center gap-1.5 px-2.5 rounded-lg border text-[11px] font-bold transition-all shadow-sm cursor-pointer hover:opacity-90 shrink-0"
+                  className="flex h-8.5 sm:h-9 items-center gap-1.5 px-3 rounded-lg border text-xs font-bold transition-all shadow-sm cursor-pointer hover:opacity-90 shrink-0"
                   style={{
                     backgroundColor: currentStatusMeta.bg,
                     color: currentStatusMeta.color,
                     borderColor: currentStatusMeta.border,
                   }}
                 >
-                  <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: currentStatusMeta.color }} />
-                  <span className="truncate max-w-[100px] sm:max-w-none">{currentStatusMeta.label}</span>
-                  <ChevronRight className="h-3 w-3 rotate-90 opacity-70 shrink-0" />
+                  <span className="h-2 w-2 rounded-full" style={{ backgroundColor: currentStatusMeta.color }} />
+                  <span className="truncate max-w-[110px] sm:max-w-none">{currentStatusMeta.label}</span>
+                  <ChevronRight className="h-3.5 w-3.5 rotate-90 opacity-70 shrink-0" />
                 </button>
 
                 {statusMenuOpen && (
@@ -362,14 +368,14 @@ export default function ProjectDashboardPage() {
               </div>
             ) : (
               <div
-                className="flex h-7.5 items-center gap-1.5 px-2.5 rounded-lg border text-[11px] font-bold shadow-sm shrink-0"
+                className="flex h-8.5 sm:h-9 items-center gap-1.5 px-3 rounded-lg border text-xs font-bold shadow-sm shrink-0"
                 style={{
                   backgroundColor: currentStatusMeta.bg,
                   color: currentStatusMeta.color,
                   borderColor: currentStatusMeta.border,
                 }}
               >
-                <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: currentStatusMeta.color }} />
+                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: currentStatusMeta.color }} />
                 <span>{currentStatusMeta.label}</span>
               </div>
             )}
@@ -379,31 +385,29 @@ export default function ProjectDashboardPage() {
             size="sm"
             variant="outline"
             onClick={loadDashboard}
-            className="h-7.5 px-2 text-xs font-semibold border-line bg-surface hover:bg-surface-2 shrink-0"
+            className="h-8.5 sm:h-9 px-3 text-xs font-semibold border-line bg-surface hover:bg-surface-2 shrink-0 gap-1.5"
           >
-            <RefreshCw className="h-3 w-3 sm:mr-1 text-muted" />
+            <RefreshCw className="h-3.5 w-3.5 text-muted" />
             <span className="hidden sm:inline">Tải lại</span>
           </Button>
 
-          <Link href={`/projects/${projectId}/board`} className="shrink-0">
-            <Button size="sm" className="h-7.5 px-2.5 text-xs font-bold bg-accent hover:bg-accent/90 text-white shadow-md shadow-accent/25">
-              <KanbanSquare className="h-3.5 w-3.5 sm:mr-1" />
-              <span className="hidden sm:inline">Mở Board</span>
-              <span className="sm:hidden">Board</span>
-            </Button>
+          <Link
+            href={`/projects/${projectId}/board`}
+            className="h-8.5 sm:h-9 px-3.5 text-xs font-bold bg-accent hover:bg-accent/90 text-white shadow-md shadow-accent/25 gap-1.5 inline-flex items-center justify-center rounded-md cursor-pointer transition-colors shrink-0"
+          >
+            <KanbanSquare className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Mở Board</span>
+            <span className="sm:hidden">Board</span>
           </Link>
 
           {hasManageRight && (
-            <Link href={`/projects/${projectId}/all-projects`} className="shrink-0">
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-7.5 px-2 text-xs font-bold border-accent/40 text-accent hover:bg-accent/10 shadow-sm"
-              >
-                <FolderKanban className="h-3 w-3 sm:mr-1 text-accent" />
-                <span className="hidden md:inline">Tất Cả Dự Án</span>
-                <span className="md:hidden">Dự án</span>
-              </Button>
+            <Link
+              href={`/projects/${projectId}/all-projects`}
+              className="h-8.5 sm:h-9 px-3 text-xs font-bold border border-accent/40 text-accent hover:bg-accent/10 shadow-sm gap-1.5 inline-flex items-center justify-center rounded-md cursor-pointer transition-colors shrink-0"
+            >
+              <FolderKanban className="h-3.5 w-3.5 text-accent" />
+              <span className="hidden md:inline">Tất Cả Dự Án</span>
+              <span className="md:hidden">Dự án</span>
             </Link>
           )}
 
@@ -413,9 +417,9 @@ export default function ProjectDashboardPage() {
                 size="sm"
                 variant="outline"
                 onClick={handleOpenSettings}
-                className="h-7.5 px-2 text-xs font-semibold border-line bg-surface hover:bg-surface-2 text-muted hover:text-foreground shrink-0"
+                className="h-8.5 sm:h-9 w-8.5 sm:w-9 px-0 text-xs font-semibold border-line bg-surface hover:bg-surface-2 text-muted hover:text-foreground shrink-0 flex items-center justify-center"
               >
-                <Settings className="h-3.5 w-3.5" />
+                <Settings className="h-4 w-4" />
               </Button>
             </Tooltip>
           )}
@@ -530,57 +534,60 @@ export default function ProjectDashboardPage() {
 
         {/* ROW 2: ACTIVE SPRINT COMPACT STRIP (IF RUNNING) */}
         {activeSprint && (
-          <div className="shrink-0 rounded-xl border border-accent/40 bg-accent/10 px-3.5 py-1.5 flex items-center justify-between gap-3 text-xs shadow-sm">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="h-5 w-5 rounded-md bg-accent text-white flex items-center justify-center shrink-0">
-                <Rocket className="h-3 w-3" />
+          <div className="shrink-0 rounded-xl border border-accent/40 bg-accent/10 px-3.5 py-2 flex items-center justify-between gap-3 text-xs shadow-sm">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="h-6 w-6 rounded-lg bg-accent text-white flex items-center justify-center shrink-0 shadow-sm shadow-accent/30">
+                <Rocket className="h-3.5 w-3.5" />
               </div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-accent shrink-0">Sprint:</span>
-              <span className="font-extrabold text-foreground truncate">{activeSprint.name}</span>
-              {activeSprint.goal && (
-                <span className="text-muted text-[11px] truncate hidden md:inline">• {activeSprint.goal}</span>
-              )}
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-accent shrink-0">Sprint:</span>
+                <span className="font-extrabold text-foreground truncate">{activeSprint.name}</span>
+                {activeSprint.goal && (
+                  <span className="text-muted text-[11px] truncate hidden md:inline">• {activeSprint.goal}</span>
+                )}
+              </div>
             </div>
 
-            <div className="flex items-center gap-4 shrink-0 text-[11px]">
-              <span className="flex items-center gap-1 text-muted">
-                <Calendar className="h-3 w-3 text-accent" />
+            <div className="flex items-center gap-3 sm:gap-4 shrink-0 text-[11px]">
+              <span className="flex items-center gap-1 text-muted hidden sm:inline-flex">
+                <Calendar className="h-3.5 w-3.5 text-accent" />
                 {activeSprint.daysRemaining !== null ? `Còn ${activeSprint.daysRemaining} ngày` : "Chưa set hạn"}
               </span>
-              <span className="text-emerald-600 font-bold">
+              <span className="text-emerald-600 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
                 {activeSprint.doneTasks}/{activeSprint.totalTasks} việc ({activeSprint.donePoints}/{activeSprint.totalPoints} pts)
               </span>
-              <Link href={`/projects/${projectId}/sprints`}>
-                <span className="text-accent hover:underline font-bold text-[11px] flex items-center gap-0.5">
-                  Chi tiết <ChevronRight className="h-3 w-3" />
-                </span>
+              <Link
+                href={`/projects/${projectId}/sprints`}
+                className="h-7.5 px-3 rounded-lg bg-accent text-white hover:bg-accent-hover font-bold text-xs inline-flex items-center gap-1 shadow-md shadow-accent/25 transition-all cursor-pointer hover:scale-105 active:scale-95 shrink-0"
+              >
+                <span>Chi tiết</span>
+                <ChevronRight className="h-3.5 w-3.5" />
               </Link>
             </div>
           </div>
         )}
 
-        {/* ROW 3: SPLIT 2-COLUMN SINGLE-VIEW ANALYTICAL WORKSPACE */}
-        <div className="flex-1 min-h-0 grid grid-cols-12 gap-3 overflow-visible lg:overflow-hidden pb-4 lg:pb-0">
-          {/* LEFT 7 COLS: CHARTS & TEAM/MEMBERS TABLE */}
-          <div className="col-span-12 lg:col-span-7 flex flex-col gap-3 min-h-0 lg:h-full overflow-visible lg:overflow-hidden">
-            {/* Top Charts Card */}
-            <div className="h-auto shrink-0 lg:shrink lg:h-[48%] min-h-[460px] sm:min-h-[250px] lg:min-h-0 rounded-xl border border-line bg-surface p-3 flex flex-col shadow-sm overflow-hidden">
-              <div className="flex items-center justify-between pb-1.5 border-b border-line/60 shrink-0">
-                <div className="flex items-center gap-1.5">
-                  <Layers className="h-3.5 w-3.5 text-accent" />
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-foreground">
-                    Phân bổ Trạng thái & Mức độ ưu tiên
-                  </span>
-                </div>
-                <span className="text-[10px] text-muted font-mono">{summary.totalTasks} công việc</span>
+        {/* ROW 3: SPLIT 2-COLUMN SINGLE-VIEW ANALYTICAL WORKSPACE (ALIGNED 2-ROW GRID) */}
+        <div className="flex-1 min-h-0 grid grid-cols-12 lg:grid-rows-2 gap-3 overflow-visible lg:overflow-hidden pb-4 lg:pb-0">
+          {/* ROW 1 - LEFT 7 COLS: CHARTS CARD */}
+          <div className="col-span-12 lg:col-span-7 lg:row-start-1 h-auto min-h-[380px] sm:min-h-[260px] lg:min-h-0 lg:h-full rounded-xl border border-line bg-surface p-3 flex flex-col shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between pb-1.5 border-b border-line/60 shrink-0">
+              <div className="flex items-center gap-1.5">
+                <Layers className="h-3.5 w-3.5 text-accent" />
+                <span className="text-[11px] font-bold uppercase tracking-wider text-foreground">
+                  Phân bổ Trạng thái & Mức độ ưu tiên
+                </span>
               </div>
+              <span className="text-[10px] text-muted font-mono">{summary.totalTasks} công việc</span>
+            </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                {/* Status Chart */}
-                <div className="flex flex-col">
-                  <span className="text-[10px] text-muted font-semibold mb-1">Theo Trạng thái</span>
-                  <div className="w-full h-[180px]">
-                    <ResponsiveContainer width="100%" height={180}>
+            <div className="flex-1 min-h-0 grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+              {/* Status Chart */}
+              <div className="flex flex-col h-full min-h-0">
+                <span className="text-[10px] text-muted font-semibold mb-1 shrink-0">Theo Trạng thái</span>
+                <div className="w-full flex-1 min-h-[140px] max-h-[220px]">
+                  {mounted ? (
+                    <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={statusDistribution} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#262b36" vertical={false} />
                         <XAxis dataKey="label" tick={{ fontSize: 9, fill: "#8b93a3" }} />
@@ -593,14 +600,20 @@ export default function ProjectDashboardPage() {
                         </Bar>
                       </BarChart>
                     </ResponsiveContainer>
-                  </div>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-[10px] text-muted">
+                      Đang tải biểu đồ...
+                    </div>
+                  )}
                 </div>
+              </div>
 
-                {/* Priority Chart */}
-                <div className="flex flex-col">
-                  <span className="text-[10px] text-muted font-semibold mb-1">Theo Mức độ ưu tiên</span>
-                  <div className="w-full h-[180px]">
-                    <ResponsiveContainer width="100%" height={180}>
+              {/* Priority Chart */}
+              <div className="flex flex-col h-full min-h-0">
+                <span className="text-[10px] text-muted font-semibold mb-1 shrink-0">Theo Mức độ ưu tiên</span>
+                <div className="w-full flex-1 min-h-[140px] max-h-[220px]">
+                  {mounted ? (
+                    <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={priorityDistribution} layout="vertical" margin={{ top: 5, right: 15, left: 0, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#262b36" horizontal={false} />
                         <XAxis type="number" tick={{ fontSize: 9, fill: "#8b93a3" }} allowDecimals={false} />
@@ -613,72 +626,143 @@ export default function ProjectDashboardPage() {
                         </Bar>
                       </BarChart>
                     </ResponsiveContainer>
-                  </div>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-[10px] text-muted">
+                      Đang tải biểu đồ...
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Bottom Tabbed Panel: Members Workload / Teams Breakdown */}
-            <div className="h-auto shrink-0 lg:shrink min-h-[280px] lg:h-[52%] lg:min-h-0 rounded-xl border border-line bg-surface flex flex-col overflow-hidden shadow-sm">
-              {/* Tabs Header */}
-              <div className="flex items-center justify-between border-b border-line px-3 py-1.5 bg-surface-2/40 shrink-0">
-                <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
-                  <button
-                    type="button"
-                    onClick={() => setLeftTab("MEMBERS")}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
-                      leftTab === "MEMBERS"
-                        ? "bg-accent text-white shadow-sm"
-                        : "text-muted hover:text-foreground hover:bg-surface"
+          {/* ROW 1 - RIGHT 5 COLS: URGENT TASKS CARD */}
+          <div className="col-span-12 lg:col-span-5 lg:row-start-1 h-auto min-h-[240px] lg:min-h-0 lg:h-full rounded-xl border border-line bg-surface p-2.5 flex flex-col shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between pb-1.5 border-b border-line/60 shrink-0">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+                <AlertTriangle className="h-3.5 w-3.5 text-accent" />
+                <span>Công việc cần xử lý gấp ({urgentAndOverdueTasks.length})</span>
+              </div>
+              <Link
+                href={`/projects/${projectId}/board`}
+                className="px-2 py-0.5 rounded-md bg-accent/15 hover:bg-accent/25 text-accent border border-accent/30 text-[10px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
+              >
+                Mở Board <ArrowUpRight className="h-3 w-3" />
+              </Link>
+            </div>
+
+            <div className="flex-1 min-h-0 overflow-y-auto pt-1.5 space-y-1.5 pr-1">
+              {urgentAndOverdueTasks.map((t) => (
+                <div
+                  key={t.id}
+                  className={`flex items-center justify-between p-2 rounded-lg border text-xs transition-colors ${
+                    t.isOverdue ? "border-accent/40 bg-accent-subtle" : "border-line bg-surface-2/60"
+                  }`}
+                >
+                  <div className="min-w-0 flex-1 pr-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-mono text-[10px] font-bold text-muted">#{t.number}</span>
+                      <span className="font-semibold text-foreground truncate">{t.title}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-[10px] text-muted mt-0.5">
+                      {t.isOverdue && (
+                        <span className="text-accent font-bold flex items-center gap-0.5">
+                          <Clock className="h-2.5 w-2.5" /> Quá hạn ({t.dueDate?.slice(5, 10)})
+                        </span>
+                      )}
+                      {t.assignee && (
+                        <span className="flex items-center gap-1 truncate">
+                          <Avatar className="h-3.5 w-3.5 text-[8px]">
+                            <AvatarFallback color={t.assignee.avatarColor}>
+                              {initials(t.assignee.name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          {t.assignee.name}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <span
+                    className={`px-1.5 py-0.2 rounded text-[9px] font-bold shrink-0 ${
+                      t.priority === "URGENT" ? "bg-accent-subtle text-accent" : "bg-surface text-muted"
                     }`}
                   >
-                    <Users className="h-3 w-3" />
-                    <span>Năng suất Nhân sự ({memberWorkloads.length})</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setLeftTab("TEAMS")}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                      leftTab === "TEAMS"
-                        ? "bg-accent text-white shadow-sm"
-                        : "text-muted hover:text-foreground hover:bg-surface"
-                    }`}
-                  >
-                    <Building2 className="h-3 w-3" />
-                    <span>Phòng ban ({teamBreakdown.length})</span>
-                  </button>
-                </div>
-
-                <Link href={`/projects/${projectId}/reports`}>
-                  <span className="text-[10px] font-bold text-accent hover:underline flex items-center gap-0.5 whitespace-nowrap">
-                    Báo cáo KPI <ArrowUpRight className="h-3 w-3" />
+                    {t.priority}
                   </span>
-                </Link>
+                </div>
+              ))}
+
+              {urgentAndOverdueTasks.length === 0 && (
+                <div className="flex h-full items-center justify-center rounded-lg border border-dashed border-line text-xs text-muted">
+                  🎉 Không có công việc nào bị quá hạn hoặc khẩn cấp!
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ROW 2 - LEFT 7 COLS: MEMBERS WORKLOAD / TEAMS BREAKDOWN */}
+          <div className="col-span-12 lg:col-span-7 lg:row-start-2 h-auto min-h-[280px] lg:min-h-0 lg:h-full rounded-xl border border-line bg-surface flex flex-col overflow-hidden shadow-sm">
+            {/* Tabs Header */}
+            <div className="flex items-center justify-between border-b border-line px-3 py-1.5 bg-surface-2/40 shrink-0">
+              <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+                <button
+                  type="button"
+                  onClick={() => setLeftTab("MEMBERS")}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+                    leftTab === "MEMBERS"
+                      ? "bg-accent text-white shadow-sm"
+                      : "text-muted hover:text-foreground hover:bg-surface"
+                  }`}
+                >
+                  <Users className="h-3 w-3" />
+                  <span>Năng suất Nhân sự ({memberWorkloads.length})</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setLeftTab("TEAMS")}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    leftTab === "TEAMS"
+                      ? "bg-accent text-white shadow-sm"
+                      : "text-muted hover:text-foreground hover:bg-surface"
+                  }`}
+                >
+                  <Building2 className="h-3 w-3" />
+                  <span>Phòng ban ({teamBreakdown.length})</span>
+                </button>
               </div>
 
-              {/* Tab Content (Scrollable internally) */}
-              <div className="flex-1 min-h-0 overflow-y-auto p-2 overflow-x-auto no-scrollbar">
-                {leftTab === "MEMBERS" ? (
-                  <div className="overflow-x-auto no-scrollbar">
-                    <table className="w-full text-left text-xs min-w-[500px]">
+              <Link
+                href={`/projects/${projectId}/reports`}
+                className="px-2 py-0.5 rounded-md bg-accent/15 hover:bg-accent/25 text-accent border border-accent/30 text-[10px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
+              >
+                Báo cáo KPI <ArrowUpRight className="h-3 w-3" />
+              </Link>
+            </div>
+
+            {/* Tab Content (Scrollable internally) */}
+            <div className="flex-1 min-h-0 overflow-y-auto p-2 overflow-x-auto no-scrollbar">
+              {leftTab === "MEMBERS" ? (
+                <div className="overflow-x-auto no-scrollbar">
+                  <table className="w-full text-left text-xs min-w-[500px]">
                     <thead className="text-muted text-[10px] uppercase font-bold border-b border-line/60">
                       <tr>
-                        <th className="pb-1.5 pl-2">Nhân sự</th>
-                        <th className="pb-1.5 text-center">Phòng ban</th>
-                        <th className="pb-1.5 text-center">Tổng việc</th>
-                        <th className="pb-1.5 text-center">Xong</th>
-                        <th className="pb-1.5 text-center">Đang làm</th>
-                        <th className="pb-1.5 text-center">Quá hạn</th>
-                        <th className="pb-1.5 text-right pr-2">Tiến độ</th>
+                        <th className="pb-1.5 pl-2 text-left">Nhân sự</th>
+                        <th className="pb-1.5 px-2 text-left">Phòng ban</th>
+                        <th className="pb-1.5 px-2 text-right">Tổng việc</th>
+                        <th className="pb-1.5 px-2 text-right">Xong</th>
+                        <th className="pb-1.5 px-2 text-right">Đang làm</th>
+                        <th className="pb-1.5 px-2 text-right">Quá hạn</th>
+                        <th className="pb-1.5 pr-2 text-right">Tiến độ</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-line/40 text-[11px]">
                       {memberWorkloads.map((m) => (
                         <tr key={m.userId} className="hover:bg-surface-2/50 transition-colors">
-                          <td className="py-1.5 pl-2">
+                          <td className="py-1.5 pl-2 text-left">
                             <div className="flex items-center gap-2">
-                              <Avatar className="h-5 w-5 text-[9px] shrink-0">
+                              <Avatar className="h-5 w-5 text-[8px] shrink-0">
                                 <AvatarFallback color={m.avatarColor}>
                                   {initials(m.name)}
                                 </AvatarFallback>
@@ -686,10 +770,10 @@ export default function ProjectDashboardPage() {
                               <span className="font-semibold text-foreground truncate max-w-[120px]">{m.name}</span>
                             </div>
                           </td>
-                          <td className="py-1.5 text-center">
+                          <td className="py-1.5 px-2 text-left">
                             {m.teamName ? (
                               <span
-                                className="px-1.5 py-0.2 rounded text-[9px] font-bold"
+                                className="px-1.5 py-0.5 rounded text-[9px] font-bold inline-block"
                                 style={{ backgroundColor: `${m.teamColor}20`, color: m.teamColor || "#6366f1" }}
                               >
                                 {m.teamName}
@@ -698,17 +782,17 @@ export default function ProjectDashboardPage() {
                               <span className="text-muted/50">—</span>
                             )}
                           </td>
-                          <td className="py-1.5 text-center font-mono font-bold">{m.totalTasks}</td>
-                          <td className="py-1.5 text-center font-mono font-bold text-emerald-600">{m.doneTasks}</td>
-                          <td className="py-1.5 text-center font-mono font-bold text-amber-600">{m.inProgressTasks}</td>
-                          <td className="py-1.5 text-center font-mono font-bold">
+                          <td className="py-1.5 px-2 text-right font-mono font-bold">{m.totalTasks}</td>
+                          <td className="py-1.5 px-2 text-right font-mono font-bold text-emerald-600">{m.doneTasks}</td>
+                          <td className="py-1.5 px-2 text-right font-mono font-bold text-amber-600">{m.inProgressTasks}</td>
+                          <td className="py-1.5 px-2 text-right font-mono font-bold">
                             {m.overdueTasks > 0 ? (
                               <span className="text-accent bg-accent-subtle px-1 rounded text-[9px]">{m.overdueTasks}</span>
                             ) : (
                               <span className="text-muted">0</span>
                             )}
                           </td>
-                          <td className="py-1.5 text-right pr-2">
+                          <td className="py-1.5 pr-2 text-right">
                             <div className="flex items-center justify-end gap-1.5">
                               <div className="w-12 h-1 bg-surface-2 rounded-full overflow-hidden">
                                 <div className="h-full bg-emerald-500" style={{ width: `${m.completionRate}%` }} />
@@ -723,146 +807,78 @@ export default function ProjectDashboardPage() {
                     </tbody>
                   </table>
                 </div>
-                ) : (
-                  <div className="space-y-2">
-                    {teamBreakdown.map((team) => (
-                      <div key={team.id} className="p-2 rounded-lg border border-line bg-surface-2/50 space-y-1">
-                        <div className="flex items-center justify-between text-xs">
-                          <div className="flex items-center gap-1.5 font-bold text-foreground">
-                            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: team.color }} />
-                            <span>{team.name}</span>
-                          </div>
-                          <span className="text-[10px] font-mono text-muted">{team.memberCount} thành viên</span>
+              ) : (
+                <div className="space-y-2">
+                  {teamBreakdown.map((team) => (
+                    <div key={team.id} className="p-2 rounded-lg border border-line bg-surface-2/50 space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-1.5 font-bold text-foreground">
+                          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: team.color }} />
+                          <span>{team.name}</span>
                         </div>
-                        <div className="flex items-center justify-between text-[10px] text-muted">
-                          <span>Khối lượng: {team.totalTasks} tasks</span>
-                          <span className="text-emerald-600 font-semibold">{team.doneTasks} hoàn thành</span>
-                        </div>
-                        <div className="h-1 w-full bg-surface-3 rounded-full overflow-hidden">
-                          <div
-                            className="h-full rounded-full"
-                            style={{
-                              backgroundColor: team.color,
-                              width: `${team.totalTasks > 0 ? (team.doneTasks / team.totalTasks) * 100 : 0}%`,
-                            }}
-                          />
-                        </div>
+                        <span className="text-[10px] font-mono text-muted">{team.memberCount} thành viên</span>
                       </div>
-                    ))}
-                    {teamBreakdown.length === 0 && (
-                      <div className="p-4 text-center text-xs text-muted">Chưa có phòng ban nào được gán cho dự án</div>
-                    )}
-                  </div>
-                )}
-              </div>
+                      <div className="flex items-center justify-between text-[10px] text-muted">
+                        <span>Khối lượng: {team.totalTasks} tasks</span>
+                        <span className="text-emerald-600 font-semibold">{team.doneTasks} hoàn thành</span>
+                      </div>
+                      <div className="h-1 w-full bg-surface-3 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full"
+                          style={{
+                            backgroundColor: team.color,
+                            width: `${team.totalTasks > 0 ? (team.doneTasks / team.totalTasks) * 100 : 0}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                  {teamBreakdown.length === 0 && (
+                    <div className="p-4 text-center text-xs text-muted">Chưa có phòng ban nào được gán cho dự án</div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* RIGHT 5 COLS: URGENT TASKS & REALTIME ACTIVITIES */}
-          <div className="col-span-12 lg:col-span-5 flex flex-col gap-3 min-h-0 lg:h-full overflow-visible lg:overflow-hidden">
-            {/* Top: Urgent & Overdue Action List */}
-            <div className="h-auto shrink-0 lg:shrink min-h-[220px] max-h-[350px] lg:max-h-none lg:h-[50%] lg:min-h-0 rounded-xl border border-line bg-surface p-2.5 flex flex-col shadow-sm">
-              <div className="flex items-center justify-between pb-1.5 border-b border-line/60 shrink-0">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
-                  <AlertTriangle className="h-3.5 w-3.5 text-accent" />
-                  <span>Công việc cần xử lý gấp ({urgentAndOverdueTasks.length})</span>
-                </div>
-                <Link href={`/projects/${projectId}/board`}>
-                  <span className="text-[10px] font-bold text-accent hover:underline flex items-center gap-0.5">
-                    Mở Board <ArrowUpRight className="h-3 w-3" />
-                  </span>
-                </Link>
+          {/* ROW 2 - RIGHT 5 COLS: REALTIME ACTIVITIES */}
+          <div className="col-span-12 lg:col-span-5 lg:row-start-2 h-auto min-h-[280px] lg:min-h-0 lg:h-full rounded-xl border border-line bg-surface p-2.5 flex flex-col shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between pb-1.5 border-b border-line/60 shrink-0">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+                <Activity className="h-3.5 w-3.5 text-emerald-600" />
+                <span>Hoạt động gần đây</span>
               </div>
-
-              <div className="flex-1 min-h-0 overflow-y-auto pt-1.5 space-y-1.5 pr-1">
-                {urgentAndOverdueTasks.map((t) => (
-                  <div
-                    key={t.id}
-                    className={`flex items-center justify-between p-2 rounded-lg border text-xs transition-colors ${
-                      t.isOverdue ? "border-accent/40 bg-accent-subtle" : "border-line bg-surface-2/60"
-                    }`}
-                  >
-                    <div className="min-w-0 flex-1 pr-2">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-mono text-[10px] font-bold text-muted">#{t.number}</span>
-                        <span className="font-semibold text-foreground truncate">{t.title}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-[10px] text-muted mt-0.5">
-                        {t.isOverdue && (
-                          <span className="text-accent font-bold flex items-center gap-0.5">
-                            <Clock className="h-2.5 w-2.5" /> Quá hạn ({t.dueDate?.slice(5, 10)})
-                          </span>
-                        )}
-                        {t.assignee && (
-                          <span className="flex items-center gap-1 truncate">
-                            <Avatar className="h-3.5 w-3.5 text-[8px]">
-                              <AvatarFallback color={t.assignee.avatarColor}>
-                                {initials(t.assignee.name)}
-                              </AvatarFallback>
-                            </Avatar>
-                            {t.assignee.name}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <span
-                      className={`px-1.5 py-0.2 rounded text-[9px] font-bold shrink-0 ${
-                        t.priority === "URGENT" ? "bg-accent-subtle text-accent" : "bg-surface text-muted"
-                      }`}
-                    >
-                      {t.priority}
-                    </span>
-                  </div>
-                ))}
-
-                {urgentAndOverdueTasks.length === 0 && (
-                  <div className="flex h-full items-center justify-center rounded-lg border border-dashed border-line text-xs text-muted">
-                    🎉 Không có công việc nào bị quá hạn hoặc khẩn cấp!
-                  </div>
-                )}
-              </div>
+              <span className="text-[10px] text-muted font-mono">Thời gian thực</span>
             </div>
 
-            {/* Bottom: Realtime Activities */}
-            <div className="h-auto shrink-0 lg:shrink min-h-[220px] max-h-[350px] lg:max-h-none lg:h-[50%] lg:min-h-0 rounded-xl border border-line bg-surface p-2.5 flex flex-col shadow-sm">
-              <div className="flex items-center justify-between pb-1.5 border-b border-line/60 shrink-0">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
-                  <Activity className="h-3.5 w-3.5 text-emerald-600" />
-                  <span>Hoạt động gần đây</span>
-                </div>
-                <span className="text-[10px] text-muted font-mono">Thời gian thực</span>
-              </div>
-
-              <div className="flex-1 min-h-0 overflow-y-auto pt-1.5 space-y-1.5 pr-1 divide-y divide-line/40">
-                {recentActivities.map((act) => (
-                  <div key={act.id} className="pt-1.5 first:pt-0 flex items-start gap-2 text-xs">
-                    <Avatar className="h-5 w-5 text-[8px] shrink-0 mt-0.5">
-                      <AvatarFallback color={act.actor.avatarColor}>
-                        {initials(act.actor.name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1 text-[11px]">
-                      <div className="text-foreground leading-tight">
-                        <strong className="font-semibold">{act.actor.name}</strong>{" "}
-                        <span className="text-muted">{act.detail || act.action}</span>{" "}
-                        {act.task && (
-                          <span className="font-medium text-accent">#{act.task.number} - {act.task.title}</span>
-                        )}
-                      </div>
-                      <div className="text-[9px] text-muted mt-0.5">
-                        {new Date(act.createdAt).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
-                      </div>
+            <div className="flex-1 min-h-0 overflow-y-auto pt-1.5 space-y-1.5 pr-1 divide-y divide-line/40">
+              {recentActivities.map((act) => (
+                <div key={act.id} className="pt-1.5 first:pt-0 flex items-start gap-2 text-xs">
+                  <Avatar className="h-5 w-5 text-[8px] shrink-0 mt-0.5">
+                    <AvatarFallback color={act.actor.avatarColor}>
+                      {initials(act.actor.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1 text-[11px]">
+                    <div className="text-foreground leading-tight">
+                      <strong className="font-semibold">{act.actor.name}</strong>{" "}
+                      <span className="text-muted">{act.detail || act.action}</span>{" "}
+                      {act.task && (
+                        <span className="font-medium text-accent">#{act.task.number} - {act.task.title}</span>
+                      )}
+                    </div>
+                    <div className="text-[9px] text-muted mt-0.5">
+                      {new Date(act.createdAt).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
                     </div>
                   </div>
-                ))}
+                </div>
+              ))}
 
-                {recentActivities.length === 0 && (
-                  <div className="flex h-full items-center justify-center text-xs text-muted border border-dashed border-line rounded-lg">
-                    Chưa có hoạt động nào được ghi nhận
-                  </div>
-                )}
-              </div>
+              {recentActivities.length === 0 && (
+                <div className="flex h-full items-center justify-center text-xs text-muted border border-dashed border-line rounded-lg">
+                  Chưa có hoạt động nào được ghi nhận
+                </div>
+              )}
             </div>
           </div>
         </div>

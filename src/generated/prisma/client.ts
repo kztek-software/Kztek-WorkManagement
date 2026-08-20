@@ -121,3 +121,8 @@ export type TicketComment = Prisma.TicketCommentModel
  * 
  */
 export type Attachment = Prisma.AttachmentModel
+/**
+ * Model SystemSetting
+ * 
+ */
+export type SystemSetting = Prisma.SystemSettingModel

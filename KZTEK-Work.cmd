@@ -23,7 +23,7 @@ if %ERRORLEVEL% equ 0 (
 :: 2. Nếu server chưa chạy, khởi động server nền
 if "!SERVER_RUNNING!"=="0" (
     echo [*] Dang khoi dong may chu lam viec KZTEK...
-    start /min "KZTEK-Server" node ./node_modules/next/dist/bin/next start -p 3000
+    start /min "KZTEK-Server" node ./node_modules/next/dist/bin/next start -H 0.0.0.0 -p 3000
     timeout /t 2 /nobreak >nul
 )
 

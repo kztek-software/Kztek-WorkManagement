@@ -130,7 +130,7 @@ export async function POST(
   publish(projectId, { type: "TASK_CREATED", taskId: task.id, actorId: user.id });
 
   // Gửi thông báo & Email giao việc nếu có người nhận
-  if (task.assigneeId && task.assigneeId !== user.id) {
+  if (task.assigneeId) {
     notifyTaskAssigned({
       taskId: task.id,
       assigneeId: task.assigneeId,

@@ -51,10 +51,10 @@ function TaskCardComponent({
 
   return (
     <div
-      className={`group relative rounded-xl border p-3 sm:p-3.5 overflow-hidden transition-all duration-200 ${
+      className={`group relative rounded-xl border p-2.5 sm:p-3 overflow-hidden transition-all duration-200 ${
         overlay
           ? "rotate-2 scale-[1.03] shadow-2xl shadow-black/80 ring-2 ring-accent border-accent bg-surface/95 backdrop-blur-xl cursor-grabbing z-50"
-          : "border-line bg-surface/80 hover:bg-surface hover:border-line-strong hover:shadow-lg shadow-sm cursor-grab active:cursor-grabbing active:scale-[0.98]"
+          : "border-line bg-surface/80 hover:bg-surface hover:border-line-strong hover:shadow-md shadow-sm cursor-grab active:cursor-grabbing active:scale-[0.98]"
       }`}
     >
       {/* Priority strip — the single strong color cue on the card */}
@@ -67,8 +67,8 @@ function TaskCardComponent({
         <span className="h-[3px] w-[3px] rounded-full bg-muted" />
       </div>
 
-      {/* Top row: Type + code & Priority (soft tint, matches the label/ticket badge language) */}
-      <div className="mb-2 flex items-center justify-between gap-2">
+      {/* Top row: Type + code & Priority */}
+      <div className="mb-1.5 flex items-center justify-between gap-1.5">
         <div className="flex min-w-0 items-center gap-1.5">
           <TypeIcon type={task.type} />
           <span className="truncate text-[10.5px] font-bold text-muted">
@@ -93,13 +93,13 @@ function TaskCardComponent({
       </div>
 
       {/* Title */}
-      <h3 className="mb-2.5 text-[13px] font-semibold text-foreground leading-snug group-hover:text-accent transition-colors line-clamp-2">
+      <h3 className="mb-1.5 text-[12.5px] sm:text-[13px] font-semibold text-foreground leading-snug group-hover:text-accent transition-colors line-clamp-2">
         {task.title}
       </h3>
 
-      {/* Labels (+ ticket badge folded in, saves a whole row) */}
+      {/* Labels — only rendered when labels exist */}
       {(isTicket || labels.length > 0) && (
-        <div className="mb-2.5 flex flex-wrap gap-1">
+        <div className="mb-2 flex flex-wrap items-center gap-1">
           {isTicket && (
             <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-accent/20 text-accent border border-accent/30">
               Ticket KH
@@ -117,8 +117,8 @@ function TaskCardComponent({
         </div>
       )}
 
-      {/* Footer: due date, comments, checklist chips + assignee */}
-      <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-line/50">
+      {/* Footer: due date, comments, checklist chips + assignee — compact and tight */}
+      <div className="flex items-center justify-between gap-1.5 pt-1.5 border-t border-line/40">
         <div className="flex flex-wrap items-center gap-1">
           {task.dueDate && (
             <span

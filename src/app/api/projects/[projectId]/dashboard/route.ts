@@ -42,6 +42,27 @@ export async function GET(
 
     const { projectId } = await params;
 
+    // Resolve target project by ID or Key, with graceful fallback to user's first project
+    let matchedProject = await prisma.project.findFirst({
+      where: {
+        OR: [
+          { id: projectId },
+          { key: projectId },
+        ],
+      },
+      select: { id: true },
+    });
+
+    if (!matchedProject) {
+      matchedProject = await prisma.project.findFirst({
+        where: user.role === "ADMIN" ? {} : { members: { some: { userId: user.id } } },
+        select: { id: true },
+        orderBy: { createdAt: "asc" },
+      });
+    }
+
+    const targetProjectId = matchedProject ? matchedProject.id : projectId;
+
     // Compute date boundaries before queries (used in WHERE clauses)
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -77,12 +98,12 @@ export async function GET(
     ] = await Promise.all([
       // Auth check
       prisma.projectMember.findUnique({
-        where: { projectId_userId: { projectId, userId: user.id } },
+        where: { projectId_userId: { projectId: targetProjectId, userId: user.id } },
       }),
 
       // Project info with members (needed for workload + team breakdown)
       prisma.project.findUnique({
-        where: { id: projectId },
+        where: { id: targetProjectId },
         include: {
           owner: { select: { id: true, name: true, email: true, avatarColor: true, title: true } },
           members: {
@@ -106,13 +127,13 @@ export async function GET(
 
       // Sprint list (needed for active sprint identification)
       prisma.sprint.findMany({
-        where: { projectId },
+        where: { projectId: targetProjectId },
         orderBy: { createdAt: "desc" },
       }),
 
       // Recent activities — already limited to 12
       prisma.activity.findMany({
-        where: { task: { projectId } },
+        where: { task: { projectId: targetProjectId } },
         include: {
           actor: { select: { id: true, name: true, avatarColor: true } },
           task: { select: { id: true, number: true, title: true } },
@@ -124,7 +145,7 @@ export async function GET(
       // Task counts + story points per status
       prisma.task.groupBy({
         by: ["status"],
-        where: { projectId },
+        where: { projectId: targetProjectId },
         _count: { _all: true },
         _sum: { storyPoints: true },
       }),
@@ -132,32 +153,32 @@ export async function GET(
       // Task counts per priority
       prisma.task.groupBy({
         by: ["priority"],
-        where: { projectId },
+        where: { projectId: targetProjectId },
         _count: { _all: true },
       }),
 
       // Task counts per type
       prisma.task.groupBy({
         by: ["type"],
-        where: { projectId },
+        where: { projectId: targetProjectId },
         _count: { _all: true },
       }),
 
       // Overdue task count — direct DB count, no JS loop needed
       prisma.task.count({
-        where: { projectId, status: { not: "DONE" }, dueDate: { lt: startOfToday } },
+        where: { projectId: targetProjectId, status: { not: "DONE" }, dueDate: { lt: startOfToday } },
       }),
 
       // Urgent non-done task count — direct DB count
       prisma.task.count({
-        where: { projectId, priority: "URGENT", status: { not: "DONE" } },
+        where: { projectId: targetProjectId, priority: "URGENT", status: { not: "DONE" } },
       }),
 
       // Per-member per-status task counts + story points
       // assigneeId=null rows (unassigned tasks) are intentionally skipped in post-processing
       prisma.task.groupBy({
         by: ["assigneeId", "status"],
-        where: { projectId },
+        where: { projectId: targetProjectId },
         _count: { _all: true },
         _sum: { storyPoints: true },
       }),
@@ -165,7 +186,7 @@ export async function GET(
       // Per-member overdue count
       prisma.task.groupBy({
         by: ["assigneeId"],
-        where: { projectId, status: { not: "DONE" }, dueDate: { lt: startOfToday } },
+        where: { projectId: targetProjectId, status: { not: "DONE" }, dueDate: { lt: startOfToday } },
         _count: { _all: true },
       }),
 
@@ -173,7 +194,7 @@ export async function GET(
       // Avoids loading ALL tasks then slicing (was: urgentAndOverdueList.slice(0, 8))
       prisma.task.findMany({
         where: {
-          projectId,
+          projectId: targetProjectId,
           status: { not: "DONE" },
           OR: [{ dueDate: { lt: startOfToday } }, { priority: "URGENT" }],
         },
@@ -198,7 +219,7 @@ export async function GET(
       // Covers all sprints in one query; filtered to active sprint in post-processing
       prisma.task.groupBy({
         by: ["sprintId", "status"],
-        where: { projectId, sprintId: { not: null } },
+        where: { projectId: targetProjectId, sprintId: { not: null } },
         _count: { _all: true },
         _sum: { storyPoints: true },
       }),
@@ -206,7 +227,7 @@ export async function GET(
       // Ticket counts by status — replaces full customerTicket.findMany
       prisma.customerTicket.groupBy({
         by: ["status"],
-        where: { projectId },
+        where: { projectId: targetProjectId },
         _count: { _all: true },
       }),
     ]);

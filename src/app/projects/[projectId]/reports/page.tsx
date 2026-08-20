@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { Avatar, AvatarFallback, initials } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { useTabCache } from "@/lib/tab-cache";
 
 type AccountReport = {
   userId: string;
@@ -142,24 +143,25 @@ const tooltipStyle = {
 export default function ReportsPage() {
   const params = useParams<{ projectId: string }>();
   const projectId = params.projectId;
-  const [data, setData] = useState<ReportData | null>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "accounts">("accounts");
   const [selectedUserId, setSelectedUserId] = useState<string>("ALL");
 
-  const load = useCallback(async () => {
-    const res = await fetch(`/api/projects/${projectId}/reports`);
-    if (res.ok) {
-      const resJson = await res.json();
-      setData(resJson);
-      if (resJson.accountReports?.length > 0 && selectedUserId === "ALL") {
-        // Mặc định chọn người đầu tiên hoặc ALL
-      }
-    }
-  }, [projectId, selectedUserId]);
+  const reportsApiUrl = projectId ? `/api/projects/${projectId}/reports` : null;
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  const fetchReports = useCallback(async (): Promise<ReportData> => {
+    if (!projectId) throw new Error("No project ID");
+    const res = await fetch(`/api/projects/${projectId}/reports`);
+    if (!res.ok) throw new Error("Failed to load reports");
+    return await res.json();
+  }, [projectId]);
+
+  const {
+    data,
+    loading,
+    revalidate: load,
+  } = useTabCache<ReportData>(reportsApiUrl, fetchReports, {
+    staleTime: 15000,
+  });
 
   if (!data) {
     return (
@@ -516,11 +518,11 @@ export default function ReportsPage() {
                     <tr>
                       <th className="px-4 py-3">Thành viên</th>
                       <th className="px-3 py-3">Vai trò</th>
-                      <th className="px-3 py-3 text-center">Tổng việc</th>
-                      <th className="px-3 py-3 text-center">Hoàn thành</th>
-                      <th className="px-3 py-3 text-center">Đang làm</th>
-                      <th className="px-3 py-3 text-center">Quá hạn</th>
-                      <th className="px-3 py-3 text-center">Points (Xong/Tổng)</th>
+                      <th className="px-3 py-3 text-right">Tổng việc</th>
+                      <th className="px-3 py-3 text-right">Hoàn thành</th>
+                      <th className="px-3 py-3 text-right">Đang làm</th>
+                      <th className="px-3 py-3 text-right">Quá hạn</th>
+                      <th className="px-3 py-3 text-right">Points (Xong/Tổng)</th>
                       <th className="px-4 py-3 text-right">Tỉ lệ hoàn thành</th>
                     </tr>
                   </thead>
@@ -553,16 +555,16 @@ export default function ReportsPage() {
                               {m.role}
                             </span>
                           </td>
-                          <td className="px-3 py-3 text-center font-semibold">
+                          <td className="px-3 py-3 text-right font-semibold font-mono">
                             {m.summary.totalAssigned}
                           </td>
-                          <td className="px-3 py-3 text-center text-emerald-600 font-semibold">
+                          <td className="px-3 py-3 text-right text-emerald-600 font-semibold font-mono">
                             {m.summary.done}
                           </td>
-                          <td className="px-3 py-3 text-center text-amber-600 font-semibold">
+                          <td className="px-3 py-3 text-right text-amber-600 font-semibold font-mono">
                             {m.summary.inProgress + m.summary.inReview}
                           </td>
-                          <td className="px-3 py-3 text-center">
+                          <td className="px-3 py-3 text-right font-mono">
                             {m.summary.overdueCount > 0 ? (
                               <span className="rounded-full bg-accent-subtle px-2 py-0.5 text-xs font-bold text-accent">
                                 {m.summary.overdueCount}
@@ -571,7 +573,7 @@ export default function ReportsPage() {
                               <span className="text-muted">0</span>
                             )}
                           </td>
-                          <td className="px-3 py-3 text-center text-accent font-semibold">
+                          <td className="px-3 py-3 text-right text-accent font-semibold font-mono">
                             {m.summary.donePoints} / {m.summary.totalPoints}
                           </td>
                           <td className="px-4 py-3 text-right">
@@ -582,7 +584,7 @@ export default function ReportsPage() {
                                   style={{ width: `${m.summary.completionRate}%` }}
                                 />
                               </div>
-                              <span className="font-bold text-emerald-600 text-xs w-10 text-right">
+                              <span className="font-bold text-emerald-600 text-xs w-10 text-right font-mono">
                                 {m.summary.completionRate}%
                               </span>
                             </div>

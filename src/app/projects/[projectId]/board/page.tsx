@@ -47,6 +47,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { BoardColumn } from "@/components/board/board-column";
 import { TaskCard } from "@/components/board/task-card";
+import { useTabCache } from "@/lib/tab-cache";
 
 // Lazy-loaded Dialogs to reduce initial JS bundle and render latency
 const TaskDialog = dynamic(() => import("@/components/board/task-dialog").then((m) => m.TaskDialog), {
@@ -95,8 +96,6 @@ export default function BoardPage() {
   const urlTaskId = searchParams.get("taskId");
   const urlSprintId = searchParams.get("sprintId");
 
-  const [data, setData] = useState<BoardData | null>(null);
-  const [loading, setLoading] = useState(true);
   const [connected, setConnected] = useState(false);
 
   // Filters State
@@ -200,31 +199,32 @@ export default function BoardPage() {
     }
   }, [urlSprintId]);
 
-  const loadBoard = useCallback(async () => {
-    if (!projectId) return;
-    try {
-      const headers: Record<string, string> = {};
-      try {
-        const token = localStorage.getItem("flowboard_session");
-        if (token) headers["Authorization"] = `Bearer ${token}`;
-      } catch {}
+  const tasksApiUrl = projectId ? `/api/projects/${projectId}/tasks` : null;
 
-      const res = await fetch(`/api/projects/${projectId}/tasks`, {
-        credentials: "same-origin",
-        headers,
-      });
-      if (res.ok) {
-        const json = await res.json();
-        setData(json);
-      }
-    } finally {
-      setLoading(false);
-    }
+  const fetchBoard = useCallback(async (): Promise<BoardData> => {
+    if (!projectId) throw new Error("No project ID");
+    const headers: Record<string, string> = {};
+    try {
+      const token = localStorage.getItem("flowboard_session");
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+    } catch {}
+
+    const res = await fetch(`/api/projects/${projectId}/tasks`, {
+      credentials: "same-origin",
+      headers,
+    });
+    if (!res.ok) throw new Error("Failed to load board tasks");
+    return await res.json();
   }, [projectId]);
 
-  useEffect(() => {
-    loadBoard();
-  }, [loadBoard]);
+  const {
+    data,
+    loading,
+    mutate: setData,
+    revalidate: loadBoard,
+  } = useTabCache<BoardData>(tasksApiUrl, fetchBoard, {
+    staleTime: 15000,
+  });
 
   // Quick-assign straight from the card, without opening the full task dialog
   const quickAssign = useCallback(
@@ -1055,7 +1055,7 @@ export default function BoardPage() {
         <div
           ref={boardContainerRef}
           onScroll={handleBoardScroll}
-          className="flex flex-1 min-h-0 gap-3 sm:gap-4 overflow-x-auto p-2 sm:p-4 snap-x snap-mandatory touch-pan-x no-scrollbar overflow-y-hidden select-none pb-3"
+          className="flex flex-1 min-h-0 w-full gap-3 sm:gap-3.5 md:gap-4 overflow-x-auto p-2.5 sm:p-4 px-3 sm:px-4 md:px-5 snap-x snap-mandatory touch-pan-x no-scrollbar overflow-y-hidden select-none pb-3"
         >
           {STATUSES.map((status) => (
             <BoardColumn

@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
     res.cookies.set("flowboard_session", token, {
       httpOnly: false,
       sameSite: "lax",
-      secure: false,
+      secure: process.env.COOKIE_SECURE === "true",
       maxAge: 7 * 24 * 60 * 60,
       path: "/",
     });

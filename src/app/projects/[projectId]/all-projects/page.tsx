@@ -690,7 +690,7 @@ export default function AllProjectsManagementPage() {
                           </button>
 
                           {isDropdownOpen && (
-                            <div className="absolute left-0 top-[calc(100%+4px)] z-50 w-48 rounded-2xl border border-white/15 bg-[#131826] p-1.5 shadow-2xl backdrop-blur-2xl animate-fade-in-up">
+                            <div className="absolute left-0 top-[calc(100%+4px)] z-50 w-48 rounded-2xl border border-line bg-surface p-1.5 shadow-2xl backdrop-blur-2xl animate-fade-in-up ring-1 ring-line">
                               <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-muted border-b border-line/50 mb-1">
                                 Đổi trạng thái
                               </div>

@@ -53,6 +53,7 @@ import type { UserLite } from "@/lib/types";
 
 import { usePermissions } from "@/lib/permissions-context";
 import { useTheme } from "@/lib/theme-context";
+import { prefetchTab } from "@/lib/tab-cache";
 
 type ProjectInfo = {
   id: string;
@@ -414,10 +415,22 @@ export function AppShell({
     const active =
       pathname === item.href || (item.href.endsWith("/dashboard") && pathname === `/projects/${project.id}`);
     const pinned = pinnedHrefs.includes(item.href);
+    const handlePrefetch = () => {
+      if (item.href.endsWith("/dashboard")) {
+        prefetchTab(`/api/projects/${project.id}/dashboard`);
+      } else if (item.href.endsWith("/board") || item.href.endsWith("/sprints")) {
+        prefetchTab(`/api/projects/${project.id}/tasks`);
+      } else if (item.href.endsWith("/reports")) {
+        prefetchTab(`/api/projects/${project.id}/reports`);
+      }
+    };
+
     return (
       <div key={`${keyPrefix}${item.href}`} className="group relative flex items-center">
         <Link
           href={item.href}
+          onMouseEnter={handlePrefetch}
+          onFocus={handlePrefetch}
           onClick={() => {
             if (isMobile) setMobileDrawerOpen(false);
           }}
@@ -556,7 +569,7 @@ export function AppShell({
 
         {/* Flyout Workspace Menu Dropdown */}
         {projectMenuOpen && (
-          <div className="absolute left-3 right-3 top-[calc(100%+6px)] z-50 rounded-2xl border border-white/15 bg-[#131826] p-2 shadow-2xl backdrop-blur-2xl animate-fade-in-up ring-1 ring-black/50">
+          <div className="absolute left-3 right-3 top-[calc(100%+6px)] z-50 rounded-2xl border border-line bg-surface p-2 shadow-2xl backdrop-blur-2xl animate-fade-in-up ring-1 ring-line">
             {/* Header */}
             <div className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted flex items-center justify-between border-b border-line/50 pb-2">
               <span>Dự án của bạn ({projects.length})</span>
@@ -794,7 +807,7 @@ export function AppShell({
             className="fixed inset-0 bg-black/75 backdrop-blur-sm animate-fade-in transition-opacity"
             onClick={() => setMobileDrawerOpen(false)}
           />
-          <aside className="relative z-50 flex w-72 max-w-[85vw] flex-col border-r border-line bg-[#111520] shadow-2xl animate-fade-in-up" suppressHydrationWarning>
+          <aside className="relative z-50 flex w-72 max-w-[85vw] flex-col border-r border-line bg-surface shadow-2xl animate-fade-in-up" suppressHydrationWarning>
             {renderSidebarContent(true)}
           </aside>
         </div>
@@ -934,10 +947,10 @@ export function AppShell({
 
               {/* User Profile Flyout Dropdown Menu */}
               {userMenuOpen && (
-                <div className="fixed inset-x-3 top-14 sm:absolute sm:inset-x-auto sm:right-0 sm:top-[calc(100%+6px)] z-50 w-auto sm:w-72 max-w-[calc(100vw-1.5rem)] rounded-2xl border border-white/15 bg-[#131826] p-3 shadow-2xl backdrop-blur-2xl animate-fade-in-up ring-1 ring-black/50 space-y-3">
+                <div className="fixed inset-x-3 top-14 sm:absolute sm:inset-x-auto sm:right-0 sm:top-[calc(100%+6px)] z-50 w-auto sm:w-72 max-w-[calc(100vw-1.5rem)] rounded-2xl border border-line bg-surface p-3 shadow-2xl backdrop-blur-2xl animate-fade-in-up ring-1 ring-line space-y-3">
                   {/* User Info Header Card */}
                   <div className="flex items-center gap-3 p-2.5 rounded-xl bg-surface-2/80 border border-line">
-                    <Avatar className="h-10 w-10 shrink-0 border border-white/20 shadow-md">
+                    <Avatar className="h-10 w-10 shrink-0 border border-line/50 shadow-md">
                       <AvatarFallback color={user.avatarColor} className="font-bold text-sm text-white">
                         {initials(user.name)}
                       </AvatarFallback>
@@ -967,7 +980,7 @@ export function AppShell({
                       onClick={() => setUserMenuOpen(false)}
                       className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-foreground hover:bg-surface-2 transition-colors"
                     >
-                      <Settings className="h-4 w-4 text-blue-400" />
+                      <Settings className="h-4 w-4 text-blue-500 dark:text-blue-400" />
                       <span>Cài đặt Dự án & Cấu hình</span>
                     </Link>
                   </div>
@@ -996,7 +1009,7 @@ export function AppShell({
       </main>
 
       {/* Mobile Thumb-Zone Bottom Navigation Bar (< lg) */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 h-16 border-t border-line bg-[#111520]/95 backdrop-blur-xl px-2 flex items-center justify-around shadow-2xl safe-bottom">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 h-16 border-t border-line bg-surface/95 backdrop-blur-xl px-2 flex items-center justify-around shadow-2xl safe-bottom">
         <Link
           href={`/projects/${project.id}/dashboard`}
           className={cn(

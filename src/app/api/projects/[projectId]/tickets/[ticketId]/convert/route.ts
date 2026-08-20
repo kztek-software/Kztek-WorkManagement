@@ -158,7 +158,7 @@ export async function POST(
     });
 
     // Gửi thông báo & Email giao việc nếu có gán người
-    if (task.assigneeId && task.assigneeId !== user.id) {
+    if (task.assigneeId) {
       notifyTaskAssigned({
         taskId: task.id,
         assigneeId: task.assigneeId,
