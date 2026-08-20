@@ -1,25 +1,27 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   LifeBuoy,
-  Search,
-  Bug,
-  HelpCircle,
-  Sparkles,
-  Wrench,
   Send,
+  AlertCircle,
   CheckCircle2,
   Copy,
   Check,
-  ArrowRight,
-  ShieldCheck,
+  Search,
   ExternalLink,
+  ShieldCheck,
+  Bug,
+  HelpCircle,
+  Sparkles,
+  MessageSquare,
   Laptop,
-  AlertCircle,
   RefreshCw,
+  PhoneCall,
+  Mail,
+  FileCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,12 +29,19 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { FileUploadZone, type UploadedFileItem } from "@/components/ui/file-upload-zone";
 
-interface ProjectOption {
-  id: string;
-  name: string;
-  key: string;
-  description: string | null;
-}
+const typeOptions = [
+  { id: "BUG", label: "Lỗi phần mềm", icon: Bug, color: "text-accent bg-accent-subtle border-accent/30" },
+  { id: "SUPPORT", label: "Hỗ trợ kỹ thuật", icon: HelpCircle, color: "text-blue-600 bg-blue-500/15 border-blue-500/30" },
+  { id: "FEATURE_REQ", label: "Đề xuất tính năng", icon: Sparkles, color: "text-purple-600 bg-purple-500/15 border-purple-500/30" },
+  { id: "INQUIRY", label: "Hỏi đáp & Tư vấn", icon: MessageSquare, color: "text-cyan-600 bg-cyan-500/15 border-cyan-500/30" },
+] as const;
+
+const priorityOptions = [
+  { id: "LOW", label: "Thấp", desc: "Không ảnh hưởng nhiều", color: "text-muted border-line hover:border-line-strong" },
+  { id: "MEDIUM", label: "Bình thường", desc: "Sự cố trong quá trình dùng", color: "text-blue-600 border-blue-500/30 hover:bg-blue-500/15" },
+  { id: "HIGH", label: "Cao", desc: "Ảnh hưởng hoạt động kinh doanh", color: "text-amber-600 border-amber-500/30 hover:bg-amber-500/15" },
+  { id: "URGENT", label: "Khẩn cấp", desc: "Hệ thống dừng hoàn toàn", color: "text-accent border-accent/40 hover:bg-accent-subtle font-bold" },
+] as const;
 
 export default function CustomerPortalPage() {
   const router = useRouter();
@@ -41,12 +50,7 @@ export default function CustomerPortalPage() {
   const [searchCode, setSearchCode] = useState("");
   const [searchError, setSearchError] = useState("");
 
-  // Projects state
-  const [projects, setProjects] = useState<ProjectOption[]>([]);
-  const [loadingProjects, setLoadingProjects] = useState(true);
-
   // Form state
-  const [selectedProjectId, setSelectedProjectId] = useState("");
   const [type, setType] = useState<"BUG" | "SUPPORT" | "FEATURE_REQ" | "INQUIRY">("BUG");
   const [priority, setPriority] = useState<"LOW" | "MEDIUM" | "HIGH" | "URGENT">("MEDIUM");
   const [customerName, setCustomerName] = useState("");
@@ -66,29 +70,10 @@ export default function CustomerPortalPage() {
     trackingCode: string;
     title: string;
     customerName: string;
-    project: { name: string; key: string };
     createdAt: string;
   } | null>(null);
 
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    async function loadProjects() {
-      try {
-        const res = await fetch("/api/tickets/public");
-        const data = await res.json();
-        if (data.projects && data.projects.length > 0) {
-          setProjects(data.projects);
-          setSelectedProjectId(data.projects[0].id);
-        }
-      } catch (err) {
-        console.error("Lỗi tải danh sách dự án:", err);
-      } finally {
-        setLoadingProjects(false);
-      }
-    }
-    loadProjects();
-  }, []);
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -105,10 +90,6 @@ export default function CustomerPortalPage() {
     e.preventDefault();
     setError("");
 
-    if (!selectedProjectId) {
-      setError("Vui lòng chọn dự án tiếp nhận báo lỗi");
-      return;
-    }
     if (!customerName.trim()) {
       setError("Vui lòng nhập họ và tên của bạn");
       return;
@@ -133,7 +114,6 @@ export default function CustomerPortalPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          projectId: selectedProjectId,
           type,
           priority,
           customerName: customerName.trim(),
@@ -154,15 +134,25 @@ export default function CustomerPortalPage() {
       });
 
       const data = await res.json();
+
       if (!res.ok) {
-        setError(data.error || "Không thể gửi báo lỗi vào lúc này. Vui lòng thử lại.");
-      } else {
-        setSubmittedTicket(data.ticket);
+        setError(data.error || "Không thể gửi yêu cầu báo lỗi");
+        setSubmitting(false);
+        return;
       }
+
+      setSubmittedTicket(data.ticket);
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+      
+      // Tự động chuyển hướng đến trang theo dõi tiến độ sau 1.5s
+      setTimeout(() => {
+        router.push(`/portal/tickets/${encodeURIComponent(data.ticket.trackingCode)}`);
+      }, 1200);
     } catch (err) {
-      console.error("Lỗi gửi ticket:", err);
-      setError("Đã xảy ra lỗi kết nối mạng. Vui lòng kiểm tra lại đường truyền.");
-    } finally {
+      console.error("Lỗi khi gửi ticket:", err);
+      setError("Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại đường truyền.");
       setSubmitting(false);
     }
   }
@@ -171,71 +161,58 @@ export default function CustomerPortalPage() {
     if (!submittedTicket) return;
     navigator.clipboard.writeText(submittedTicket.trackingCode);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
+    setTimeout(() => setCopied(false), 2000);
   }
 
-  const typeOptions = [
-    { id: "BUG", label: "Báo lỗi phần mềm", icon: Bug, color: "text-red-400 border-red-500/30 bg-red-950/20" },
-    { id: "SUPPORT", label: "Yêu cầu hỗ trợ kỹ thuật", icon: Wrench, color: "text-amber-400 border-amber-500/30 bg-amber-950/20" },
-    { id: "FEATURE_REQ", label: "Đề xuất tính năng mới", icon: Sparkles, color: "text-emerald-400 border-emerald-500/30 bg-emerald-950/20" },
-    { id: "INQUIRY", label: "Hỏi đáp & Tư vấn", icon: HelpCircle, color: "text-blue-400 border-blue-500/30 bg-blue-950/20" },
-  ] as const;
-
-  const priorityOptions = [
-    { id: "LOW", label: "Thấp", desc: "Không ảnh hưởng nhiều", color: "hover:border-slate-500" },
-    { id: "MEDIUM", label: "Bình thường", desc: "Cần hỗ trợ sớm", color: "hover:border-yellow-500" },
-    { id: "HIGH", label: "Cao", desc: "Ảnh hưởng hoạt động", color: "hover:border-orange-500" },
-    { id: "URGENT", label: "Khẩn cấp", desc: "Hệ thống dừng hoàn toàn", color: "hover:border-red-500" },
-  ] as const;
-
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col selection:bg-accent/30 selection:text-accent-foreground">
-      {/* Public Header */}
-      <header className="border-b border-line bg-surface/80 backdrop-blur-md sticky top-0 z-40">
+    <div className="min-h-screen bg-background text-foreground flex flex-col selection:bg-accent selection:text-white">
+      {/* Top Header */}
+      <header className="sticky top-0 z-30 border-b border-line bg-surface/85 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#F05922] to-[#FF8C00] font-black text-white text-sm shadow-md shadow-[#F05922]/25">
-              KZ
+          <Link href="/portal" className="flex items-center gap-3 group">
+            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-accent to-accent-hover flex items-center justify-center text-white shadow-lg shadow-accent/20 group-hover:scale-105 transition-transform">
+              <LifeBuoy className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-sm text-white tracking-tight">KZTEK Service Desk</span>
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-accent/20 text-accent border border-accent/30">
-                  Customer Portal
+              <div className="font-bold text-sm sm:text-base text-foreground tracking-tight flex items-center gap-1.5">
+                <span>KZTEK Service Desk</span>
+                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-accent/20 text-accent border border-accent/30">
+                  Khách Hàng
                 </span>
               </div>
-              <p className="text-[11px] text-muted hidden sm:block">Trung tâm tiếp nhận sự cố & hỗ trợ khách hàng</p>
+              <p className="text-[11px] text-muted hidden sm:block">Trung tâm tiếp nhận & xử lý sự cố kỹ thuật</p>
             </div>
-          </div>
+          </Link>
 
           <div className="flex items-center gap-3">
             <Link
               href="/login"
-              className="text-xs font-semibold text-muted hover:text-white px-3 py-1.5 rounded-lg hover:bg-surface-2 transition-colors flex items-center gap-1.5"
+              className="text-xs font-semibold text-muted hover:text-foreground px-3 py-1.5 rounded-lg hover:bg-surface-2 transition-colors"
             >
-              <span>Đăng nhập nội bộ</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              Dành cho Nhân viên
             </Link>
           </div>
         </div>
       </header>
 
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-8 sm:py-12">
-        {/* Quick Tracking Search Card */}
-        <div className="mb-10 p-6 rounded-2xl border border-line bg-gradient-to-b from-surface-2/80 to-surface/90 shadow-xl backdrop-blur-md">
-          <div className="max-w-xl mx-auto text-center space-y-2">
-            <div className="inline-flex items-center justify-center p-2 rounded-xl bg-accent/15 text-accent mb-1">
-              <LifeBuoy className="w-5 h-5" />
-            </div>
-            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-              Tra Cứu Tiến Độ & Tiếp Nhận Báo Lỗi
-            </h1>
-            <p className="text-xs sm:text-sm text-muted">
-              Đã gửi yêu cầu trước đó? Nhập mã tra cứu của bạn để xem tình trạng xử lý tức thời.
-            </p>
+      {/* Main Content */}
+      <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-8 sm:py-12 space-y-8">
+        {/* Hero Section */}
+        <div className="text-center space-y-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-2 border border-line text-xs text-muted-light">
+            <FileCheck className="w-3.5 h-3.5 text-accent" />
+            <span>Phản hồi & Xử lý sự cố kỹ thuật 24/7</span>
+          </div>
+          <h1 className="text-2xl sm:text-4xl font-extrabold text-foreground tracking-tight">
+            Cổng Báo Cáo Sự Cố & Hỗ Trợ Kỹ Thuật
+          </h1>
+          <p className="text-xs sm:text-sm text-muted max-w-xl mx-auto leading-relaxed">
+            Gửi yêu cầu báo lỗi, sự cố hoặc thắc mắc trực tiếp tới trung tâm kỹ thuật KZTEK. Bạn sẽ nhận được mã tra cứu riêng biệt để theo dõi tiến độ xử lý trực tuyến.
+          </p>
 
-            <form onSubmit={handleSearch} className="mt-4 flex gap-2">
+          {/* Quick Tracking Search Bar */}
+          <div className="pt-4 max-w-xl mx-auto">
+            <form onSubmit={handleSearch} className="flex gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
                 <Input
@@ -249,7 +226,7 @@ export default function CustomerPortalPage() {
                 Tra Cứu
               </Button>
             </form>
-            {searchError && <p className="text-xs text-red-400 mt-1">{searchError}</p>}
+            {searchError && <p className="text-xs text-accent mt-1">{searchError}</p>}
           </div>
         </div>
 
@@ -264,19 +241,18 @@ export default function CustomerPortalPage() {
               <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                 Gửi báo lỗi thành công
               </span>
-              <h2 className="text-2xl font-black text-white tracking-tight">
+              <h2 className="text-2xl font-black text-foreground tracking-tight">
                 Cảm ơn bạn, {submittedTicket.customerName}!
               </h2>
               <p className="text-sm text-muted max-w-md mx-auto">
-                Yêu cầu của bạn đã được chuyển thẳng tới đội ngũ kỹ thuật dự án{" "}
-                <span className="font-bold text-foreground">{submittedTicket.project.name}</span>.
+                Yêu cầu của bạn đã được chuyển tới Ban Quản Trị & Đội ngũ Kỹ thuật KZTEK để tiếp nhận và điều phối xử lý ngay lập tức.
               </p>
             </div>
 
             {/* Tracking Code Box */}
             <div className="max-w-md mx-auto p-5 rounded-xl border border-line-strong bg-surface-2/90 space-y-2">
               <span className="text-[11px] font-bold text-muted uppercase tracking-wider block">
-                Mã tra cứu tiến độ độc quyền của bạn
+                Mã tra cứu tiến độ của bạn
               </span>
               <div className="flex items-center justify-center gap-3">
                 <span className="font-mono text-2xl sm:text-3xl font-black text-accent tracking-wider">
@@ -286,10 +262,10 @@ export default function CustomerPortalPage() {
                   variant="outline"
                   size="icon"
                   onClick={copyTrackingCode}
-                  className="h-9 w-9 border-line hover:border-accent text-muted hover:text-white cursor-pointer"
+                  className="h-9 w-9 border-line hover:border-accent text-muted hover:text-foreground cursor-pointer"
                   title="Sao chép mã"
                 >
-                  {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                  {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
                 </Button>
               </div>
               <p className="text-[11px] text-muted">
@@ -313,8 +289,9 @@ export default function CustomerPortalPage() {
                   setTitle("");
                   setDescription("");
                   setEnvironment("");
+                  setAttachments([]);
                 }}
-                className="w-full sm:w-auto text-xs text-muted hover:text-white cursor-pointer"
+                className="w-full sm:w-auto text-xs text-muted hover:text-foreground cursor-pointer"
               >
                 Gửi thêm yêu cầu khác
               </Button>
@@ -330,7 +307,7 @@ export default function CustomerPortalPage() {
                   Biểu mẫu tiếp nhận trực tuyến
                 </span>
               </div>
-              <h2 className="text-xl font-bold text-white tracking-tight">Gửi Yêu Cầu Hỗ Trợ / Báo Cáo Sự Cố</h2>
+              <h2 className="text-xl font-bold text-foreground tracking-tight">Gửi Yêu Cầu Hỗ Trợ / Báo Cáo Sự Cố</h2>
               <p className="text-xs sm:text-sm text-muted mt-1">
                 Vui lòng cung cấp chi tiết sự cố để đội ngũ kỹ thuật KZTEK kiểm tra và khắc phục nhanh nhất.
               </p>
@@ -338,36 +315,13 @@ export default function CustomerPortalPage() {
 
             <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6">
               {error && (
-                <div className="p-4 rounded-xl border border-red-500/30 bg-red-950/30 text-red-300 text-xs flex items-center gap-2.5 animate-fade-in-up">
-                  <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
+                <div className="p-4 rounded-xl border border-accent/30 bg-accent-subtle text-foreground text-xs flex items-center gap-2.5 animate-fade-in-up">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-accent" />
                   <span>{error}</span>
                 </div>
               )}
 
-              {/* 1. Chọn Dự án tiếp nhận */}
-              <div className="space-y-2">
-                <Label className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                  <span>Dự án / Phần mềm gặp sự cố</span>
-                  <span className="text-red-400">*</span>
-                </Label>
-                {loadingProjects ? (
-                  <div className="h-10 rounded-xl bg-surface-2 animate-pulse" />
-                ) : (
-                  <select
-                    value={selectedProjectId}
-                    onChange={(e) => setSelectedProjectId(e.target.value)}
-                    className="w-full h-11 px-3.5 rounded-xl border border-line bg-surface-2 text-foreground text-xs sm:text-sm font-medium focus:border-accent focus:outline-none transition-colors"
-                  >
-                    {projects.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name} ({p.key})
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-
-              {/* 2. Loại sự cố (Type) */}
+              {/* 1. Loại sự cố (Type) */}
               <div className="space-y-2">
                 <Label className="text-xs font-bold text-foreground">Phân loại sự cố</Label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -393,7 +347,7 @@ export default function CustomerPortalPage() {
                 </div>
               </div>
 
-              {/* 3. Mức độ ưu tiên (Priority) */}
+              {/* 2. Mức độ ưu tiên (Priority) */}
               <div className="space-y-2">
                 <Label className="text-xs font-bold text-foreground">Mức độ ảnh hưởng / Khẩn cấp</Label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -406,7 +360,7 @@ export default function CustomerPortalPage() {
                         onClick={() => setPriority(p.id)}
                         className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
                           active
-                            ? "border-accent bg-accent/15 text-white font-bold shadow-md shadow-accent/10"
+                            ? "border-accent bg-accent/15 text-accent font-bold shadow-md shadow-accent/10"
                             : `border-line bg-surface-2/40 text-muted ${p.color}`
                         }`}
                       >
@@ -418,12 +372,12 @@ export default function CustomerPortalPage() {
                 </div>
               </div>
 
-              {/* 4. Thông tin người gửi */}
+              {/* 3. Thông tin người gửi */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-line/60">
                 <div className="space-y-1.5">
                   <Label className="text-xs font-bold text-foreground flex items-center gap-1">
                     <span>Họ và tên của bạn</span>
-                    <span className="text-red-400">*</span>
+                    <span className="text-accent">*</span>
                   </Label>
                   <Input
                     value={customerName}
@@ -437,7 +391,7 @@ export default function CustomerPortalPage() {
                 <div className="space-y-1.5">
                   <Label className="text-xs font-bold text-foreground flex items-center gap-1">
                     <span>Email nhận kết quả</span>
-                    <span className="text-red-400">*</span>
+                    <span className="text-accent">*</span>
                   </Label>
                   <Input
                     type="email"
@@ -470,12 +424,12 @@ export default function CustomerPortalPage() {
                 </div>
               </div>
 
-              {/* 5. Chi tiết sự cố */}
+              {/* 4. Chi tiết sự cố */}
               <div className="space-y-4 pt-2 border-t border-line/60">
                 <div className="space-y-1.5">
                   <Label className="text-xs font-bold text-foreground flex items-center gap-1">
                     <span>Tóm tắt sự cố (Tiêu đề ngắn gọn)</span>
-                    <span className="text-red-400">*</span>
+                    <span className="text-accent">*</span>
                   </Label>
                   <Input
                     value={title}
@@ -489,7 +443,7 @@ export default function CustomerPortalPage() {
                 <div className="space-y-1.5">
                   <Label className="text-xs font-bold text-foreground flex items-center gap-1">
                     <span>Mô tả chi tiết & Các bước tái hiện lỗi</span>
-                    <span className="text-red-400">*</span>
+                    <span className="text-accent">*</span>
                   </Label>
                   <Textarea
                     value={description}
@@ -510,7 +464,7 @@ export default function CustomerPortalPage() {
                   onChange={setAttachments}
                   maxFiles={8}
                   label="Đính kèm hình ảnh, video quay lỗi hoặc tài liệu (Khuyên dùng)"
-                  helperText="Tải lên ảnh chụp màn hình, video quay thao tác lỗi hoặc file log để kỹ thuật xử lý nhanh nhất"
+                  helperText="Kéo thả hoặc tải lên ảnh chụp màn hình, video quay lỗi hoặc file log để kỹ thuật xử lý nhanh nhất"
                 />
 
                 <div className="space-y-1.5">
@@ -527,10 +481,18 @@ export default function CustomerPortalPage() {
                 </div>
               </div>
 
+              {/* Error Banner at bottom near submit button */}
+              {error && (
+                <div className="p-4 rounded-xl border border-accent/30 bg-accent-subtle text-foreground text-xs flex items-center gap-2.5 animate-fade-in-up">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-accent" />
+                  <span className="font-semibold">{error}</span>
+                </div>
+              )}
+
               {/* Submit Action */}
               <div className="pt-4 border-t border-line/60 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-[11px] text-muted">
-                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
                   <span>Thông tin của bạn được bảo mật tuyệt đối</span>
                 </div>
 

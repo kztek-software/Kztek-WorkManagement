@@ -1,0 +1,11 @@
+{
+  "name": "kztek-work-desktop",
+  "version": "1.0.0",
+  "description": "KZTEK Work Management — Native Desktop Standalone Application",
+  "main": "main.js",
+  "author": "KZTEK Team",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron main.js"
+  }
+}

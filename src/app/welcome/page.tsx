@@ -49,7 +49,21 @@ export default function WelcomePage() {
   const [loading, setLoading] = useState(false);
   const [existingProjects, setExistingProjects] = useState<{ id: string; name: string; key: string; status?: string }[]>([]);
 
+  const [canCreate, setCanCreate] = useState<boolean | null>(null);
+
   useEffect(() => {
+    // Tải thông tin người dùng và quyền hạn
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.canCreateProject !== undefined) {
+          setCanCreate(Boolean(data.canCreateProject));
+        } else if (data.user) {
+          setCanCreate(data.user.role === "ADMIN" || data.user.role === "OWNER");
+        }
+      })
+      .catch(() => setCanCreate(false));
+
     // Tải danh sách project của user
     fetch("/api/projects")
       .then((res) => res.json())
@@ -176,7 +190,22 @@ export default function WelcomePage() {
             </div>
           )}
 
-          <form onSubmit={createProject} className="space-y-3.5 pt-1">
+          {canCreate === false && (
+            <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-5 space-y-3 text-center my-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/20 text-amber-400 mx-auto">
+                <Shield className="h-5 w-5" />
+              </div>
+              <div className="space-y-1">
+                <div className="text-xs font-bold text-foreground">Bạn không có quyền tự tạo dự án mới</div>
+                <p className="text-[11px] text-muted leading-relaxed">
+                  Tài khoản của bạn chỉ có quyền truy cập vào các dự án được chỉ định. Vui lòng chọn một dự án bạn đã tham gia ở trên hoặc liên hệ Quản trị viên (ADMIN) để được gán vào dự án phù hợp.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {canCreate !== false && (
+            <form onSubmit={createProject} className="space-y-3.5 pt-1">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label htmlFor="pname" className="text-xs font-semibold">Tên dự án *</Label>
@@ -270,7 +299,7 @@ export default function WelcomePage() {
                   })}
                 </div>
                 {selectedMemberIds.length > 0 && (
-                  <div className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1 pt-1">
+                  <div className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1 pt-1">
                     <UserCheck className="h-3.5 w-3.5" />
                     Đã tự động chọn {selectedMemberIds.length} nhân sự tham gia dự án
                   </div>
@@ -279,7 +308,7 @@ export default function WelcomePage() {
             )}
 
             {error && (
-              <p className="rounded-md bg-red-500/10 px-3 py-2 text-xs text-red-400 border border-red-500/20">{error}</p>
+              <p className="rounded-md bg-accent-subtle px-3 py-2 text-xs text-accent font-medium border border-accent/20">{error}</p>
             )}
 
             <div className="flex items-center justify-between pt-2">
@@ -301,6 +330,7 @@ export default function WelcomePage() {
               </Button>
             </div>
           </form>
+          )}
         </DialogContent>
       </Dialog>
     </div>

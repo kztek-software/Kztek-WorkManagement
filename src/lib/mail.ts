@@ -1,6 +1,6 @@
 import net from "node:net";
 import tls from "node:tls";
-import { getEffectiveSmtpConfig } from "@/lib/system-config";
+import { getEffectiveSmtpConfig, getAppBaseUrl } from "@/lib/system-config";
 
 export type EmailLogType = "TASK_ASSIGNED" | "STATUS_CHANGED" | "COMMENTED" | "TASK_MENTION" | "TEST" | "SYSTEM";
 export type EmailLogStatus = "SENT" | "SIMULATED" | "FAILED";
@@ -51,6 +51,7 @@ export type TaskEmailPayload = {
   projectName: string;
   projectKey: string;
   projectId: string;
+  taskId?: string;
   assignorName: string;
   assigneeName: string;
   assigneeEmail: string;
@@ -62,11 +63,13 @@ export type StatusChangeEmailPayload = {
   taskTitle: string;
   projectName: string;
   projectId: string;
+  taskId?: string;
   oldStatus: string;
   newStatus: string;
   actorName: string;
   recipientName: string;
   recipientEmail: string;
+  taskUrl?: string;
 };
 
 export type CommentEmailPayload = {
@@ -74,10 +77,12 @@ export type CommentEmailPayload = {
   taskTitle: string;
   projectName: string;
   projectId: string;
+  taskId?: string;
   authorName: string;
   commentBody: string;
   recipientName: string;
   recipientEmail: string;
+  taskUrl?: string;
 };
 
 export type TaskMentionEmailPayload = {
@@ -352,14 +357,14 @@ const BRAND = {
   border: "#e2e8f0",
   success: "#10b981",
   warning: "#f59e0b",
-  danger: "#ef4444",
+  danger: "#F05922", // Cam KZTEK (thay cho đỏ — brand KZTEK không dùng màu đỏ)
   info: "#3b82f6",
 };
 
 function getPriorityBadge(priority: string) {
   switch (priority.toUpperCase()) {
     case "URGENT":
-      return { label: "Khẩn cấp", bg: "#fef2f2", color: "#dc2626", border: "#fecaca" };
+      return { label: "Khẩn cấp", bg: "#FDE9E0", color: "#F05922", border: "#F9C7AA" };
     case "HIGH":
       return { label: "Cao", bg: "#fff7ed", color: "#ea580c", border: "#ffedd5" };
     case "MEDIUM":
@@ -373,7 +378,7 @@ function getPriorityBadge(priority: string) {
 function getTypeBadge(type: string) {
   switch (type.toUpperCase()) {
     case "BUG":
-      return { label: "Báo lỗi (Bug)", bg: "#fef2f2", color: "#ef4444" };
+      return { label: "Báo lỗi (Bug)", bg: "#FDE9E0", color: "#F05922" };
     case "STORY":
       return { label: "Story", bg: "#ecfdf5", color: "#059669" };
     case "EPIC":
@@ -451,7 +456,7 @@ export function generateTaskAssignedEmailHtml(payload: TaskEmailPayload): string
   const pBadge = getPriorityBadge(payload.priority);
   const tBadge = getTypeBadge(payload.taskType || "TASK");
   const taskCode = `${payload.projectKey}-${payload.taskNumber}`;
-  const directLink = payload.taskUrl || `http://localhost:3000/projects/${payload.projectId}/board`;
+  const directLink = payload.taskUrl || `${getAppBaseUrl()}/projects/${payload.projectId}/board?taskId=${payload.taskId || ""}`;
 
   const content = `
     <div style="font-size: 18px; font-weight: 700; color: ${BRAND.primary}; margin-bottom: 12px;">
@@ -549,7 +554,7 @@ export function generateStatusChangedEmailHtml(payload: StatusChangeEmailPayload
     </div>
 
     <div style="text-align: center; margin: 24px 0;">
-      <a href="http://localhost:3000/projects/${payload.projectId}/board" class="btn" target="_blank">
+      <a href="${payload.taskUrl || `${getAppBaseUrl()}/projects/${payload.projectId}/board?taskId=${payload.taskId || ""}`}" class="btn" target="_blank">
         Truy Cập Bảng Công Việc
       </a>
     </div>
@@ -566,6 +571,8 @@ export function generateStatusChangedEmailHtml(payload: StatusChangeEmailPayload
  * Tạo mẫu HTML Email Bình luận mới (Task Comment)
  */
 export function generateTaskCommentEmailHtml(payload: CommentEmailPayload): string {
+  const directLink = payload.taskUrl || `${getAppBaseUrl()}/projects/${payload.projectId}/board?taskId=${payload.taskId || ""}`;
+
   const content = `
     <div style="font-size: 18px; font-weight: 700; color: ${BRAND.primary}; margin-bottom: 12px;">
       💬 Bình luận mới trong công việc
@@ -584,7 +591,7 @@ export function generateTaskCommentEmailHtml(payload: CommentEmailPayload): stri
     </div>
 
     <div style="text-align: center; margin: 24px 0;">
-      <a href="http://localhost:3000/projects/${payload.projectId}/board" class="btn" target="_blank">
+      <a href="${directLink}" class="btn" target="_blank">
         Xem & Trả Lời Bình Luận
       </a>
     </div>
@@ -603,6 +610,7 @@ export function generateTaskCommentEmailHtml(payload: CommentEmailPayload): stri
 export function generateTestEmailHtml(recipientName: string, recipientEmail: string): string {
   const isConfigured = isSmtpConfigured();
   const config = getSmtpConfig();
+  const appUrl = getAppBaseUrl();
 
   const content = `
     <div style="font-size: 18px; font-weight: 700; color: ${BRAND.primary}; margin-bottom: 12px;">
@@ -634,6 +642,10 @@ export function generateTestEmailHtml(recipientName: string, recipientEmail: str
           <td class="meta-val">${config.from}</td>
         </tr>
         <tr>
+          <td class="meta-label">Địa chỉ Web/App:</td>
+          <td class="meta-val" style="font-weight: 700; color: ${BRAND.accent};">${appUrl}</td>
+        </tr>
+        <tr>
           <td class="meta-label">Người nhận thử:</td>
           <td class="meta-val">${recipientEmail}</td>
         </tr>
@@ -645,7 +657,7 @@ export function generateTestEmailHtml(recipientName: string, recipientEmail: str
     </div>
 
     <div style="text-align: center; margin: 24px 0;">
-      <a href="http://localhost:3000" class="btn" target="_blank">
+      <a href="${appUrl}" class="btn" target="_blank">
         Quay Lại Trang Điều Hành
       </a>
     </div>
@@ -665,13 +677,14 @@ export async function sendTaskAssignedEmail(payload: TaskEmailPayload): Promise<
   const html = generateTaskAssignedEmailHtml(payload);
   const taskCode = `${payload.projectKey}-${payload.taskNumber}`;
   const subject = `[KZTEK Work] Giao việc: ${taskCode} - ${payload.taskTitle}`;
+  const taskUrl = payload.taskUrl || `${getAppBaseUrl()}/projects/${payload.projectId}/board?taskId=${payload.taskId || ""}`;
 
   return sendMail({
     to: payload.assigneeEmail,
     toName: payload.assigneeName,
     subject,
     html,
-    text: `Bạn vừa được ${payload.assignorName} giao task ${taskCode}: ${payload.taskTitle}. Chi tiết: ${payload.taskUrl || "http://localhost:3000"}`,
+    text: `Bạn vừa được ${payload.assignorName} giao task ${taskCode}: ${payload.taskTitle}. Chi tiết: ${taskUrl}`,
     type: "TASK_ASSIGNED",
     metadata: {
       taskId: payload.taskNumber,
@@ -688,13 +701,14 @@ export async function sendTaskAssignedEmail(payload: TaskEmailPayload): Promise<
 export async function sendStatusChangedEmail(payload: StatusChangeEmailPayload): Promise<EmailLogEntry> {
   const html = generateStatusChangedEmailHtml(payload);
   const subject = `[KZTEK Work] Task #${payload.taskNumber} đổi trạng thái sang ${payload.newStatus}`;
+  const taskUrl = payload.taskUrl || `${getAppBaseUrl()}/projects/${payload.projectId}/board?taskId=${payload.taskId || ""}`;
 
   return sendMail({
     to: payload.recipientEmail,
     toName: payload.recipientName,
     subject,
     html,
-    text: `${payload.actorName} đã chuyển trạng thái task #${payload.taskNumber} (${payload.taskTitle}) sang ${payload.newStatus}`,
+    text: `${payload.actorName} đã chuyển trạng thái task #${payload.taskNumber} (${payload.taskTitle}) sang ${payload.newStatus}. Chi tiết: ${taskUrl}`,
     type: "STATUS_CHANGED",
     metadata: {
       taskNumber: payload.taskNumber,
@@ -710,13 +724,14 @@ export async function sendStatusChangedEmail(payload: StatusChangeEmailPayload):
 export async function sendTaskCommentEmail(payload: CommentEmailPayload): Promise<EmailLogEntry> {
   const html = generateTaskCommentEmailHtml(payload);
   const subject = `[KZTEK Work] ${payload.authorName} đã bình luận trên task #${payload.taskNumber}`;
+  const taskUrl = payload.taskUrl || `${getAppBaseUrl()}/projects/${payload.projectId}/board?taskId=${payload.taskId || ""}`;
 
   return sendMail({
     to: payload.recipientEmail,
     toName: payload.recipientName,
     subject,
     html,
-    text: `${payload.authorName} đã bình luận trên task #${payload.taskNumber}: ${payload.commentBody}`,
+    text: `${payload.authorName} đã bình luận trên task #${payload.taskNumber}: ${payload.commentBody}. Chi tiết: ${taskUrl}`,
     type: "COMMENTED",
     metadata: {
       taskNumber: payload.taskNumber,
@@ -731,7 +746,7 @@ export async function sendTaskCommentEmail(payload: CommentEmailPayload): Promis
  */
 export function generateTaskMentionEmailHtml(payload: TaskMentionEmailPayload): string {
   const taskCode = `${payload.projectKey}-${payload.taskNumber}`;
-  const directLink = payload.taskUrl || `http://localhost:3000/projects/${payload.projectId}/board?taskId=${payload.taskId}`;
+  const directLink = payload.taskUrl || `${getAppBaseUrl()}/projects/${payload.projectId}/board?taskId=${payload.taskId}`;
 
   const content = `
     <div style="background: linear-gradient(135deg, rgba(240, 89, 34, 0.15), rgba(37, 28, 83, 0.1)); border: 1px solid rgba(240, 89, 34, 0.4); border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; display: flex; align-items: center;">
@@ -814,13 +829,14 @@ export async function sendTaskMentionEmail(payload: TaskMentionEmailPayload): Pr
   const html = generateTaskMentionEmailHtml(payload);
   const taskCode = `${payload.projectKey}-${payload.taskNumber}`;
   const subject = `[KZTEK Work] [${taskCode}] ${payload.authorName} đã nhắc đến bạn trong bình luận`;
+  const taskUrl = payload.taskUrl || `${getAppBaseUrl()}/projects/${payload.projectId}/board?taskId=${payload.taskId}`;
 
   return sendMail({
     to: payload.recipientEmail,
     toName: payload.recipientName,
     subject,
     html,
-    text: `[KZTEK] ${payload.authorName} đã nhắc đến bạn trong task ${taskCode} (${payload.taskTitle}):\n\n"${payload.commentBody}"\n\nXem chi tiết tại: ${payload.taskUrl || "http://localhost:3000"}`,
+    text: `[KZTEK] ${payload.authorName} đã nhắc đến bạn trong task ${taskCode} (${payload.taskTitle}):\n\n"${payload.commentBody}"\n\nXem chi tiết tại: ${taskUrl}`,
     type: "TASK_MENTION",
     metadata: {
       taskId: payload.taskId,

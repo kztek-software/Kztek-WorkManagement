@@ -1,0 +1,21 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: kztek-work-management:latest
+    container_name: kztek-work-management
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # Nối tới SQL Server ngoài (mặc định trỏ về server hiện có trong .env.example)
+      DATABASE_URL: ${DATABASE_URL:-sqlserver://14.160.26.45:9999;database=WorkingManager;user=vietanh;password=Kztek123456;encrypt=true;trustServerCertificate=true;}
+      AUTH_SECRET: ${AUTH_SECRET:?Cần đặt AUTH_SECRET trong .env}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+    volumes:
+      # Giữ lại file upload (ảnh/video/tài liệu) qua các lần deploy lại container
+      - uploads-data:/app/public/uploads
+
+volumes:
+  uploads-data:

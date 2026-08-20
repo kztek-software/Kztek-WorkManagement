@@ -3,18 +3,19 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { canManageMembers } from "@/lib/permissions";
+import { checkUserPermission } from "@/lib/permissions-server";
 
 const addMemberSchema = z.object({
   userId: z.string().optional(),
   userIds: z.array(z.string()).optional(),
   teamId: z.string().optional(),
   teamIds: z.array(z.string()).optional(),
-  role: z.enum(["ADMIN", "MEMBER", "VIEWER"]).default("MEMBER"),
+  role: z.string().min(1).default("MEMBER"),
 });
 
 const updateRoleSchema = z.object({
   userId: z.string().min(1),
-  role: z.enum(["OWNER", "ADMIN", "MEMBER", "VIEWER"]),
+  role: z.string().min(1),
 });
 
 export async function GET(
@@ -31,7 +32,7 @@ export async function GET(
     return NextResponse.json({ error: "Không có quyền truy cập" }, { status: 403 });
   }
 
-  const [members, allUsers, teams, project] = await Promise.all([
+  const [members, allUsers, teams, project, roleDefs] = await Promise.all([
     prisma.projectMember.findMany({
       where: { projectId },
       include: {
@@ -72,6 +73,10 @@ export async function GET(
       where: { id: projectId },
       select: { ownerId: true, name: true, key: true },
     }),
+    prisma.roleDefinition.findMany({
+      select: { id: true, key: true, name: true, color: true, description: true },
+      orderBy: [{ isSystem: "desc" }, { name: "asc" }],
+    }),
   ]);
 
   const memberUserIds = new Set(members.map((m) => m.userId));
@@ -81,6 +86,7 @@ export async function GET(
     members,
     nonMembers,
     teams,
+    roles: roleDefs,
     currentRole: currentMember?.role || (user.role === "ADMIN" ? "ADMIN" : "VIEWER"),
     ownerId: project?.ownerId,
     project,
@@ -94,11 +100,9 @@ export async function POST(
   const user = await requireUser();
   const { projectId } = await params;
 
-  const currentMember = await prisma.projectMember.findUnique({
-    where: { projectId_userId: { projectId, userId: user.id } },
-  });
-  if ((!currentMember || !canManageMembers(currentMember.role)) && user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Chỉ Quản trị viên mới có quyền thêm thành viên" }, { status: 403 });
+  const permCheck = await checkUserPermission(user.id, "members.add", projectId, user.role);
+  if (!permCheck.allowed) {
+    return NextResponse.json({ error: permCheck.reason || "Bạn không có quyền thêm thành viên vào dự án này" }, { status: 403 });
   }
 
   const body = await req.json().catch(() => null);
@@ -178,11 +182,9 @@ export async function PATCH(
   const user = await requireUser();
   const { projectId } = await params;
 
-  const currentMember = await prisma.projectMember.findUnique({
-    where: { projectId_userId: { projectId, userId: user.id } },
-  });
-  if (!currentMember || !canManageMembers(currentMember.role)) {
-    return NextResponse.json({ error: "Chỉ Quản trị viên mới có quyền thay đổi phân quyền" }, { status: 403 });
+  const permCheck = await checkUserPermission(user.id, "members.change_role", projectId, user.role);
+  if (!permCheck.allowed) {
+    return NextResponse.json({ error: permCheck.reason || "Bạn không có quyền thay đổi vai trò thành viên" }, { status: 403 });
   }
 
   const body = await req.json().catch(() => null);
@@ -198,8 +200,8 @@ export async function PATCH(
     return NextResponse.json({ error: "Không tìm thấy thành viên" }, { status: 404 });
   }
 
-  // Không thể hạ quyền Owner trừ khi người thao tác là Owner
-  if (targetMember.role === "OWNER" && currentMember.role !== "OWNER") {
+  // Không thể hạ quyền Owner trừ khi người thao tác là Admin hoặc chính Owner
+  if (targetMember.role === "OWNER" && user.role !== "ADMIN" && !permCheck.isOwner) {
     return NextResponse.json({ error: "Không thể thay đổi quyền của Chủ dự án" }, { status: 403 });
   }
 
@@ -221,11 +223,9 @@ export async function DELETE(
   const user = await requireUser();
   const { projectId } = await params;
 
-  const currentMember = await prisma.projectMember.findUnique({
-    where: { projectId_userId: { projectId, userId: user.id } },
-  });
-  if (!currentMember || !canManageMembers(currentMember.role)) {
-    return NextResponse.json({ error: "Chỉ Quản trị viên mới có quyền xóa thành viên" }, { status: 403 });
+  const permCheck = await checkUserPermission(user.id, "members.remove", projectId, user.role);
+  if (!permCheck.allowed) {
+    return NextResponse.json({ error: permCheck.reason || "Bạn không có quyền xóa thành viên khỏi dự án" }, { status: 403 });
   }
 
   const { searchParams } = new URL(req.url);

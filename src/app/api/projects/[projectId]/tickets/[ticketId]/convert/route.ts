@@ -30,8 +30,11 @@ export async function POST(
     }
 
     const ticket = await getTicketById(ticketId, true);
-    if (!ticket || ticket.projectId !== projectId) {
+    if (!ticket) {
       return NextResponse.json({ error: "Không tìm thấy ticket" }, { status: 404 });
+    }
+    if (ticket.projectId && ticket.projectId !== projectId) {
+      return NextResponse.json({ error: "Ticket này thuộc dự án khác" }, { status: 400 });
     }
 
     // Nếu đã chuyển đổi trước đó
@@ -61,7 +64,7 @@ export async function POST(
         data: {
           projectId,
           name: "Báo lỗi KH",
-          color: "#f43f5e",
+          color: "#F05922",
         },
       });
     }
@@ -134,8 +137,9 @@ export async function POST(
       });
     }
 
-    // Cập nhật ticket với convertedTaskId và đổi trạng thái sang IN_PROGRESS
+    // Cập nhật ticket với convertedTaskId, projectId và đổi trạng thái sang IN_PROGRESS
     await updateTicket(ticketId, {
+      projectId,
       convertedTaskId: task.id,
       status: "IN_PROGRESS",
     });

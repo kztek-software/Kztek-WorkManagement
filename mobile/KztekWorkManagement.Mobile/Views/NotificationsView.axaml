@@ -1,0 +1,71 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:KztekWorkManagement.Mobile.ViewModels"
+             x:Class="KztekWorkManagement.Mobile.Views.NotificationsView"
+             x:DataType="vm:NotificationsViewModel">
+
+  <Grid RowDefinitions="Auto,*" Background="{DynamicResource KzBackground}">
+
+    <!-- Header info -->
+    <Grid Grid.Row="0" Margin="16,12,16,8" ColumnDefinitions="*,Auto">
+      <TextBlock Grid.Column="0" Text="{Binding UnreadCount, StringFormat='{}Tin chưa đọc: {0}'}" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource KzPrimary}" VerticalAlignment="Center" />
+      <Button Grid.Column="1" Classes="kz-btn-outline" Command="{Binding RefreshCommand}" Padding="10,6">
+        <TextBlock Text="Làm mới" FontSize="11" />
+      </Button>
+    </Grid>
+
+    <!-- Notifications List (Virtualized ListBox) -->
+    <Grid Grid.Row="1" Margin="0,0,0,80">
+      <!-- Empty State -->
+      <Border Classes="kz-card" Margin="16,4,16,8" Padding="24" HorizontalAlignment="Stretch" VerticalAlignment="Top"
+              IsVisible="{Binding !Notifications.Count}">
+        <StackPanel Spacing="8" HorizontalAlignment="Center">
+          <TextBlock Text="🔔" FontSize="32" HorizontalAlignment="Center" />
+          <TextBlock Text="Bạn không có thông báo mới nào" FontSize="14" FontWeight="Medium" Foreground="{DynamicResource KzTextSecondary}" HorizontalAlignment="Center" />
+        </StackPanel>
+      </Border>
+
+      <!-- Notifications Items with Virtualized ListBox -->
+      <ListBox ItemsSource="{Binding Notifications}"
+               Background="Transparent"
+               BorderThickness="0"
+               Padding="16,4,16,16"
+               ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+               ScrollViewer.VerticalScrollBarVisibility="Auto">
+        <ListBox.Styles>
+          <Style Selector="ListBoxItem">
+            <Setter Property="Padding" Value="0,0,0,8"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Template">
+              <ControlTemplate>
+                <ContentPresenter Content="{TemplateBinding Content}"
+                                  ContentTemplate="{TemplateBinding ContentTemplate}"
+                                  Margin="{TemplateBinding Padding}"/>
+              </ControlTemplate>
+            </Setter>
+          </Style>
+        </ListBox.Styles>
+        <ListBox.ItemTemplate>
+          <DataTemplate>
+            <Border Classes="kz-card" Padding="14">
+              <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Spacing="4">
+                  <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="Bold" />
+                  <TextBlock Text="{Binding Message}" FontSize="12" Foreground="{DynamicResource KzTextSecondary}" TextWrapping="Wrap" />
+                  <TextBlock Text="{Binding CreatedAt, StringFormat='{}{0:dd/MM/yyyy HH:mm}'}" FontSize="10" Foreground="{DynamicResource KzTextMuted}" />
+                </StackPanel>
+
+                <Button Grid.Column="1" Classes="kz-btn-outline"
+                        Command="{Binding $parent[UserControl].((vm:NotificationsViewModel)DataContext).MarkAsReadCommand}"
+                        CommandParameter="{Binding}" Padding="8,4" MinHeight="30" VerticalAlignment="Center">
+                  <TextBlock Text="Đã đọc ✓" FontSize="10" />
+                </Button>
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+    </Grid>
+
+  </Grid>
+</UserControl>

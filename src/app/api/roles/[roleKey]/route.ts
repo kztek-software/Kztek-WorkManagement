@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { ALL_PERMISSION_KEYS } from "@/lib/permissions";
+import { checkUserPermission, invalidateRolePermissionsCache } from "@/lib/permissions-server";
 
 const updateRoleSchema = z.object({
   name: z.string().min(2).max(60).optional(),
@@ -20,8 +21,9 @@ export async function PATCH(
   if (!user) {
     return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
   }
-  if (user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Chỉ Quản trị viên (Admin) mới có quyền sửa phân quyền" }, { status: 403 });
+  const permCheck = await checkUserPermission(user.id, "roles.manage", undefined, user.role);
+  if (!permCheck.allowed) {
+    return NextResponse.json({ error: "Chỉ Quản trị viên mới có quyền sửa phân quyền" }, { status: 403 });
   }
 
   const { roleKey } = await context.params;
@@ -54,6 +56,9 @@ export async function PATCH(
     },
   });
 
+  // Xóa cache permissions để role mới có hiệu lực ngay lập tức
+  invalidateRolePermissionsCache();
+
   return NextResponse.json({
     role: {
       id: updated.id,
@@ -76,8 +81,9 @@ export async function DELETE(
   if (!user) {
     return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
   }
-  if (user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Chỉ Quản trị viên (Admin) mới có quyền xóa vai trò" }, { status: 403 });
+  const permCheck = await checkUserPermission(user.id, "roles.manage", undefined, user.role);
+  if (!permCheck.allowed) {
+    return NextResponse.json({ error: "Chỉ Quản trị viên mới có quyền xóa vai trò" }, { status: 403 });
   }
 
   const { roleKey } = await context.params;
@@ -103,6 +109,9 @@ export async function DELETE(
   });
 
   await prisma.roleDefinition.delete({ where: { key } });
+
+  // Xóa cache để role đã xóa không còn được dùng nữa
+  invalidateRolePermissionsCache();
 
   return NextResponse.json({ success: true });
 }

@@ -1,0 +1,93 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:KztekWorkManagement.Mobile.ViewModels"
+             xmlns:conv="using:KztekWorkManagement.Mobile.Common"
+             x:Class="KztekWorkManagement.Mobile.Views.TicketsView"
+             x:DataType="vm:TicketsViewModel">
+
+  <Grid RowDefinitions="Auto,*" Background="{DynamicResource KzBackground}">
+
+    <!-- Top Search & Refresh -->
+    <Grid Grid.Row="0" Margin="16,12,16,8" ColumnDefinitions="*,Auto">
+      <TextBox Grid.Column="0" Classes="kz-input" Text="{Binding SearchKeyword, Mode=TwoWay}" Watermark="🔍 Tra cứu mã ticket hoặc tên KH..." Margin="0,0,8,0" />
+      <Button Grid.Column="1" Classes="kz-btn-primary" Command="{Binding RefreshCommand}" Padding="12,10">
+        <TextBlock Text="Làm mới" FontSize="12" />
+      </Button>
+    </Grid>
+
+    <!-- Tickets List (Virtualized ListBox) -->
+    <Grid Grid.Row="1" Margin="0,0,0,80">
+      <!-- Empty State -->
+      <Border Classes="kz-card" Margin="16,4,16,8" Padding="24" HorizontalAlignment="Stretch" VerticalAlignment="Top"
+              IsVisible="{Binding !Tickets.Count}">
+        <StackPanel Spacing="8" HorizontalAlignment="Center">
+          <TextBlock Text="🎫" FontSize="32" HorizontalAlignment="Center" />
+          <TextBlock Text="Không có phiếu sự cố nào" FontSize="14" FontWeight="Medium" Foreground="{DynamicResource KzTextSecondary}" HorizontalAlignment="Center" />
+        </StackPanel>
+      </Border>
+
+      <!-- Tickets Cards with Virtualized ListBox -->
+      <ListBox ItemsSource="{Binding Tickets}"
+               Background="Transparent"
+               BorderThickness="0"
+               Padding="16,4,16,16"
+               ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+               ScrollViewer.VerticalScrollBarVisibility="Auto">
+        <ListBox.Styles>
+          <Style Selector="ListBoxItem">
+            <Setter Property="Padding" Value="0,0,0,10"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Template">
+              <ControlTemplate>
+                <ContentPresenter Content="{TemplateBinding Content}"
+                                  ContentTemplate="{TemplateBinding ContentTemplate}"
+                                  Margin="{TemplateBinding Padding}"/>
+              </ControlTemplate>
+            </Setter>
+          </Style>
+        </ListBox.Styles>
+        <ListBox.ItemTemplate>
+          <DataTemplate>
+            <Border Classes="kz-card" Padding="14">
+              <StackPanel Spacing="8">
+                
+                <!-- Tracking Code & Status -->
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                  <TextBlock Grid.Column="0" Text="{Binding TrackingCode}" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource KzAccent}" />
+                  
+                  <Border Grid.Column="2" Background="{Binding Status, Converter={x:Static conv:StatusToBrushConverter.Instance}}" CornerRadius="4" Padding="6,2">
+                    <TextBlock Text="{Binding Status}" FontSize="10" FontWeight="Bold" Foreground="#FFFFFF" />
+                  </Border>
+                </Grid>
+
+                <!-- Title -->
+                <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" />
+
+                <!-- Description -->
+                <TextBlock Text="{Binding Description}" FontSize="12" Foreground="{DynamicResource KzTextSecondary}" TextWrapping="Wrap" MaxLines="2" />
+
+                <!-- Customer Info & Action -->
+                <Grid ColumnDefinitions="*,Auto" Margin="0,4,0,0">
+                  <StackPanel Grid.Column="0" Spacing="2">
+                    <TextBlock Text="{Binding CustomerName, StringFormat='Khách hàng: {0}'}" FontSize="11" Foreground="{DynamicResource KzTextMuted}" />
+                    <TextBlock Text="{Binding CustomerEmail}" FontSize="11" Foreground="{DynamicResource KzTextMuted}" />
+                  </StackPanel>
+
+                  <!-- Resolve Button -->
+                  <Button Grid.Column="1" Classes="kz-btn-outline"
+                          Command="{Binding $parent[UserControl].((vm:TicketsViewModel)DataContext).ResolveTicketCommand}"
+                          CommandParameter="{Binding}" Padding="10,6" MinHeight="32"
+                          IsVisible="{Binding Status, Converter={x:Static conv:BooleanToVisibilityConverter.Instance}}">
+                    <TextBlock Text="Xong ✓" FontSize="11" />
+                  </Button>
+                </Grid>
+
+              </StackPanel>
+            </Border>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+    </Grid>
+
+  </Grid>
+</UserControl>

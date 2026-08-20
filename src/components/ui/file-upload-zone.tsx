@@ -160,10 +160,10 @@ export function FileUploadZone({
               <div className="p-1.5 rounded-lg bg-surface-3 text-accent border border-line">
                 <ImageIcon className="w-3.5 h-3.5" />
               </div>
-              <div className="p-1.5 rounded-lg bg-surface-3 text-purple-400 border border-line">
+              <div className="p-1.5 rounded-lg bg-surface-3 text-purple-600 border border-line">
                 <Video className="w-3.5 h-3.5" />
               </div>
-              <div className="p-1.5 rounded-lg bg-surface-3 text-blue-400 border border-line">
+              <div className="p-1.5 rounded-lg bg-surface-3 text-blue-600 border border-line">
                 <FileText className="w-3.5 h-3.5" />
               </div>
             </div>
@@ -179,7 +179,7 @@ export function FileUploadZone({
 
       {/* Error Banner */}
       {uploadError && (
-        <div className="p-2.5 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center gap-1.5">
+        <div className="p-2.5 rounded-lg bg-accent/10 border border-accent/30 text-accent text-xs flex items-center gap-1.5">
           <AlertCircle className="w-3.5 h-3.5 shrink-0" />
           <span>{uploadError}</span>
         </div>
@@ -206,12 +206,12 @@ export function FileUploadZone({
                       className="w-full h-full object-cover"
                     />
                   ) : isVideo ? (
-                    <div className="flex flex-col items-center justify-center text-purple-400">
+                    <div className="flex flex-col items-center justify-center text-purple-600">
                       <Video className="w-5 h-5" />
                       <span className="text-[8px] font-mono font-bold">VIDEO</span>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center justify-center text-blue-400">
+                    <div className="flex flex-col items-center justify-center text-blue-600">
                       <FileText className="w-5 h-5" />
                       <span className="text-[8px] font-mono font-bold">DOC</span>
                     </div>
@@ -220,12 +220,12 @@ export function FileUploadZone({
 
                 {/* Info */}
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-xs font-semibold text-foreground group-hover:text-white transition-colors" title={file.fileName}>
+                  <div className="truncate text-xs font-semibold text-foreground group-hover:text-accent transition-colors" title={file.fileName}>
                     {file.fileName}
                   </div>
                   <div className="text-[10px] text-muted font-mono flex items-center gap-1.5 mt-0.5">
                     {formatBytes(file.fileSize)}
-                    <span className="text-emerald-400 flex items-center gap-0.5 text-[9px] font-sans">
+                    <span className="text-emerald-600 flex items-center gap-0.5 text-[9px] font-sans">
                       <CheckCircle2 className="w-2.5 h-2.5" /> Đã tải
                     </span>
                   </div>
@@ -239,7 +239,7 @@ export function FileUploadZone({
                       e.stopPropagation();
                       removeFile(idx);
                     }}
-                    className="p-1 rounded-lg text-muted hover:text-red-400 hover:bg-red-500/10 transition-colors shrink-0 cursor-pointer"
+                    className="p-1 rounded-lg text-muted hover:text-accent hover:bg-accent/10 transition-colors shrink-0 cursor-pointer"
                     title="Xóa tệp này"
                   >
                     <X className="w-3.5 h-3.5" />

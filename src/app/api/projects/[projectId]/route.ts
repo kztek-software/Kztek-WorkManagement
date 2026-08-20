@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { canManageMembers } from "@/lib/permissions";
+import { checkUserPermission } from "@/lib/permissions-server";
 
 export async function GET(
   _req: NextRequest,
@@ -73,13 +74,9 @@ export async function PATCH(
   const user = await requireUser();
   const { projectId } = await params;
 
-  const currentMember = await prisma.projectMember.findUnique({
-    where: { projectId_userId: { projectId, userId: user.id } },
-  });
-
-  const isAllowed = user.role === "ADMIN" || (currentMember && canManageMembers(currentMember.role));
-  if (!isAllowed) {
-    return NextResponse.json({ error: "Chỉ Quản trị viên hoặc Chủ dự án mới có quyền cập nhật" }, { status: 403 });
+  const permCheck = await checkUserPermission(user.id, "projects.edit", projectId, user.role);
+  if (!permCheck.allowed) {
+    return NextResponse.json({ error: permCheck.reason || "Không có quyền chỉnh sửa dự án này" }, { status: 403 });
   }
 
   const body = await req.json().catch(() => null);
@@ -145,17 +142,58 @@ export async function DELETE(
 
   const project = await prisma.project.findUnique({
     where: { id: projectId },
-    select: { ownerId: true },
+    select: { id: true, name: true, key: true, ownerId: true },
   });
 
   if (!project) {
     return NextResponse.json({ error: "Không tìm thấy dự án" }, { status: 404 });
   }
 
-  if (project.ownerId !== user.id && user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Chỉ Chủ dự án hoặc Quản trị viên mới có thể xóa dự án" }, { status: 403 });
+  const permCheck = await checkUserPermission(user.id, "projects.delete", projectId, user.role);
+  if (!permCheck.allowed) {
+    return NextResponse.json({ error: permCheck.reason || "Chỉ Chủ dự án hoặc Quản trị viên mới có thể xóa dự án này" }, { status: 403 });
   }
 
-  await prisma.project.delete({ where: { id: projectId } });
-  return NextResponse.json({ ok: true });
+  // Xóa toàn bộ dữ liệu phụ thuộc một cách an toàn và triệt để trong Transaction
+  await prisma.$transaction(async (tx) => {
+    // 1. Tìm tất cả task IDs trong project
+    const tasks = await tx.task.findMany({
+      where: { projectId },
+      select: { id: true },
+    });
+    const taskIds = tasks.map((t) => t.id);
+
+    if (taskIds.length > 0) {
+      await tx.subtask.deleteMany({ where: { taskId: { in: taskIds } } });
+      await tx.comment.deleteMany({ where: { taskId: { in: taskIds } } });
+      await tx.activity.deleteMany({ where: { taskId: { in: taskIds } } });
+      await tx.taskLabel.deleteMany({ where: { taskId: { in: taskIds } } });
+      await tx.attachment.deleteMany({ where: { taskId: { in: taskIds } } });
+    }
+
+    // 2. Tìm tất cả customer tickets trong project
+    const tickets = await tx.customerTicket.findMany({
+      where: { projectId },
+      select: { id: true },
+    });
+    const ticketIds = tickets.map((t) => t.id);
+
+    if (ticketIds.length > 0) {
+      await tx.ticketComment.deleteMany({ where: { ticketId: { in: ticketIds } } });
+      await tx.attachment.deleteMany({ where: { ticketId: { in: ticketIds } } });
+      await tx.customerTicket.deleteMany({ where: { projectId } });
+    }
+
+    // 3. Xóa các thực thể cấp dự án
+    await tx.task.deleteMany({ where: { projectId } });
+    await tx.sprint.deleteMany({ where: { projectId } });
+    await tx.label.deleteMany({ where: { projectId } });
+    await tx.projectMember.deleteMany({ where: { projectId } });
+
+    // 4. Xóa chính Project
+    await tx.project.delete({ where: { id: projectId } });
+  });
+
+  return NextResponse.json({ ok: true, message: `Đã xóa vĩnh viễn dự án ${project.name}` });
 }
+

@@ -1,20 +1,6 @@
-import Database from "better-sqlite3";
-import path from "path";
 import { publish } from "@/lib/bus";
 import { prisma } from "@/lib/prisma";
-import type { CustomerTicketDto, TicketCommentDto } from "@/lib/types";
-
-let dbInstance: Database.Database | null = null;
-
-function getDb(): Database.Database {
-  if (!dbInstance) {
-    const dbPath = path.resolve(process.cwd(), "prisma/dev.db");
-    dbInstance = new Database(dbPath);
-    // Ensure WAL mode for optimal concurrent reads and writes
-    dbInstance.pragma("journal_mode = WAL");
-  }
-  return dbInstance;
-}
+import type { CustomerTicketDto, TicketCommentDto, AttachmentDto } from "@/lib/types";
 
 export function generateTrackingCode(): string {
   const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
@@ -26,12 +12,8 @@ export function generateTrackingCode(): string {
   return `TK-${dateStr}-${random}`;
 }
 
-function generateId(): string {
-  return "c" + Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
-}
-
 export type CreateTicketParams = {
-  projectId: string;
+  projectId?: string | null;
   title: string;
   description: string;
   type?: string;
@@ -51,98 +33,89 @@ export type CreateTicketParams = {
 };
 
 export async function createTicket(params: CreateTicketParams): Promise<CustomerTicketDto> {
-  const db = getDb();
   let trackingCode = generateTrackingCode();
   
   // Ensure unique tracking code
   while (true) {
-    const existing = db.prepare("SELECT id FROM CustomerTicket WHERE trackingCode = ?").get(trackingCode);
+    const existing = await prisma.customerTicket.findUnique({ where: { trackingCode } });
     if (!existing) break;
     trackingCode = generateTrackingCode();
   }
 
-  const id = generateId();
-  const now = new Date().toISOString();
-
-  const stmt = db.prepare(`
-    INSERT INTO CustomerTicket (
-      id, trackingCode, projectId, title, description, type, status, priority,
-      customerName, customerEmail, customerPhone, customerCompany, environment,
-      createdAt, updatedAt
-    ) VALUES (
-      ?, ?, ?, ?, ?, ?, ?, ?,
-      ?, ?, ?, ?, ?,
-      ?, ?
-    )
-  `);
-
-  stmt.run(
-    id,
-    trackingCode,
-    params.projectId,
-    params.title,
-    params.description,
-    params.type || "BUG",
-    "OPEN",
-    params.priority || "MEDIUM",
-    params.customerName,
-    params.customerEmail,
-    params.customerPhone || null,
-    params.customerCompany || null,
-    params.environment || null,
-    now,
-    now
-  );
-
-  // Insert attachments if any
-  if (params.attachments && params.attachments.length > 0) {
-    const attachStmt = db.prepare(`
-      INSERT INTO Attachment (id, ticketId, fileName, fileUrl, fileType, fileSize, mimeType, createdAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    for (const att of params.attachments) {
-      attachStmt.run(
-        generateId(),
-        id,
-        att.fileName,
-        att.fileUrl,
-        att.fileType || "other",
-        att.fileSize || null,
-        att.mimeType || null,
-        now
-      );
+  const created = await prisma.customerTicket.create({
+    data: {
+      trackingCode,
+      projectId: params.projectId || null,
+      title: params.title,
+      description: params.description,
+      type: params.type || "BUG",
+      status: "OPEN",
+      priority: params.priority || "MEDIUM",
+      customerName: params.customerName,
+      customerEmail: params.customerEmail,
+      customerPhone: params.customerPhone || null,
+      customerCompany: params.customerCompany || null,
+      environment: params.environment || null,
+      attachments: params.attachments && params.attachments.length > 0 ? {
+        create: params.attachments.map(att => ({
+          fileName: att.fileName,
+          fileUrl: att.fileUrl,
+          fileType: att.fileType || "other",
+          fileSize: att.fileSize || null,
+          mimeType: att.mimeType || null,
+        }))
+      } : undefined,
+    },
+    include: {
+      comments: { orderBy: { createdAt: "asc" } },
+      attachments: { orderBy: { createdAt: "asc" } },
+      project: { select: { id: true, name: true, key: true } },
+      convertedTask: { select: { id: true, number: true, title: true, status: true, type: true } },
     }
-  }
-
-  publish(params.projectId, {
-    type: "TICKET_CREATED",
-    ticketId: id,
-    actorId: "customer",
   });
 
-  const created = await getTicketById(id);
-  if (!created) throw new Error("Không thể tải ticket vừa tạo");
-  return created;
+  if (params.projectId) {
+    publish(params.projectId, {
+      type: "TICKET_CREATED",
+      ticketId: created.id,
+      actorId: "customer",
+    });
+  }
+
+  return formatPrismaTicket(created, false);
 }
 
 export async function getTicketByTrackingCode(trackingCode: string): Promise<CustomerTicketDto | null> {
-  const db = getDb();
-  const row = db.prepare(`
-    SELECT * FROM CustomerTicket WHERE trackingCode = ? COLLATE NOCASE
-  `).get(trackingCode) as any;
+  const row = await prisma.customerTicket.findFirst({
+    where: { trackingCode: { equals: trackingCode } },
+    include: {
+      comments: { where: { isInternalOnly: false }, orderBy: { createdAt: "asc" } },
+      attachments: { orderBy: { createdAt: "asc" } },
+      project: { select: { id: true, name: true, key: true } },
+      convertedTask: { select: { id: true, number: true, title: true, status: true, type: true } },
+    }
+  });
 
   if (!row) return null;
-  return formatTicketRow(row, false);
+  return formatPrismaTicket(row, false);
 }
 
 export async function getTicketById(id: string, includeInternal = true): Promise<CustomerTicketDto | null> {
-  const db = getDb();
-  const row = db.prepare(`
-    SELECT * FROM CustomerTicket WHERE id = ?
-  `).get(id) as any;
+  const row = await prisma.customerTicket.findUnique({
+    where: { id },
+    include: {
+      comments: {
+        where: includeInternal ? undefined : { isInternalOnly: false },
+        orderBy: { createdAt: "asc" }
+      },
+      attachments: { orderBy: { createdAt: "asc" } },
+      project: { select: { id: true, name: true, key: true } },
+      convertedTask: { select: { id: true, number: true, title: true, status: true, type: true } },
+    }
+  });
 
   if (!row) return null;
-  return formatTicketRow(row, includeInternal);
+  return formatPrismaTicket(row, includeInternal);
 }
 
 export async function getTicketsByProject(
@@ -152,6 +125,8 @@ export async function getTicketsByProject(
     priority?: string;
     type?: string;
     search?: string;
+    unassignedOnly?: boolean;
+    includeUnassigned?: boolean;
   }
 ): Promise<{
   tickets: CustomerTicketDto[];
@@ -162,41 +137,70 @@ export async function getTicketsByProject(
     inProgress: number;
     resolved: number;
     closed: number;
+    unassigned: number;
   };
 }> {
-  const db = getDb();
-  let query = `SELECT * FROM CustomerTicket WHERE projectId = ?`;
-  const params: any[] = [projectId];
+  const whereClause: any = {};
+
+  if (options?.unassignedOnly || projectId === "UNASSIGNED") {
+    whereClause.projectId = null;
+  } else if (projectId === "ALL") {
+    // No project restriction
+  } else if (options?.includeUnassigned) {
+    whereClause.OR = [{ projectId }, { projectId: null }];
+  } else {
+    whereClause.projectId = projectId;
+  }
 
   if (options?.status && options.status !== "ALL") {
-    query += ` AND status = ?`;
-    params.push(options.status);
+    whereClause.status = options.status;
   }
 
   if (options?.priority && options.priority !== "ALL") {
-    query += ` AND priority = ?`;
-    params.push(options.priority);
+    whereClause.priority = options.priority;
   }
 
   if (options?.type && options.type !== "ALL") {
-    query += ` AND type = ?`;
-    params.push(options.type);
+    whereClause.type = options.type;
   }
 
   if (options?.search && options.search.trim()) {
-    query += ` AND (title LIKE ? OR trackingCode LIKE ? OR customerName LIKE ? OR customerEmail LIKE ?)`;
-    const searchParam = `%${options.search.trim()}%`;
-    params.push(searchParam, searchParam, searchParam, searchParam);
+    const term = options.search.trim();
+    whereClause.AND = [
+      ...(whereClause.AND || []),
+      {
+        OR: [
+          { title: { contains: term } },
+          { trackingCode: { contains: term } },
+          { customerName: { contains: term } },
+          { customerEmail: { contains: term } },
+        ]
+      }
+    ];
   }
 
-  query += ` ORDER BY createdAt DESC`;
-
-  const rows = db.prepare(query).all(...params) as any[];
-
-  // Calculate stats for the project
-  const allProjectRows = db.prepare(`
-    SELECT status, COUNT(*) as count FROM CustomerTicket WHERE projectId = ? GROUP BY status
-  `).all(projectId) as { status: string; count: number }[];
+  const [rows, allStatusCounts, unassignedCount] = await Promise.all([
+    prisma.customerTicket.findMany({
+      where: whereClause,
+      orderBy: { createdAt: "desc" },
+      include: {
+        comments: { orderBy: { createdAt: "asc" } },
+        attachments: { orderBy: { createdAt: "asc" } },
+        project: { select: { id: true, name: true, key: true } },
+        convertedTask: { select: { id: true, number: true, title: true, status: true, type: true } },
+      }
+    }),
+    prisma.customerTicket.groupBy({
+      by: ["status"],
+      _count: { _all: true },
+      where: projectId === "ALL"
+        ? undefined
+        : options?.includeUnassigned
+        ? { OR: [{ projectId }, { projectId: null }] }
+        : { projectId }
+    }),
+    prisma.customerTicket.count({ where: { projectId: null } })
+  ]);
 
   const stats = {
     total: 0,
@@ -205,25 +209,72 @@ export async function getTicketsByProject(
     inProgress: 0,
     resolved: 0,
     closed: 0,
+    unassigned: unassignedCount,
   };
 
-  for (const r of allProjectRows) {
-    stats.total += r.count;
-    if (r.status === "OPEN") stats.open = r.count;
-    else if (r.status === "TRIAGED") stats.triaged = r.count;
-    else if (r.status === "IN_PROGRESS") stats.inProgress = r.count;
-    else if (r.status === "RESOLVED") stats.resolved = r.count;
-    else if (r.status === "CLOSED" || r.status === "REJECTED") stats.closed += r.count;
+  for (const r of allStatusCounts) {
+    const count = r._count._all;
+    stats.total += count;
+    if (r.status === "OPEN") stats.open = count;
+    else if (r.status === "TRIAGED") stats.triaged = count;
+    else if (r.status === "IN_PROGRESS") stats.inProgress = count;
+    else if (r.status === "RESOLVED") stats.resolved = count;
+    else if (r.status === "CLOSED" || r.status === "REJECTED") stats.closed += count;
   }
 
-  const tickets = await Promise.all(rows.map((r) => formatTicketRow(r, true)));
-
+  const tickets = rows.map((r) => formatPrismaTicket(r, true));
   return { tickets, stats };
+}
+
+export async function dispatchTicketToProject(params: {
+  ticketId: string;
+  targetProjectId: string;
+  adminUser: { id: string; name: string };
+}): Promise<CustomerTicketDto | null> {
+  const targetProject = await prisma.project.findUnique({
+    where: { id: params.targetProjectId },
+    select: { id: true, name: true, key: true },
+  });
+
+  if (!targetProject) throw new Error("Không tìm thấy dự án đích để điều phối");
+
+  const current = await prisma.customerTicket.findUnique({
+    where: { id: params.ticketId },
+    select: { status: true },
+  });
+  if (!current) throw new Error("Không tìm thấy ticket cần điều phối");
+
+  const newStatus = current.status === "OPEN" ? "TRIAGED" : current.status;
+
+  await prisma.customerTicket.update({
+    where: { id: params.ticketId },
+    data: {
+      projectId: targetProject.id,
+      status: newStatus,
+    },
+  });
+
+  await addTicketComment({
+    ticketId: params.ticketId,
+    authorName: params.adminUser.name,
+    isStaff: true,
+    isInternalOnly: true,
+    message: `[Điều phối hệ thống] Quản trị viên ${params.adminUser.name} đã điều phối ticket này tới dự án ${targetProject.name} (${targetProject.key}).`,
+  });
+
+  publish(targetProject.id, {
+    type: "TICKET_UPDATED",
+    ticketId: params.ticketId,
+    actorId: params.adminUser.id,
+  });
+
+  return getTicketById(params.ticketId);
 }
 
 export async function updateTicket(
   id: string,
   data: {
+    projectId?: string | null;
     status?: string;
     priority?: string;
     type?: string;
@@ -232,11 +283,10 @@ export async function updateTicket(
     convertedTaskId?: string | null;
   }
 ): Promise<CustomerTicketDto | null> {
-  const db = getDb();
-  const current = await getTicketById(id);
+  const current = await prisma.customerTicket.findUnique({ where: { id } });
   if (!current) return null;
 
-  const now = new Date().toISOString();
+  const now = new Date();
   let resolvedAt = current.resolvedAt;
 
   if (data.status === "RESOLVED" && current.status !== "RESOLVED") {
@@ -245,36 +295,28 @@ export async function updateTicket(
     resolvedAt = null;
   }
 
-  const stmt = db.prepare(`
-    UPDATE CustomerTicket SET
-      status = COALESCE(?, status),
-      priority = COALESCE(?, priority),
-      type = COALESCE(?, type),
-      internalNotes = COALESCE(?, internalNotes),
-      resolutionNotes = COALESCE(?, resolutionNotes),
-      convertedTaskId = COALESCE(?, convertedTaskId),
-      resolvedAt = ?,
-      updatedAt = ?
-    WHERE id = ?
-  `);
-
-  stmt.run(
-    data.status ?? null,
-    data.priority ?? null,
-    data.type ?? null,
-    data.internalNotes !== undefined ? data.internalNotes : null,
-    data.resolutionNotes !== undefined ? data.resolutionNotes : null,
-    data.convertedTaskId !== undefined ? data.convertedTaskId : null,
-    resolvedAt,
-    now,
-    id
-  );
-
-  publish(current.projectId, {
-    type: "TICKET_UPDATED",
-    ticketId: id,
-    actorId: "staff",
+  await prisma.customerTicket.update({
+    where: { id },
+    data: {
+      projectId: data.projectId !== undefined ? data.projectId : undefined,
+      status: data.status,
+      priority: data.priority,
+      type: data.type,
+      internalNotes: data.internalNotes !== undefined ? data.internalNotes : undefined,
+      resolutionNotes: data.resolutionNotes !== undefined ? data.resolutionNotes : undefined,
+      convertedTaskId: data.convertedTaskId !== undefined ? data.convertedTaskId : undefined,
+      resolvedAt,
+    },
   });
+
+  const finalProjectId = data.projectId !== undefined ? data.projectId : current.projectId;
+  if (finalProjectId) {
+    publish(finalProjectId, {
+      type: "TICKET_UPDATED",
+      ticketId: id,
+      actorId: "staff",
+    });
+  }
 
   return getTicketById(id);
 }
@@ -287,32 +329,25 @@ export async function addTicketComment(params: {
   isInternalOnly?: boolean;
   message: string;
 }): Promise<TicketCommentDto> {
-  const db = getDb();
-  const id = generateId();
-  const now = new Date().toISOString();
+  const comment = await prisma.ticketComment.create({
+    data: {
+      ticketId: params.ticketId,
+      authorName: params.authorName,
+      authorEmail: params.authorEmail || null,
+      isStaff: !!params.isStaff,
+      isInternalOnly: !!params.isInternalOnly,
+      message: params.message,
+    }
+  });
 
-  const stmt = db.prepare(`
-    INSERT INTO TicketComment (
-      id, ticketId, authorName, authorEmail, isStaff, isInternalOnly, message, createdAt
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `);
+  // Touch ticket's updatedAt
+  const ticket = await prisma.customerTicket.update({
+    where: { id: params.ticketId },
+    data: { updatedAt: new Date() },
+    select: { projectId: true }
+  });
 
-  stmt.run(
-    id,
-    params.ticketId,
-    params.authorName,
-    params.authorEmail || null,
-    params.isStaff ? 1 : 0,
-    params.isInternalOnly ? 1 : 0,
-    params.message,
-    now
-  );
-
-  // Update ticket's updatedAt timestamp
-  db.prepare("UPDATE CustomerTicket SET updatedAt = ? WHERE id = ?").run(now, params.ticketId);
-
-  const ticket = await getTicketById(params.ticketId);
-  if (ticket) {
+  if (ticket && ticket.projectId) {
     publish(ticket.projectId, {
       type: "TICKET_UPDATED",
       ticketId: params.ticketId,
@@ -321,14 +356,14 @@ export async function addTicketComment(params: {
   }
 
   return {
-    id,
-    ticketId: params.ticketId,
-    authorName: params.authorName,
-    authorEmail: params.authorEmail || null,
-    isStaff: !!params.isStaff,
-    isInternalOnly: !!params.isInternalOnly,
-    message: params.message,
-    createdAt: now,
+    id: comment.id,
+    ticketId: comment.ticketId,
+    authorName: comment.authorName,
+    authorEmail: comment.authorEmail,
+    isStaff: comment.isStaff,
+    isInternalOnly: comment.isInternalOnly,
+    message: comment.message,
+    createdAt: comment.createdAt.toISOString(),
   };
 }
 
@@ -336,37 +371,39 @@ export async function getTicketComments(
   ticketId: string,
   includeInternal = true
 ): Promise<TicketCommentDto[]> {
-  const db = getDb();
-  let query = `SELECT * FROM TicketComment WHERE ticketId = ?`;
-  if (!includeInternal) {
-    query += ` AND isInternalOnly = 0`;
-  }
-  query += ` ORDER BY createdAt ASC`;
-
-  const rows = db.prepare(query).all(ticketId) as any[];
+  const rows = await prisma.ticketComment.findMany({
+    where: {
+      ticketId,
+      isInternalOnly: includeInternal ? undefined : false,
+    },
+    orderBy: { createdAt: "asc" }
+  });
 
   return rows.map((r) => ({
     id: r.id,
     ticketId: r.ticketId,
     authorName: r.authorName,
     authorEmail: r.authorEmail,
-    isStaff: Boolean(r.isStaff),
-    isInternalOnly: Boolean(r.isInternalOnly),
+    isStaff: r.isStaff,
+    isInternalOnly: r.isInternalOnly,
     message: r.message,
-    createdAt: r.createdAt,
+    createdAt: r.createdAt.toISOString(),
   }));
 }
 
-async function formatTicketRow(row: any, includeInternal: boolean): Promise<CustomerTicketDto> {
-  const comments = await getTicketComments(row.id, includeInternal);
-  const db = getDb();
+function formatPrismaTicket(row: any, includeInternal: boolean): CustomerTicketDto {
+  const comments: TicketCommentDto[] = (row.comments || []).map((c: any) => ({
+    id: c.id,
+    ticketId: c.ticketId,
+    authorName: c.authorName,
+    authorEmail: c.authorEmail,
+    isStaff: Boolean(c.isStaff),
+    isInternalOnly: Boolean(c.isInternalOnly),
+    message: c.message,
+    createdAt: c.createdAt instanceof Date ? c.createdAt.toISOString() : String(c.createdAt),
+  }));
 
-  // Query attachments for this ticket
-  const attachmentRows = db.prepare(`
-    SELECT * FROM Attachment WHERE ticketId = ? ORDER BY createdAt ASC
-  `).all(row.id) as any[];
-
-  const attachments = attachmentRows.map((a) => ({
+  const attachments: AttachmentDto[] = (row.attachments || []).map((a: any) => ({
     id: a.id,
     ticketId: a.ticketId,
     taskId: a.taskId,
@@ -375,22 +412,14 @@ async function formatTicketRow(row: any, includeInternal: boolean): Promise<Cust
     fileType: a.fileType,
     fileSize: a.fileSize,
     mimeType: a.mimeType,
-    createdAt: a.createdAt,
+    createdAt: a.createdAt instanceof Date ? a.createdAt.toISOString() : String(a.createdAt),
   }));
-
-  let convertedTask = null;
-  if (row.convertedTaskId) {
-    const task = await prisma.task.findUnique({
-      where: { id: row.convertedTaskId },
-      select: { id: true, number: true, title: true, status: true, type: true },
-    });
-    convertedTask = task;
-  }
 
   return {
     id: row.id,
     trackingCode: row.trackingCode,
     projectId: row.projectId,
+    project: row.project,
     title: row.title,
     description: row.description,
     type: row.type,
@@ -402,12 +431,16 @@ async function formatTicketRow(row: any, includeInternal: boolean): Promise<Cust
     customerCompany: row.customerCompany,
     environment: row.environment,
     convertedTaskId: row.convertedTaskId,
-    convertedTask,
+    convertedTask: row.convertedTask,
     internalNotes: includeInternal ? row.internalNotes : undefined,
     resolutionNotes: row.resolutionNotes,
-    resolvedAt: row.resolvedAt,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
+    resolvedAt: row.resolvedAt
+      ? row.resolvedAt instanceof Date
+        ? row.resolvedAt.toISOString()
+        : String(row.resolvedAt)
+      : null,
+    createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : String(row.createdAt),
+    updatedAt: row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
     comments,
     attachments,
     _count: { comments: comments.length },

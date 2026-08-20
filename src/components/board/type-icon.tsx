@@ -5,7 +5,7 @@ export function TypeIcon({ type }: { type: string }) {
     case "STORY":
       return <BookOpen className="h-3.5 w-3.5 text-emerald-400" />;
     case "BUG":
-      return <Bug className="h-3.5 w-3.5 text-red-400" />;
+      return <Bug className="h-3.5 w-3.5 text-accent" />;
     case "EPIC":
       return <Layers className="h-3.5 w-3.5 text-purple-400" />;
     default:

@@ -8,9 +8,9 @@ export default async function Home() {
   const user = await getSessionUser();
   if (!user) redirect("/login");
 
-  // 1. Tìm project đầu tiên mà user là thành viên
+  // 1. Tìm project đầu tiên mà user có quyền truy cập
   const targetProject = await prisma.project.findFirst({
-    where: { members: { some: { userId: user.id } } },
+    where: user.role === "ADMIN" ? {} : { members: { some: { userId: user.id } } },
     orderBy: { createdAt: "asc" },
     select: { id: true },
   });

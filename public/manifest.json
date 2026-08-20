@@ -1,0 +1,48 @@
+{
+  "name": "KZTEK Work Management — Desktop Workstation",
+  "short_name": "KZTEK Work",
+  "description": "Nền tảng Điều hành & Quản lý Công việc Toàn diện KZTEK",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#251C53",
+  "theme_color": "#251C53",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/kztek-custom.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/kztek-custom.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Trang Làm Việc Máy Tính",
+      "short_name": "Desktop Workstation",
+      "description": "Mở trung tâm làm việc đa nhiệm chia màn hình trên máy tính",
+      "url": "/desktop",
+      "icons": [{ "src": "/Kztek_Logo.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Bảng Kanban Dự Án",
+      "short_name": "Kanban Board",
+      "description": "Xem và chuyển đổi trạng thái công việc nhanh",
+      "url": "/",
+      "icons": [{ "src": "/Kztek_Logo.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Báo Lỗi Khách Hàng",
+      "short_name": "Customer Tickets",
+      "description": "Quản lý và điều phối sự cố khách hàng",
+      "url": "/portal",
+      "icons": [{ "src": "/Kztek_Logo.png", "sizes": "96x96" }]
+    }
+  ],
+  "categories": ["productivity", "business", "utilities"]
+}

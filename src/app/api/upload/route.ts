@@ -1,16 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { getSessionUser } from "@/lib/auth";
 import fs from "node:fs/promises";
 import path from "node:path";
 import crypto from "node:crypto";
 
 const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
 
+// 25MB for images/documents, 100MB for video captures
+const MAX_IMAGE_SIZE = 25 * 1024 * 1024;
+const MAX_VIDEO_SIZE = 100 * 1024 * 1024;
+
 function getFileType(mimeType: string, extension: string): "image" | "video" | "document" | "other" {
   if (mimeType.startsWith("image/") || /\.(jpg|jpeg|png|gif|webp|svg|bmp|ico)$/i.test(extension)) {
     return "image";
   }
-  if (mimeType.startsWith("video/") || /\.(mp4|webm|mov|avi|mkv|wmv|flv)$/i.test(extension)) {
+  if (mimeType.startsWith("video/") || /\.(mp4|webm|mov|avi|mkv|wmv|flv|m4v)$/i.test(extension)) {
     return "video";
   }
   if (
@@ -19,6 +23,7 @@ function getFileType(mimeType: string, extension: string): "image" | "video" | "
     mimeType.includes("sheet") ||
     mimeType.includes("presentation") ||
     mimeType.includes("text") ||
+    mimeType.includes("zip") ||
     /\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt|log|csv|json|zip|rar|7z)$/i.test(extension)
   ) {
     return "document";
@@ -28,13 +33,17 @@ function getFileType(mimeType: string, extension: string): "image" | "video" | "
 
 export async function POST(req: NextRequest) {
   try {
-    const user = await requireUser();
-    if (!user) {
-      return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
-    }
+    // Optional user: allow public customers to upload error evidence without logging in
+    const user = await getSessionUser();
 
     const formData = await req.formData();
-    const files = formData.getAll("file") as File[];
+    
+    // Support both "files", "file" and "attachments" keys in FormData
+    const files = [
+      ...(formData.getAll("files") as File[]),
+      ...(formData.getAll("file") as File[]),
+      ...(formData.getAll("attachments") as File[]),
+    ];
 
     if (!files || files.length === 0) {
       return NextResponse.json({ error: "Không tìm thấy tệp để tải lên" }, { status: 400 });
@@ -50,6 +59,20 @@ export async function POST(req: NextRequest) {
 
       const originalName = file.name || "upload";
       const ext = path.extname(originalName).toLowerCase();
+      const fileType = getFileType(file.type || "", ext);
+      const maxSize = fileType === "video" ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
+
+      if (file.size > maxSize) {
+        return NextResponse.json(
+          {
+            error: `Tệp "${originalName}" vượt quá dung lượng tối đa cho phép (${
+              fileType === "video" ? "100MB cho video" : "25MB cho ảnh/tài liệu"
+            })`,
+          },
+          { status: 400 }
+        );
+      }
+
       const randomSuffix = crypto.randomBytes(8).toString("hex");
       const sanitizedBaseName = path
         .basename(originalName, ext)
@@ -62,7 +85,6 @@ export async function POST(req: NextRequest) {
       const buffer = Buffer.from(await file.arrayBuffer());
       await fs.writeFile(filePath, buffer);
 
-      const fileType = getFileType(file.type || "", ext);
       const fileUrl = `/uploads/${savedFileName}`;
 
       uploadedResults.push({
@@ -72,7 +94,12 @@ export async function POST(req: NextRequest) {
         fileType,
         fileSize: file.size,
         mimeType: file.type || "application/octet-stream",
+        uploadedBy: user ? user.name : "Khách hàng (Portal)",
       });
+    }
+
+    if (uploadedResults.length === 0) {
+      return NextResponse.json({ error: "Không có tệp hợp lệ nào được tải lên" }, { status: 400 });
     }
 
     return NextResponse.json({

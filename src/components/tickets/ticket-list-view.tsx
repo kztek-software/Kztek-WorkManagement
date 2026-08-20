@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   LifeBuoy,
@@ -25,6 +25,10 @@ import {
   Flame,
   ArrowUpDown,
   Mail,
+  FolderKanban,
+  ArrowRightLeft,
+  AlertTriangle,
+  Globe,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +36,7 @@ import { Dialog } from "primereact/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import { TicketDrawer } from "./ticket-drawer";
 import type { CustomerTicketDto, SprintDto, MemberDto, ProjectDto } from "@/lib/types";
 
@@ -58,8 +63,21 @@ export function TicketListView({
   initialStats,
 }: TicketListViewProps) {
   const [tickets, setTickets] = useState<CustomerTicketDto[]>(initialTickets);
-  const [stats, setStats] = useState(initialStats);
+  const [stats, setStats] = useState<{
+    total: number;
+    open: number;
+    triaged: number;
+    inProgress: number;
+    resolved: number;
+    closed: number;
+    unassigned?: number;
+  }>(initialStats);
   const [loading, setLoading] = useState(false);
+
+  // Scope & Admin Dispatch filters
+  const [scopeFilter, setScopeFilter] = useState<"PROJECT" | "UNASSIGNED" | "ALL">("PROJECT");
+  const [allProjects, setAllProjects] = useState<Array<{ id: string; name: string; key: string }>>([]);
+  const [userRole, setUserRole] = useState<string>("");
 
   // Filters
   const [search, setSearch] = useState("");
@@ -89,6 +107,7 @@ export function TicketListView({
     setLoading(true);
     try {
       const params = new URLSearchParams();
+      params.set("scope", scopeFilter);
       if (statusFilter !== "ALL") params.set("status", statusFilter);
       if (priorityFilter !== "ALL") params.set("priority", priorityFilter);
       if (typeFilter !== "ALL") params.set("type", typeFilter);
@@ -99,6 +118,8 @@ export function TicketListView({
       if (res.ok) {
         setTickets(data.tickets);
         setStats(data.stats);
+        if (data.allProjects) setAllProjects(data.allProjects);
+        if (data.userRole) setUserRole(data.userRole);
       }
     } catch (err) {
       console.error("Lỗi tải danh sách ticket:", err);
@@ -107,9 +128,16 @@ export function TicketListView({
     }
   }
 
+  const isFirstRender = useRef(true);
   useEffect(() => {
+    // Dữ liệu ban đầu (initialTickets/initialStats) đã được server render sẵn đúng bộ lọc mặc định
+    // -> bỏ qua lần fetch đầu tiên để tránh gọi API thừa và tránh bảng bị mờ ngay khi vừa vào trang.
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     fetchTickets();
-  }, [statusFilter, priorityFilter, typeFilter]);
+  }, [scopeFilter, statusFilter, priorityFilter, typeFilter]);
 
   function handleSearchSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -169,19 +197,19 @@ export function TicketListView({
   }
 
   const statusBadges: Record<string, { label: string; bg: string; text: string; border: string }> = {
-    OPEN: { label: "Mới tiếp nhận", bg: "bg-blue-500/15", text: "text-blue-400", border: "border-blue-500/30" },
-    TRIAGED: { label: "Đã phân loại", bg: "bg-purple-500/15", text: "text-purple-400", border: "border-purple-500/30" },
-    IN_PROGRESS: { label: "Đang xử lý", bg: "bg-amber-500/15", text: "text-amber-400", border: "border-amber-500/30" },
-    RESOLVED: { label: "Đã giải quyết", bg: "bg-emerald-500/15", text: "text-emerald-400", border: "border-emerald-500/30" },
-    CLOSED: { label: "Đã đóng", bg: "bg-slate-500/15", text: "text-slate-400", border: "border-slate-500/30" },
-    REJECTED: { label: "Từ chối", bg: "bg-red-500/15", text: "text-red-400", border: "border-red-500/30" },
+    OPEN: { label: "Mới tiếp nhận", bg: "bg-blue-500/15", text: "text-blue-600", border: "border-blue-500/30" },
+    TRIAGED: { label: "Đã phân loại", bg: "bg-purple-500/15", text: "text-purple-600", border: "border-purple-500/30" },
+    IN_PROGRESS: { label: "Đang xử lý", bg: "bg-amber-500/15", text: "text-amber-600", border: "border-amber-500/30" },
+    RESOLVED: { label: "Đã giải quyết", bg: "bg-emerald-500/15", text: "text-emerald-600", border: "border-emerald-500/30" },
+    CLOSED: { label: "Đã đóng", bg: "bg-slate-500/15", text: "text-slate-600", border: "border-slate-500/30" },
+    REJECTED: { label: "Từ chối", bg: "bg-accent/15", text: "text-accent", border: "border-accent/30" },
   };
 
-  const priorityBadges: Record<string, { label: string; text: string }> = {
-    LOW: { label: "Thấp", text: "text-slate-400" },
-    MEDIUM: { label: "Trung bình", text: "text-yellow-400" },
-    HIGH: { label: "Cao", text: "text-orange-400" },
-    URGENT: { label: "Khẩn cấp", text: "text-red-400 font-bold" },
+  const priorityBadges: Record<string, { label: string; bg: string; text: string; border: string }> = {
+    LOW: { label: "Thấp", bg: "bg-slate-500/15", text: "text-slate-400", border: "border-slate-500/30" },
+    MEDIUM: { label: "Trung bình", bg: "bg-yellow-500/15", text: "text-yellow-600", border: "border-yellow-500/30" },
+    HIGH: { label: "Cao", bg: "bg-orange-500/15", text: "text-orange-500", border: "border-orange-500/30" },
+    URGENT: { label: "Khẩn cấp", bg: "bg-accent/15", text: "text-accent", border: "border-accent/30" },
   };
 
   const typeIcons: Record<string, any> = {
@@ -202,7 +230,7 @@ export function TicketListView({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+                <h1 className="text-lg sm:text-xl font-bold text-foreground tracking-tight">
                   Hộp Thư Ticket & Báo Lỗi Khách Hàng
                 </h1>
                 <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-accent/20 text-accent border border-accent/30">
@@ -220,7 +248,7 @@ export function TicketListView({
             <Link
               href={`/portal/${project.key}`}
               target="_blank"
-              className="h-9 px-3.5 rounded-xl border border-line bg-surface-2 hover:bg-surface-3 text-muted hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              className="h-9 px-3.5 rounded-xl border border-line bg-surface-2 hover:bg-surface-3 text-muted hover:text-foreground text-xs font-semibold flex items-center gap-1.5 transition-colors"
             >
               <span>Cổng Portal Khách Hàng</span>
               <ExternalLink className="w-3.5 h-3.5" />
@@ -248,7 +276,7 @@ export function TicketListView({
             }`}
           >
             <div className="text-[10px] font-bold uppercase tracking-wider text-muted">Tổng số ticket</div>
-            <div className="text-xl font-black text-white mt-1">{stats.total}</div>
+            <div className="text-xl font-black text-foreground mt-1">{stats.total}</div>
           </div>
 
           <div
@@ -287,6 +315,53 @@ export function TicketListView({
             <div className="text-xl font-black text-emerald-400 mt-1">{stats.resolved}</div>
           </div>
         </div>
+      </div>
+
+      {/* Scope Navigation Tabs */}
+      <div className="flex items-center gap-1 border-b border-line bg-surface-2/40 px-3 sm:px-6 pt-2 overflow-x-auto no-scrollbar">
+        <button
+          type="button"
+          onClick={() => setScopeFilter("PROJECT")}
+          className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
+            scopeFilter === "PROJECT"
+              ? "border-accent text-accent bg-surface/50 rounded-t-lg"
+              : "border-transparent text-muted hover:text-foreground"
+          }`}
+        >
+          <FolderKanban className="w-3.5 h-3.5 text-accent" />
+          <span>Dự án này ({project.name})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setScopeFilter("UNASSIGNED")}
+          className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
+            scopeFilter === "UNASSIGNED"
+              ? "border-amber-400 text-amber-400 bg-surface/50 rounded-t-lg"
+              : "border-transparent text-muted hover:text-amber-300"
+          }`}
+        >
+          <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+          <span>Chờ Admin Điều Phối</span>
+          {typeof stats.unassigned === "number" && stats.unassigned > 0 && (
+            <span className="px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-mono font-black border border-amber-500/30">
+              {stats.unassigned}
+            </span>
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setScopeFilter("ALL")}
+          className={`px-4 py-2.5 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-2 shrink-0 ${
+            scopeFilter === "ALL"
+              ? "border-purple-400 text-purple-400 bg-surface/50 rounded-t-lg"
+              : "border-transparent text-muted hover:text-purple-300"
+          }`}
+        >
+          <Globe className="w-3.5 h-3.5 text-purple-400" />
+          <span>Tất Cả Tickets Hệ Thống</span>
+        </button>
       </div>
 
       {/* Filter Toolbar */}
@@ -347,7 +422,7 @@ export function TicketListView({
             variant="ghost"
             size="sm"
             onClick={fetchTickets}
-            className="h-8 px-2 text-xs text-muted hover:text-white"
+            className="h-8 px-2 text-xs text-muted hover:text-foreground"
             title="Tải lại danh sách"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
@@ -357,24 +432,37 @@ export function TicketListView({
 
       {/* Main Table / List View */}
       <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-        {tickets.length === 0 ? (
+        {loading && tickets.length === 0 ? (
+          <div className="py-20 text-center">
+            <div className="text-xs font-semibold text-muted flex items-center justify-center gap-2">
+              <RefreshCw className="h-4 w-4 animate-spin text-accent" />
+              Đang tải danh sách ticket...
+            </div>
+          </div>
+        ) : tickets.length === 0 ? (
           <div className="py-20 text-center space-y-3 rounded-2xl border border-line/60 bg-surface/30">
             <div className="w-12 h-12 rounded-full bg-surface-2 text-muted flex items-center justify-center mx-auto">
               <LifeBuoy className="w-6 h-6" />
             </div>
-            <h3 className="text-sm font-bold text-white">Chưa có ticket nào phù hợp</h3>
+            <h3 className="text-sm font-bold text-foreground">Chưa có ticket nào phù hợp</h3>
             <p className="text-xs text-muted max-w-sm mx-auto">
               Không tìm thấy ticket báo lỗi theo tiêu chí lọc hiện tại, hoặc chưa có khách hàng gửi báo lỗi.
             </p>
           </div>
         ) : (
-          <div className="rounded-2xl border border-line bg-surface/90 overflow-hidden shadow-xl">
+          <div
+            className={cn(
+              "rounded-2xl border border-line bg-surface/90 overflow-hidden shadow-xl transition-opacity",
+              loading && "opacity-50 pointer-events-none"
+            )}
+          >
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="border-b border-line bg-surface-2/80 text-muted font-bold uppercase tracking-wider text-[10px]">
                     <th className="py-3 px-4">Mã Tra Cứu</th>
                     <th className="py-3 px-4">Tiêu Đề Sự Cố</th>
+                    <th className="py-3 px-4">Dự Án Phụ Trách</th>
                     <th className="py-3 px-4">Khách Hàng</th>
                     <th className="py-3 px-4">Trạng Thái</th>
                     <th className="py-3 px-4">Ưu Tiên</th>
@@ -406,7 +494,7 @@ export function TicketListView({
                         <td className="py-3.5 px-4 max-w-xs sm:max-w-md">
                           <div className="flex items-center gap-1.5">
                             <TypeIcon className="w-3.5 h-3.5 text-muted shrink-0" />
-                            <span className="font-bold text-foreground group-hover:text-white transition-colors truncate">
+                            <span className="font-bold text-foreground group-hover:text-accent transition-colors truncate">
                               {t.title}
                             </span>
                             {t._count && t._count.comments > 0 ? (
@@ -415,6 +503,21 @@ export function TicketListView({
                               </span>
                             ) : null}
                           </div>
+                        </td>
+
+                        {/* Project Assignment */}
+                        <td className="py-3.5 px-4">
+                          {t.project ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-surface-3 text-foreground border border-line">
+                              <FolderKanban className="w-3 h-3 text-accent" />
+                              <span>{t.project.name}</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 animate-pulse">
+                              <AlertTriangle className="w-3 h-3" />
+                              <span>Chờ điều phối</span>
+                            </span>
+                          )}
                         </td>
 
                         {/* Customer Info */}
@@ -434,7 +537,9 @@ export function TicketListView({
 
                         {/* Priority */}
                         <td className="py-3.5 px-4">
-                          <span className={`text-[11px] font-semibold ${priorityMeta.text}`}>
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${priorityMeta.bg} ${priorityMeta.text} ${priorityMeta.border}`}
+                          >
                             {priorityMeta.label}
                           </span>
                         </td>
@@ -442,8 +547,8 @@ export function TicketListView({
                         {/* Converted Kanban Task */}
                         <td className="py-3.5 px-4">
                           {t.convertedTaskId && t.convertedTask ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-purple-950/40 text-purple-300 border border-purple-500/30">
-                              <KanbanSquare className="w-3 h-3 text-purple-400" />
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-purple-500/15 text-purple-500 border border-purple-500/30">
+                              <KanbanSquare className="w-3 h-3 text-purple-500" />
                               <span>#{t.convertedTask.number}</span>
                             </span>
                           ) : (
@@ -471,14 +576,16 @@ export function TicketListView({
         projectId={project.id}
         sprints={sprints}
         members={members}
+        allProjects={allProjects}
+        userRole={userRole}
         isOpen={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         onTicketUpdated={async () => {
           await fetchTickets();
           if (selectedTicket) {
-            const res = await fetch(`/api/projects/${project.id}/tickets/${selectedTicket.id}`);
+            const res = await fetch(`/api/tickets/${selectedTicket.id}`);
             const data = await res.json();
-            if (res.ok) setSelectedTicket(data.ticket);
+            if (res.ok && data.ticket) setSelectedTicket(data.ticket);
           }
         }}
       />
@@ -494,7 +601,7 @@ export function TicketListView({
       >
         <form onSubmit={handleCreateTicket} className="space-y-4 pt-2 text-xs">
           {createError && (
-            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400">
+            <div className="p-3 rounded-xl bg-accent/10 border border-accent/30 text-accent">
               {createError}
             </div>
           )}

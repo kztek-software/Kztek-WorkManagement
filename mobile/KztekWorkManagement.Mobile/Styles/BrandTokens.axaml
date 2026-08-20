@@ -1,0 +1,41 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- KZTEK Brand Color Tokens -->
+  <SolidColorBrush x:Key="KzPrimary" Color="#251C53" />
+  <SolidColorBrush x:Key="KzPrimaryDark" Color="#181238" />
+  <SolidColorBrush x:Key="KzPrimaryLight" Color="#3B2F73" />
+  <SolidColorBrush x:Key="KzAccent" Color="#F05922" />
+  <SolidColorBrush x:Key="KzAccentHover" Color="#D94814" />
+  <SolidColorBrush x:Key="KzAccentLight" Color="#FFEDD5" />
+
+  <!-- Backgrounds & Surfaces -->
+  <SolidColorBrush x:Key="KzBackground" Color="#F8FAFC" />
+  <SolidColorBrush x:Key="KzCardBackground" Color="#FFFFFF" />
+  <SolidColorBrush x:Key="KzSurfaceHover" Color="#F1F5F9" />
+  <SolidColorBrush x:Key="KzBorder" Color="#E2E8F0" />
+  <SolidColorBrush x:Key="KzBorderFocus" Color="#251C53" />
+
+  <!-- Text Hierarchy -->
+  <SolidColorBrush x:Key="KzTextPrimary" Color="#0F172A" />
+  <SolidColorBrush x:Key="KzTextSecondary" Color="#64748B" />
+  <SolidColorBrush x:Key="KzTextMuted" Color="#94A3B8" />
+  <SolidColorBrush x:Key="KzTextOnPrimary" Color="#FFFFFF" />
+
+  <!-- Priority & Status Colors -->
+  <SolidColorBrush x:Key="KzStatusTodo" Color="#3B82F6" />
+  <SolidColorBrush x:Key="KzStatusInProgress" Color="#F05922" />
+  <SolidColorBrush x:Key="KzStatusReview" Color="#8B5CF6" />
+  <SolidColorBrush x:Key="KzStatusDone" Color="#10B981" />
+  <SolidColorBrush x:Key="KzPriorityUrgent" Color="#EF4444" />
+  <SolidColorBrush x:Key="KzPriorityHigh" Color="#F59E0B" />
+  <SolidColorBrush x:Key="KzPriorityMedium" Color="#3B82F6" />
+  <SolidColorBrush x:Key="KzPriorityLow" Color="#10B981" />
+
+  <!-- Radii Tokens -->
+  <CornerRadius x:Key="KzRadiusSm">6</CornerRadius>
+  <CornerRadius x:Key="KzRadiusMd">12</CornerRadius>
+  <CornerRadius x:Key="KzRadiusLg">16</CornerRadius>
+  <CornerRadius x:Key="KzRadiusFull">999</CornerRadius>
+
+</ResourceDictionary>

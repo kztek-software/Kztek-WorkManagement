@@ -202,7 +202,7 @@ export function NotificationBell({
         >
           <Bell className="h-4 w-4" />
           {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white shadow-sm animate-pulse">
+            <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[9px] font-bold text-white shadow-sm animate-pulse">
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}
@@ -210,9 +210,9 @@ export function NotificationBell({
 
         {open && (
           <div
-            className={`absolute right-0 ${
-              placement === "bottom" ? "top-[calc(100%+8px)]" : "bottom-full mb-2"
-            } w-[92vw] sm:w-[500px] rounded-2xl border border-line bg-surface-2 p-0 shadow-2xl z-50 animate-fade-in-up overflow-hidden ring-1 ring-black/50`}
+            className={`fixed inset-x-3 top-14 sm:absolute sm:inset-x-auto sm:right-0 ${
+              placement === "bottom" ? "sm:top-[calc(100%+8px)]" : "sm:bottom-full sm:mb-2"
+            } w-auto sm:w-[480px] max-w-[calc(100vw-1.5rem)] rounded-2xl border border-line bg-surface-2 p-0 shadow-2xl z-50 animate-fade-in-up overflow-hidden ring-1 ring-black/50`}
           >
             {/* Header */}
             <div className="border-b border-line p-3 bg-surface/90">
@@ -223,7 +223,7 @@ export function NotificationBell({
                   </div>
                   <span>Trung Tâm Thông Báo</span>
                   {unreadCount > 0 && (
-                    <span className="rounded-full bg-red-500/20 px-2 py-0.5 text-[10px] text-red-400 font-bold border border-red-500/30">
+                    <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[10px] text-accent font-bold border border-accent/30">
                       {unreadCount} chưa đọc
                     </span>
                   )}
@@ -423,7 +423,7 @@ export function NotificationBell({
               <button
                 type="button"
                 onClick={clearReadNotifications}
-                className="text-[10px] text-muted hover:text-red-400 flex items-center gap-1 cursor-pointer px-2 py-1 rounded hover:bg-line/40 transition-colors"
+                className="text-[10px] text-muted hover:text-accent flex items-center gap-1 cursor-pointer px-2 py-1 rounded hover:bg-line/40 transition-colors"
                 title="Xóa các thông báo đã đọc"
               >
                 <Trash2 className="h-3 w-3" /> Dọn đã đọc

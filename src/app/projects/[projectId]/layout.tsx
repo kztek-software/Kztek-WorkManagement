@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AppShell } from "@/components/app-shell";
+import { PermissionsProvider } from "@/lib/permissions-context";
+import { getUserPermissionContext } from "@/lib/permissions-server";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +15,7 @@ export default async function ProjectLayout({
   const user = await getSessionUser();
   if (!user) redirect("/login");
 
-  const [project, projects] = await Promise.all([
+  const [project, projects, permCtx] = await Promise.all([
     prisma.project.findFirst({
       where: user.role === "ADMIN"
         ? { id: projectId }
@@ -39,26 +41,38 @@ export default async function ProjectLayout({
       select: { id: true, name: true, key: true },
       orderBy: { createdAt: "asc" },
     }),
+    // Truyền user.role đã có sẵn để tránh query DB lần 2
+    getUserPermissionContext(user.id, projectId, user.role),
   ]);
 
   if (!project) redirect("/");
 
   return (
-    <AppShell
-      user={user}
-      project={{
-        id: project.id,
-        name: project.name,
-        key: project.key,
-        members: project.members.map((m) => ({
-          id: m.id,
-          role: m.role,
-          user: m.user,
-        })),
-      }}
-      projects={projects}
+    <PermissionsProvider
+      projectId={project.id}
+      initialPermissions={permCtx.permissions}
+      initialRole={permCtx.role}
+      initialProjectRole={permCtx.projectRole}
+      initialIsAdmin={permCtx.isAdmin}
+      initialIsOwner={permCtx.isOwner}
+      initialCanCreateProject={permCtx.canCreateProject}
     >
-      {children}
-    </AppShell>
+      <AppShell
+        user={user}
+        project={{
+          id: project.id,
+          name: project.name,
+          key: project.key,
+          members: project.members.map((m) => ({
+            id: m.id,
+            role: m.role,
+            user: m.user,
+          })),
+        }}
+        projects={projects}
+      >
+        {children}
+      </AppShell>
+    </PermissionsProvider>
   );
 }

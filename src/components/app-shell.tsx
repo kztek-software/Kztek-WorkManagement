@@ -26,9 +26,21 @@ import {
   Shield,
   Clock,
   UserCheck,
+  Menu,
+  Calculator,
+  FileText,
+  Keyboard,
+  Command,
+  Sun,
+  Moon,
+  Pin,
 } from "lucide-react";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { cn } from "@/lib/utils";
+import { CommandPalette } from "@/components/desktop/command-palette";
+import { ShortcutsModal } from "@/components/desktop/shortcuts-modal";
+import { SmartWorkCalculator } from "@/components/desktop/smart-work-calculator";
+import { DesktopScratchpad } from "@/components/desktop/desktop-scratchpad";
 import { Avatar, AvatarFallback, initials } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +50,9 @@ import { Dialog } from "primereact/dialog";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { PROJECT_STATUSES, projectStatusMeta } from "@/lib/constants";
 import type { UserLite } from "@/lib/types";
+
+import { usePermissions } from "@/lib/permissions-context";
+import { useTheme } from "@/lib/theme-context";
 
 type ProjectInfo = {
   id: string;
@@ -52,7 +67,7 @@ const PROJECT_GRADIENTS = [
   "from-blue-600 to-indigo-600",
   "from-emerald-500 to-teal-600",
   "from-purple-600 to-pink-600",
-  "from-rose-500 to-red-600",
+  "from-[#F05922] to-[#251C53]",
   "from-cyan-500 to-blue-600",
 ];
 
@@ -119,6 +134,85 @@ export function AppShell({
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
+  // Mobile Drawer State
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+
+  // Desktop Productivity Tools & Modal States
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+  const [isScratchpadOpen, setIsScratchpadOpen] = useState(false);
+
+  // Pinned Sidebar Nav Items (ghim mục điều hướng lên đầu sidebar) — lưu theo từng user trên trình duyệt
+  const [pinnedHrefs, setPinnedHrefs] = useState<string[]>([]);
+  const pinnedStorageKey = `kztek_pinned_nav_items_${user.id}`;
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(pinnedStorageKey);
+      if (raw) setPinnedHrefs(JSON.parse(raw));
+    } catch {
+      // localStorage không khả dụng (SSR/private mode) -> bỏ qua, dùng mặc định rỗng
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pinnedStorageKey]);
+
+  function togglePinnedNav(href: string) {
+    setPinnedHrefs((prev) => {
+      const next = prev.includes(href) ? prev.filter((h) => h !== href) : [...prev, href];
+      try {
+        localStorage.setItem(pinnedStorageKey, JSON.stringify(next));
+      } catch {
+        // bỏ qua nếu không ghi được localStorage
+      }
+      return next;
+    });
+  }
+
+  // Global Keyboard Shortcuts Listener for AppShell
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const targetTag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+      const isInput = targetTag === "input" || targetTag === "textarea" || (e.target as HTMLElement)?.isContentEditable;
+
+      // Ctrl + K / Cmd + K -> Command Palette
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setIsCommandPaletteOpen((prev) => !prev);
+        return;
+      }
+
+      // Alt + C -> Smart Calculator
+      if (e.altKey && e.key.toLowerCase() === "c") {
+        e.preventDefault();
+        setIsCalculatorOpen((prev) => !prev);
+        return;
+      }
+
+      // Alt + S -> Scratchpad
+      if (e.altKey && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        setIsScratchpadOpen((prev) => !prev);
+        return;
+      }
+
+      // Shortcuts help (? or Ctrl+/)
+      if ((e.key === "?" && !isInput) || ((e.ctrlKey || e.metaKey) && e.key === "/")) {
+        e.preventDefault();
+        setIsShortcutsOpen((prev) => !prev);
+        return;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Close mobile drawer when route changes
+  useEffect(() => {
+    setMobileDrawerOpen(false);
+  }, [pathname]);
+
   // Close dropdowns on outside click
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -152,6 +246,9 @@ export function AppShell({
     }
   }, [createProjectOpen, availableTeams.length]);
 
+  const { can, canCreateProject, isAdmin, isOwner } = usePermissions();
+  const { theme, toggleTheme } = useTheme();
+
   const mainNav = [
     { href: `/projects/${project.id}/dashboard`, label: "Dashboard Dự Án", icon: LayoutDashboard },
     { href: `/projects/${project.id}/board`, label: "Board Công Việc", icon: KanbanSquare },
@@ -161,9 +258,30 @@ export function AppShell({
   ];
 
   const systemNav = [
-    { href: `/projects/${project.id}/all-projects`, label: "Tất Cả Dự Án", icon: FolderKanban, adminOnly: true },
-    { href: `/projects/${project.id}/notion`, label: "Tích Hợp Notion", icon: ArrowRightLeft },
-    { href: `/projects/${project.id}/users`, label: "Người Dùng & Email", icon: Users, adminOnly: true },
+    {
+      href: `/projects/${project.id}/all-projects`,
+      label: "Tất Cả Dự Án",
+      icon: FolderKanban,
+      visible: isAdmin || can("projects.view_all"),
+    },
+    {
+      href: `/projects/${project.id}/users`,
+      label: "Người Dùng & Phân Quyền",
+      icon: Users,
+      visible: isAdmin || isOwner || can("users.manage") || can("roles.manage"),
+    },
+    {
+      href: `/projects/${project.id}/settings`,
+      label: "Cấu hình & Cài đặt",
+      icon: Settings,
+      visible: isAdmin || isOwner || can("projects.edit") || can("email.config"),
+    },
+    {
+      href: `/projects/${project.id}/notion`,
+      label: "Tích Hợp Notion Hub",
+      icon: ArrowRightLeft,
+      visible: isAdmin || isOwner || can("notion.migrate"),
+    },
   ];
 
   async function logout() {
@@ -268,205 +386,298 @@ export function AppShell({
 
   const activeProjectStatusMeta = projectStatusMeta(project.status);
 
-  return (
-    <div className="flex h-screen overflow-hidden bg-background text-foreground">
-      {/* Modern Obsidian Sidebar */}
-      <aside className="flex w-64 shrink-0 flex-col border-r border-line bg-surface/95 backdrop-blur-md z-30">
-        {/* Brand Header */}
-        <div className="flex h-16 items-center justify-between border-b border-line px-4 bg-surface/40">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#F05922] via-[#FF6B35] to-[#FFA500] font-black text-white text-sm shadow-lg shadow-[#F05922]/30 ring-1 ring-white/20">
-              KZ
-            </div>
-            <div className="min-w-0">
-              <span className="text-sm font-bold tracking-tight block leading-tight text-white">
-                KZTEK Work
-              </span>
-              <span className="text-[10px] text-muted block font-medium">Enterprise Management</span>
-            </div>
-          </div>
+  // Compute current page label once — used for both breadcrumb text and title tooltip
+  const currentPageLabel =
+    pathname.endsWith("/board") ? "Board Công Việc" :
+    pathname.endsWith("/sprints") ? "Sprints & Kế Hoạch" :
+    pathname.endsWith("/reports") ? "Báo Cáo & KPI" :
+    pathname.endsWith("/tickets") ? "Tickets Khách Hàng" :
+    pathname.endsWith("/notion") ? "Tích Hợp Notion Hub" :
+    pathname.endsWith("/users") ? "Người Dùng & Phân Quyền" :
+    pathname.endsWith("/settings") ? "Cài Đặt Dự Án" :
+    pathname.endsWith("/all-projects") ? "Tất Cả Dự Án" :
+    (pathname.endsWith("/dashboard") || pathname === `/projects/${project.id}`) ? "Tổng Quan" :
+    "";
 
+  // Danh sách phẳng toàn bộ mục nav (đã lọc visible) — dùng để tra cứu icon/label cho mục đã ghim
+  const allVisibleNavItems = [...mainNav, ...systemNav.filter((item) => item.visible)];
+  const pinnedNavItems = pinnedHrefs
+    .map((href) => allVisibleNavItems.find((item) => item.href === href))
+    .filter((item): item is (typeof allVisibleNavItems)[number] => Boolean(item));
+
+  // Helper: render 1 mục nav sidebar kèm nút ghim/bỏ ghim (dùng chung cho mainNav, systemNav và mục "Đã ghim")
+  function renderNavItem(
+    item: { href: string; label: string; icon: typeof LayoutDashboard },
+    isMobile: boolean,
+    keyPrefix: string = ""
+  ) {
+    const active =
+      pathname === item.href || (item.href.endsWith("/dashboard") && pathname === `/projects/${project.id}`);
+    const pinned = pinnedHrefs.includes(item.href);
+    return (
+      <div key={`${keyPrefix}${item.href}`} className="group relative flex items-center">
+        <Link
+          href={item.href}
+          onClick={() => {
+            if (isMobile) setMobileDrawerOpen(false);
+          }}
+          className={cn(
+            "flex flex-1 min-w-0 items-center gap-2.5 rounded-xl px-3 py-2 pr-8 text-xs font-semibold transition-all group/link",
+            active
+              ? "bg-accent text-white shadow-md shadow-accent/25 font-bold"
+              : "text-muted hover:bg-surface-2 hover:text-foreground"
+          )}
+        >
+          <item.icon
+            className={cn(
+              "h-4 w-4 shrink-0 transition-transform group-hover/link:scale-110",
+              active ? "text-white" : "text-muted group-hover/link:text-foreground"
+            )}
+          />
+          <span className="truncate">{item.label}</span>
+        </Link>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            togglePinnedNav(item.href);
+          }}
+          className={cn(
+            "absolute right-1.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg transition-all cursor-pointer",
+            pinned
+              ? active
+                ? "opacity-100 text-white hover:bg-white/15"
+                : "opacity-100 text-accent hover:bg-accent/15"
+              : active
+              ? "opacity-0 group-hover:opacity-100 text-white/70 hover:bg-white/15 hover:text-white"
+              : "opacity-0 group-hover:opacity-100 text-muted hover:bg-surface-3 hover:text-foreground"
+          )}
+          title={pinned ? "Bỏ ghim mục này" : "Ghim mục này lên đầu Sidebar"}
+        >
+          <Pin className={cn("h-3.5 w-3.5", pinned && "fill-current")} />
+        </button>
+      </div>
+    );
+  }
+
+  // Helper function to render sidebar content for both desktop and mobile drawer
+  const renderSidebarContent = (isMobile: boolean = false) => (
+    <>
+      {/* Brand Header */}
+      <div className="flex h-16 items-center justify-between border-b border-line px-4 bg-surface/40 shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#F05922] via-[#FF6B35] to-[#FFA500] font-black text-white text-sm shadow-lg shadow-[#F05922]/30 ring-1 ring-white/20">
+            KZ
+          </div>
+          <div className="min-w-0">
+            <span className="text-sm font-bold tracking-tight block leading-tight text-foreground">
+              KZTEK Work
+            </span>
+            <span className="text-[10px] text-muted block font-medium">Enterprise Management</span>
+          </div>
+        </div>
+
+        {isMobile ? (
+          <button
+            type="button"
+            onClick={() => setMobileDrawerOpen(false)}
+            className="h-8 w-8 rounded-lg flex items-center justify-center border border-line bg-surface-2 hover:bg-surface-3 text-muted hover:text-foreground cursor-pointer transition-colors"
+            title="Đóng menu"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        ) : (
           <div
             className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-md shadow-emerald-500/60 ring-2 ring-emerald-500/20 animate-pulse"
             title="Máy chủ trực tuyến"
           />
+        )}
+      </div>
+
+      {/* ========================================================================= */}
+      {/* PROJECT SWITCHER WIDGET WITH STATUS BADGE                                */}
+      {/* ========================================================================= */}
+      <div className="relative p-3 border-b border-line/70 bg-surface/50 shrink-0" ref={isMobile ? undefined : dropdownRef}>
+        <div className="text-[10px] font-bold uppercase tracking-wider text-muted/80 mb-1.5 px-1 flex items-center justify-between">
+          <span>Dự án hiện tại</span>
+          <span className="text-[9px] font-mono text-accent font-semibold">{project.key}</span>
         </div>
 
-        {/* ========================================================================= */}
-        {/* PROJECT SWITCHER WIDGET WITH STATUS BADGE                                */}
-        {/* ========================================================================= */}
-        <div className="relative p-3 border-b border-line/70 bg-surface/50" ref={dropdownRef}>
-          <div className="text-[10px] font-bold uppercase tracking-wider text-muted/80 mb-1.5 px-1 flex items-center justify-between">
-            <span>Dự án hiện tại</span>
-            <span className="text-[9px] font-mono text-accent font-semibold">{project.key}</span>
-          </div>
-
-          <button
-            onClick={() => setProjectMenuOpen((v) => !v)}
-            className={cn(
-              "flex w-full items-center justify-between rounded-xl border p-2.5 text-left transition-all cursor-pointer shadow-sm group",
-              projectMenuOpen
-                ? "bg-surface-3 border-accent ring-2 ring-accent/30 shadow-md"
-                : "bg-surface-2/80 border-line hover:border-line-strong hover:bg-surface-3"
-            )}
-          >
-            <div className="flex items-center gap-2.5 min-w-0 flex-1">
-              {/* Vibrant Project Key Avatar */}
-              <div
-                className={cn(
-                  "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg font-mono font-bold text-xs text-white shadow-md bg-gradient-to-br",
-                  getProjectGradient(project.key)
-                )}
-              >
-                {project.key.slice(0, 3)}
-              </div>
-
-              {/* Project Title, Key & Status */}
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-xs font-bold text-foreground group-hover:text-white transition-colors">
-                  {project.name}
-                </div>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <span
-                    className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-bold"
-                    style={{
-                      backgroundColor: activeProjectStatusMeta.bg,
-                      color: activeProjectStatusMeta.color,
-                      border: `1px solid ${activeProjectStatusMeta.border}`,
-                    }}
-                  >
-                    {activeProjectStatusMeta.label}
-                  </span>
-                </div>
-              </div>
+        <button
+          onClick={() => setProjectMenuOpen((v) => !v)}
+          className={cn(
+            "flex w-full items-center justify-between rounded-xl border p-2.5 text-left transition-all cursor-pointer shadow-sm group",
+            projectMenuOpen
+              ? "bg-surface-3 border-accent ring-2 ring-accent/30 shadow-md"
+              : "bg-surface-2/80 border-line hover:border-line-strong hover:bg-surface-3"
+          )}
+        >
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            {/* Vibrant Project Key Avatar */}
+            <div
+              className={cn(
+                "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg font-mono font-bold text-xs text-white shadow-md bg-gradient-to-br",
+                getProjectGradient(project.key)
+              )}
+            >
+              {project.key.slice(0, 3)}
             </div>
 
-            <div className="h-6 w-6 rounded-lg bg-surface flex items-center justify-center border border-line/60 group-hover:border-line-strong transition-colors shrink-0 ml-1.5">
-              <ChevronsUpDown
-                className={cn(
-                  "h-3.5 w-3.5 text-muted transition-colors group-hover:text-foreground",
-                  projectMenuOpen && "text-accent"
-                )}
-              />
-            </div>
-          </button>
-
-          {/* Flyout Workspace Menu Dropdown */}
-          {projectMenuOpen && (
-            <div className="absolute left-3 right-3 top-[calc(100%+6px)] z-50 rounded-2xl border border-white/15 bg-[#131826] p-2 shadow-2xl backdrop-blur-2xl animate-fade-in-up ring-1 ring-black/50">
-              {/* Header */}
-              <div className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted flex items-center justify-between border-b border-line/50 pb-2">
-                <span>Dự án của bạn ({projects.length})</span>
-                <span className="rounded bg-surface-2 px-1.5 py-0.2 text-[9px] font-mono text-muted-light">
-                  ESC
+            {/* Project Title, Key & Status */}
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-xs font-bold text-foreground group-hover:text-accent transition-colors">
+                {project.name}
+              </div>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span
+                  className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-bold"
+                  style={{
+                    backgroundColor: activeProjectStatusMeta.bg,
+                    color: activeProjectStatusMeta.color,
+                    border: `1px solid ${activeProjectStatusMeta.border}`,
+                  }}
+                >
+                  {activeProjectStatusMeta.label}
                 </span>
               </div>
+            </div>
+          </div>
 
-              {/* Search Box if > 2 projects */}
-              {projects.length > 2 && (
-                <div className="relative my-2 px-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted" />
-                  <input
-                    type="text"
-                    placeholder="Tìm tên hoặc mã dự án..."
-                    value={searchProject}
-                    onChange={(e) => setSearchProject(e.target.value)}
-                    className="w-full h-7.5 rounded-lg border border-line bg-surface-2 pl-8 pr-2 text-xs text-foreground placeholder:text-muted/60 focus:outline-none focus:border-accent"
-                    autoFocus
-                  />
-                </div>
+          <div className="h-6 w-6 rounded-lg bg-surface flex items-center justify-center border border-line/60 group-hover:border-line-strong transition-colors shrink-0 ml-1.5">
+            <ChevronsUpDown
+              className={cn(
+                "h-3.5 w-3.5 text-muted transition-colors group-hover:text-foreground",
+                projectMenuOpen && "text-accent"
               )}
+            />
+          </div>
+        </button>
 
-              {/* Projects List */}
-              <div className="space-y-1 max-h-56 overflow-y-auto py-1 pr-0.5">
-                {filteredProjects.map((p) => {
-                  const isActive = p.id === project.id;
-                  const pStatusMeta = projectStatusMeta(p.status);
-                  return (
-                    <Link
-                      key={p.id}
-                      href={`/projects/${p.id}/dashboard`}
-                      onClick={() => setProjectMenuOpen(false)}
-                      className={cn(
-                        "flex items-center justify-between rounded-xl px-2.5 py-2 transition-all group/item",
-                        isActive
-                          ? "bg-accent/15 border border-accent/40 shadow-sm"
-                          : "hover:bg-surface-2/90 border border-transparent"
-                      )}
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        {/* Project Initial Avatar */}
-                        <div
-                          className={cn(
-                            "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg font-mono font-bold text-[11px] text-white shadow-sm bg-gradient-to-br",
-                            getProjectGradient(p.key)
-                          )}
-                        >
-                          {p.key.slice(0, 3)}
-                        </div>
+        {/* Flyout Workspace Menu Dropdown */}
+        {projectMenuOpen && (
+          <div className="absolute left-3 right-3 top-[calc(100%+6px)] z-50 rounded-2xl border border-white/15 bg-[#131826] p-2 shadow-2xl backdrop-blur-2xl animate-fade-in-up ring-1 ring-black/50">
+            {/* Header */}
+            <div className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted flex items-center justify-between border-b border-line/50 pb-2">
+              <span>Dự án của bạn ({projects.length})</span>
+              <span className="rounded bg-surface-2 px-1.5 py-0.2 text-[9px] font-mono text-muted-light">
+                ESC
+              </span>
+            </div>
 
-                        <div className="min-w-0">
-                          <div
-                            className={cn(
-                              "truncate text-xs font-bold transition-colors",
-                              isActive
-                                ? "text-accent"
-                                : "text-foreground group-hover/item:text-white"
-                            )}
-                          >
-                            {p.name}
-                          </div>
-                          <div className="flex items-center gap-1.5 text-[10px] text-muted font-mono mt-0.5">
-                            <span>{p.key}</span>
-                            <span>•</span>
-                            <span
-                              className="px-1 py-0.1 rounded text-[8px] font-semibold"
-                              style={{ color: pStatusMeta.color }}
-                            >
-                              {pStatusMeta.label}
-                            </span>
-                          </div>
-                        </div>
+            {/* Search Box if > 2 projects */}
+            {projects.length > 2 && (
+              <div className="relative my-2 px-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted" />
+                <input
+                  type="text"
+                  placeholder="Tìm tên hoặc mã dự án..."
+                  value={searchProject}
+                  onChange={(e) => setSearchProject(e.target.value)}
+                  className="w-full h-7.5 rounded-lg border border-line bg-surface-2 pl-8 pr-2 text-xs text-foreground placeholder:text-muted/60 focus:outline-none focus:border-accent"
+                  autoFocus
+                />
+              </div>
+            )}
+
+            {/* Projects List */}
+            <div className="space-y-1 max-h-56 overflow-y-auto py-1 pr-0.5">
+              {filteredProjects.map((p) => {
+                const isActive = p.id === project.id;
+                const pStatusMeta = projectStatusMeta(p.status);
+                return (
+                  <Link
+                    key={p.id}
+                    href={`/projects/${p.id}/dashboard`}
+                    onClick={() => {
+                      setProjectMenuOpen(false);
+                      if (isMobile) setMobileDrawerOpen(false);
+                    }}
+                    className={cn(
+                      "flex items-center justify-between rounded-xl px-2.5 py-2 transition-all group/item",
+                      isActive
+                        ? "bg-accent/15 border border-accent/40 shadow-sm"
+                        : "hover:bg-surface-2/90 border border-transparent"
+                    )}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      {/* Project Initial Avatar */}
+                      <div
+                        className={cn(
+                          "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg font-mono font-bold text-[11px] text-white shadow-sm bg-gradient-to-br",
+                          getProjectGradient(p.key)
+                        )}
+                      >
+                        {p.key.slice(0, 3)}
                       </div>
 
-                      {isActive && (
-                        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-white shrink-0 shadow-sm">
-                          <Check className="h-3 w-3 stroke-[3]" />
+                      <div className="min-w-0">
+                        <div
+                          className={cn(
+                            "truncate text-xs font-bold transition-colors",
+                            isActive
+                              ? "text-accent"
+                              : "text-foreground group-hover/item:text-accent"
+                          )}
+                        >
+                          {p.name}
                         </div>
-                      )}
-                    </Link>
-                  );
-                })}
-
-                {filteredProjects.length === 0 && (
-                  <div className="p-3 text-center text-xs text-muted">
-                    Không tìm thấy dự án phù hợp
-                  </div>
-                )}
-              </div>
-
-              {/* Quick Actions: All Projects & Create New Project */}
-              <div className="border-t border-line/60 pt-1.5 mt-1 space-y-1">
-                {user.role === "ADMIN" && (
-                  <Link
-                    href={`/projects/${project.id}/all-projects`}
-                    onClick={() => setProjectMenuOpen(false)}
-                    className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-xs font-bold text-foreground hover:bg-surface-2 hover:text-accent transition-all cursor-pointer border border-line/60 bg-surface/50"
-                  >
-                    <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-accent/15 text-accent">
-                      <FolderKanban className="h-3.5 w-3.5" />
+                        <div className="flex items-center gap-1.5 text-[10px] text-muted font-mono mt-0.5">
+                          <span>{p.key}</span>
+                          <span>•</span>
+                          <span
+                            className="px-1 py-0.1 rounded text-[8px] font-semibold"
+                            style={{ color: pStatusMeta.color }}
+                          >
+                            {pStatusMeta.label}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <span>Quản lý tất cả dự án</span>
-                    <span className="ml-auto text-[9px] font-bold text-accent bg-accent/15 px-1.5 py-0.2 rounded">
-                      ADMIN
-                    </span>
-                  </Link>
-                )}
 
+                    {isActive && (
+                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-white shrink-0 shadow-sm">
+                        <Check className="h-3 w-3 stroke-[3]" />
+                      </div>
+                    )}
+                  </Link>
+                );
+              })}
+
+              {filteredProjects.length === 0 && (
+                <div className="p-3 text-center text-xs text-muted">
+                  Không tìm thấy dự án phù hợp
+                </div>
+              )}
+            </div>
+
+            {/* Quick Actions: All Projects & Create New Project */}
+            <div className="border-t border-line/60 pt-1.5 mt-1 space-y-1">
+              {(isAdmin || can("projects.view_all")) && (
+                <Link
+                  href={`/projects/${project.id}/all-projects`}
+                  onClick={() => {
+                    setProjectMenuOpen(false);
+                    if (isMobile) setMobileDrawerOpen(false);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-xs font-bold text-foreground hover:bg-surface-2 hover:text-accent transition-all cursor-pointer border border-line/60 bg-surface/50"
+                >
+                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-accent/15 text-accent">
+                    <FolderKanban className="h-3.5 w-3.5" />
+                  </div>
+                  <span>Quản lý tất cả dự án</span>
+                  <span className="ml-auto text-[9px] font-bold text-accent bg-accent/15 px-1.5 py-0.2 rounded">
+                    ADMIN
+                  </span>
+                </Link>
+              )}
+
+              {canCreateProject && (
                 <button
                   type="button"
                   onClick={() => {
                     setProjectMenuOpen(false);
+                    if (isMobile) setMobileDrawerOpen(false);
                     setCreateProjectOpen(true);
                   }}
                   className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-xs font-bold text-accent hover:bg-accent/15 hover:text-accent-hover transition-all cursor-pointer"
@@ -476,153 +687,206 @@ export function AppShell({
                   </div>
                   <span>Tạo dự án mới</span>
                 </button>
-              </div>
+              )}
             </div>
-          )}
+          </div>
+        )}
+      </div>
+
+      {/* Navigation Sections */}
+      <div className="flex-1 overflow-y-auto p-3 space-y-4">
+        {/* Pinned Section — các mục đã được ghim, luôn nổi lên đầu sidebar */}
+        {pinnedNavItems.length > 0 && (
+          <div className="space-y-1">
+            <div className="px-2.5 text-[10px] font-bold uppercase tracking-wider text-accent flex items-center gap-1">
+              <Pin className="h-3 w-3 fill-current" />
+              Đã ghim
+            </div>
+            {pinnedNavItems.map((item) => renderNavItem(item, isMobile, "pinned-"))}
+          </div>
+        )}
+
+        {/* Main Workspace Section */}
+        <div className="space-y-1">
+          <div className="px-2.5 text-[10px] font-bold uppercase tracking-wider text-muted">
+            Quản lý dự án
+          </div>
+          {mainNav.map((item) => renderNavItem(item, isMobile))}
         </div>
 
-        {/* Navigation Sections */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-4">
-          {/* Main Workspace Section */}
-          <div className="space-y-1">
-            <div className="px-2.5 text-[10px] font-bold uppercase tracking-wider text-muted">
-              Quản lý dự án
-            </div>
-            {mainNav.map((item) => {
-              const active = pathname === item.href || (item.href.endsWith("/dashboard") && pathname === `/projects/${project.id}`);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold transition-all group",
-                    active
-                      ? "bg-accent text-white shadow-md shadow-accent/25 font-bold"
-                      : "text-muted hover:bg-surface-2 hover:text-foreground"
-                  )}
-                >
-                  <item.icon
-                    className={cn(
-                      "h-4 w-4 shrink-0 transition-transform group-hover:scale-110",
-                      active ? "text-white" : "text-muted group-hover:text-foreground"
-                    )}
-                  />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
-          </div>
-
-          {/* System & Integrations Section */}
+        {/* System & Integrations Section */}
+        {systemNav.some((item) => item.visible) && (
           <div className="space-y-1">
             <div className="px-2.5 text-[10px] font-bold uppercase tracking-wider text-muted">
               Hệ thống & Tích hợp
             </div>
-            {systemNav
-              .filter((item) => !item.adminOnly || user.role === "ADMIN")
-              .map((item) => {
-                const active = pathname.startsWith(item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={cn(
-                      "flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold transition-all group",
-                      active
-                        ? "bg-accent text-white shadow-md shadow-accent/25 font-bold"
-                        : "text-muted hover:bg-surface-2 hover:text-foreground"
-                    )}
-                  >
-                    <item.icon
-                      className={cn(
-                        "h-4 w-4 shrink-0 transition-transform group-hover:scale-110",
-                        active ? "text-white" : "text-muted group-hover:text-foreground"
-                      )}
-                    />
-                    <span>{item.label}</span>
-                  </Link>
-                );
-              })}
+            {systemNav.filter((item) => item.visible).map((item) => renderNavItem(item, isMobile))}
           </div>
+        )}
 
-          {/* Project Members List */}
-          <div className="pt-2 border-t border-line/60">
-            <div className="flex items-center justify-between px-2.5 mb-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
-                Thành viên ({project.members.length})
-              </span>
-              <span className="text-[10px] text-accent font-mono font-bold">{project.key}</span>
-            </div>
-            <div className="space-y-1">
-              {project.members.slice(0, 5).map((m) => (
-                <div
-                  key={m.id}
-                  className="flex items-center justify-between rounded-lg px-2.5 py-1.5 hover:bg-surface-2/60 transition-colors"
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Avatar className="h-6 w-6 shrink-0 border border-white/10">
-                      <AvatarFallback color={m.user.avatarColor} className="text-[9px] font-bold">
-                        {initials(m.user.name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0">
-                      <div className="truncate text-xs font-medium text-foreground">{m.user.name}</div>
-                      <div className="truncate text-[9px] text-muted">
-                        {m.user.team ? m.user.team.name : (m.user.title || m.role)}
-                      </div>
+        {/* Project Members List */}
+        <div className="pt-2 border-t border-line/60">
+          <div className="flex items-center justify-between px-2.5 mb-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
+              Thành viên ({project.members.length})
+            </span>
+            <span className="text-[10px] text-accent font-mono font-bold">{project.key}</span>
+          </div>
+          <div className="space-y-1">
+            {project.members.slice(0, 5).map((m) => (
+              <div
+                key={m.id}
+                className="flex items-center justify-between rounded-lg px-2.5 py-1.5 hover:bg-surface-2/60 transition-colors"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <Avatar className="h-6 w-6 shrink-0 border border-white/10">
+                    <AvatarFallback color={m.user.avatarColor} className="text-[9px] font-bold">
+                      {initials(m.user.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <div className="truncate text-xs font-medium text-foreground">{m.user.name}</div>
+                    <div className="truncate text-[9px] text-muted">
+                      {m.user.team ? m.user.team.name : (m.user.title || m.role)}
                     </div>
                   </div>
-                  <span className="text-[9px] font-mono font-medium px-1.5 py-0.2 rounded bg-surface-2 text-muted border border-line">
-                    {m.role}
-                  </span>
                 </div>
-              ))}
-            </div>
+                <span
+                  className={cn(
+                    "text-[9px] font-mono font-bold px-1.5 py-0.2 rounded border",
+                    m.role === "OWNER"
+                      ? "bg-accent/15 border-accent/30 text-accent"
+                      : "bg-surface-3 border-line-strong text-foreground"
+                  )}
+                >
+                  {m.role}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
+      </div>
 
-        {/* Sidebar Status Footer */}
-        <div className="border-t border-line/60 p-3 bg-surface/40 flex items-center justify-between text-[11px] text-muted">
-          <div className="flex items-center gap-2 font-medium">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shadow-sm shadow-emerald-500/50" />
-            <span className="text-foreground/80 font-semibold">KZTEK Work</span>
-          </div>
-          <span className="font-mono text-[10px] text-muted/70 bg-surface-2 px-1.5 py-0.5 rounded border border-line">
-            v2.4
-          </span>
+      {/* Sidebar Status Footer */}
+      <div className="border-t border-line/60 p-3 bg-surface/40 flex items-center justify-between text-[11px] text-muted shrink-0">
+        <div className="flex items-center gap-2 font-medium">
+          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shadow-sm shadow-emerald-500/50" />
+          <span className="text-foreground/80 font-semibold">KZTEK Work</span>
         </div>
+        <span className="font-mono text-[10px] text-muted/70 bg-surface-2 px-1.5 py-0.5 rounded border border-line">
+          v2.4
+        </span>
+      </div>
+    </>
+  );
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-background text-foreground" suppressHydrationWarning>
+      {/* Modern Obsidian Sidebar (Desktop View >= lg) */}
+      <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-line bg-surface/95 backdrop-blur-md z-30" suppressHydrationWarning>
+        {renderSidebarContent(false)}
       </aside>
 
+      {/* Mobile Drawer Sidebar with Animated Backdrop (< lg) */}
+      {mobileDrawerOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden flex" suppressHydrationWarning>
+          <div
+            className="fixed inset-0 bg-black/75 backdrop-blur-sm animate-fade-in transition-opacity"
+            onClick={() => setMobileDrawerOpen(false)}
+          />
+          <aside className="relative z-50 flex w-72 max-w-[85vw] flex-col border-r border-line bg-[#111520] shadow-2xl animate-fade-in-up" suppressHydrationWarning>
+            {renderSidebarContent(true)}
+          </aside>
+        </div>
+      )}
+
       {/* Main App Content Viewport with Global Top-Right Header */}
-      <main className="flex min-w-0 flex-1 flex-col overflow-hidden bg-background">
+      <main className="flex min-w-0 flex-1 flex-col overflow-hidden bg-background pb-16 lg:pb-0" suppressHydrationWarning>
         {/* Global Top-Right Navigation Bar */}
-        <header className="h-14 shrink-0 border-b border-line bg-surface/70 backdrop-blur-md px-5 flex items-center justify-between z-20">
-          {/* Left Context & Project Info */}
-          <div className="flex items-center gap-2 text-xs font-semibold">
+        <header className="h-14 shrink-0 border-b border-line bg-surface/70 backdrop-blur-md px-3 sm:px-5 flex items-center justify-between z-20 gap-2" suppressHydrationWarning>
+          {/* Left Context & Project Info + Mobile Hamburger Trigger */}
+          <div className="flex items-center gap-2 text-xs font-semibold min-w-0 flex-1" suppressHydrationWarning>
+            {/* Hamburger Button for Mobile (< lg) */}
+            <button
+              type="button"
+              onClick={() => setMobileDrawerOpen(true)}
+              className="lg:hidden h-8 w-8 rounded-lg flex items-center justify-center border border-line bg-surface hover:bg-surface-2 text-muted hover:text-foreground shrink-0 cursor-pointer"
+              title="Mở menu điều hướng"
+              suppressHydrationWarning
+            >
+              <Menu className="h-4 w-4" />
+            </button>
+
             <Link
               href={`/projects/${project.id}/dashboard`}
-              className="text-muted hover:text-foreground flex items-center gap-1.5 transition-colors"
+              className="text-muted hover:text-foreground flex items-center gap-1.5 transition-colors shrink-0"
+              suppressHydrationWarning
             >
               <FolderKanban className="h-3.5 w-3.5 text-accent" />
-              <span>{project.name}</span>
+              <span className="hidden sm:inline font-bold" suppressHydrationWarning>{project.name}</span>
+              <span className="sm:hidden font-mono font-bold text-accent" suppressHydrationWarning>{project.key}</span>
             </Link>
             <span className="text-muted/40">/</span>
-            <span className="text-foreground font-bold">
-              {pathname.endsWith("/board") && "Board Công Việc"}
-              {pathname.endsWith("/sprints") && "Sprints & Kế Hoạch"}
-              {pathname.endsWith("/reports") && "Báo Cáo & KPI"}
-              {pathname.endsWith("/tickets") && "Tickets Khách Hàng"}
-              {pathname.endsWith("/notion") && "Tích Hợp Notion Hub"}
-              {pathname.endsWith("/users") && "Người Dùng & Phân Quyền"}
-              {pathname.endsWith("/settings") && "Cài Đặt Dự Án"}
-              {(pathname.endsWith("/dashboard") || pathname === `/projects/${project.id}`) && "Tổng Quan Dự Án"}
+            <span
+              className="text-foreground font-bold truncate"
+              title={currentPageLabel}
+              suppressHydrationWarning
+            >
+              {currentPageLabel}
             </span>
           </div>
 
-          {/* Right Top-Bar: Notifications & User Account Profile Card */}
-          <div className="flex items-center gap-3">
+          {/* Right Top-Bar: Desktop Tools, Notifications & User Account Profile Card */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0" suppressHydrationWarning>
+            {/* Quick Command Palette Button */}
+            <button
+              type="button"
+              onClick={() => setIsCommandPaletteOpen(true)}
+              className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-line bg-surface-2/60 hover:bg-surface-3 text-muted hover:text-foreground text-xs font-medium transition-all shadow-xs"
+              title="Tìm kiếm và lệnh nhanh (Ctrl+K)"
+              suppressHydrationWarning
+            >
+              <Search className="h-3.5 w-3.5 text-accent" />
+              <span className="hidden lg:inline text-[11px]" suppressHydrationWarning>Lệnh nhanh</span>
+              <kbd className="hidden lg:inline-flex px-1 py-0.2 text-[9px] font-mono bg-surface rounded border border-line">
+                Ctrl+K
+              </kbd>
+            </button>
+
+            {/* Smart Work Calculator Toggle — hidden on mobile, accessible via keyboard shortcut (Alt+C) on desktop */}
+            <button
+              type="button"
+              onClick={() => setIsCalculatorOpen((v) => !v)}
+              className={cn(
+                "hidden sm:flex p-1.5 sm:px-2 sm:py-1.5 rounded-xl border text-xs font-semibold items-center gap-1.5 transition-all shadow-xs",
+                isCalculatorOpen
+                  ? "bg-orange-500/20 border-orange-500/50 text-orange-400"
+                  : "border-line bg-surface-2/60 hover:bg-surface-3 text-muted hover:text-foreground"
+              )}
+              title="Mở Máy Tính Năng Suất (Alt+C)"
+              suppressHydrationWarning
+            >
+              <Calculator className="h-4 w-4 text-orange-400" />
+              <span className="hidden md:inline text-[11px]" suppressHydrationWarning>Máy tính</span>
+            </button>
+
             {/* Notification Bell */}
             <NotificationBell projectId={project.id} currentUserEmail={user.email} />
+
+            {/* Theme Toggle — Sun khi dark (bấm → light), Moon khi light (bấm → dark) */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="flex p-1.5 sm:px-2 sm:py-1.5 rounded-xl border border-line bg-surface-2/60 hover:bg-surface-3 text-muted hover:text-foreground items-center transition-all shadow-xs"
+              title={theme === "dark" ? "Chuyển sang chế độ sáng" : "Chuyển sang chế độ tối"}
+              suppressHydrationWarning
+            >
+              {theme === "dark" ? (
+                <Sun className="h-4 w-4 text-yellow-400" />
+              ) : (
+                <Moon className="h-4 w-4 text-[#4A3F8C]" />
+              )}
+            </button>
 
             <div className="h-4 w-[1px] bg-line/80" />
 
@@ -632,7 +896,7 @@ export function AppShell({
                 type="button"
                 onClick={() => setUserMenuOpen((v) => !v)}
                 className={cn(
-                  "flex items-center gap-2.5 rounded-xl border py-1.5 px-2.5 transition-all cursor-pointer shadow-sm group",
+                  "flex items-center gap-2 sm:gap-2.5 rounded-xl border py-1.5 px-2 sm:px-2.5 transition-all cursor-pointer shadow-sm group",
                   userMenuOpen
                     ? "bg-surface-3 border-accent ring-2 ring-accent/30 shadow-md"
                     : "bg-surface-2/80 border-line hover:border-line-strong hover:bg-surface-3"
@@ -644,8 +908,8 @@ export function AppShell({
                   </AvatarFallback>
                 </Avatar>
 
-                <div className="min-w-0 text-left hidden sm:block">
-                  <div className="truncate text-xs font-bold text-foreground group-hover:text-white flex items-center gap-1.5">
+                <div className="min-w-0 text-left hidden md:block">
+                  <div className="truncate text-xs font-bold text-foreground group-hover:text-accent flex items-center gap-1.5">
                     <span>{user.name}</span>
                     {user.role === "ADMIN" ? (
                       <span className="px-1.5 py-0.1 rounded text-[8px] font-black bg-accent/20 text-accent border border-accent/30 font-mono">
@@ -670,7 +934,7 @@ export function AppShell({
 
               {/* User Profile Flyout Dropdown Menu */}
               {userMenuOpen && (
-                <div className="absolute right-0 top-[calc(100%+6px)] z-50 w-72 rounded-2xl border border-white/15 bg-[#131826] p-3 shadow-2xl backdrop-blur-2xl animate-fade-in-up ring-1 ring-black/50 space-y-3">
+                <div className="fixed inset-x-3 top-14 sm:absolute sm:inset-x-auto sm:right-0 sm:top-[calc(100%+6px)] z-50 w-auto sm:w-72 max-w-[calc(100vw-1.5rem)] rounded-2xl border border-white/15 bg-[#131826] p-3 shadow-2xl backdrop-blur-2xl animate-fade-in-up ring-1 ring-black/50 space-y-3">
                   {/* User Info Header Card */}
                   <div className="flex items-center gap-3 p-2.5 rounded-xl bg-surface-2/80 border border-line">
                     <Avatar className="h-10 w-10 shrink-0 border border-white/20 shadow-md">
@@ -713,7 +977,7 @@ export function AppShell({
                     <button
                       type="button"
                       onClick={logout}
-                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-red-400 hover:bg-red-950/30 transition-colors cursor-pointer"
+                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-bold text-accent hover:bg-accent/10 transition-colors cursor-pointer"
                     >
                       <LogOut className="h-4 w-4" />
                       <span>Đăng xuất khỏi hệ thống</span>
@@ -731,6 +995,67 @@ export function AppShell({
         </div>
       </main>
 
+      {/* Mobile Thumb-Zone Bottom Navigation Bar (< lg) */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 h-16 border-t border-line bg-[#111520]/95 backdrop-blur-xl px-2 flex items-center justify-around shadow-2xl safe-bottom">
+        <Link
+          href={`/projects/${project.id}/dashboard`}
+          className={cn(
+            "flex flex-col items-center justify-center flex-1 h-full py-1 text-[10px] font-semibold transition-all",
+            pathname === `/projects/${project.id}/dashboard` || pathname === `/projects/${project.id}`
+              ? "text-accent font-bold"
+              : "text-muted hover:text-foreground"
+          )}
+        >
+          <LayoutDashboard className={cn("h-5 w-5 mb-0.5", (pathname === `/projects/${project.id}/dashboard` || pathname === `/projects/${project.id}`) && "text-accent")} />
+          <span>Tổng quan</span>
+        </Link>
+
+        <Link
+          href={`/projects/${project.id}/board`}
+          className={cn(
+            "flex flex-col items-center justify-center flex-1 h-full py-1 text-[10px] font-semibold transition-all",
+            pathname.endsWith("/board") ? "text-accent font-bold" : "text-muted hover:text-foreground"
+          )}
+        >
+          <KanbanSquare className={cn("h-5 w-5 mb-0.5", pathname.endsWith("/board") && "text-accent")} />
+          <span>Board</span>
+        </Link>
+
+        <Link
+          href={`/projects/${project.id}/sprints`}
+          className={cn(
+            "flex flex-col items-center justify-center flex-1 h-full py-1 text-[10px] font-semibold transition-all",
+            pathname.endsWith("/sprints") ? "text-accent font-bold" : "text-muted hover:text-foreground"
+          )}
+        >
+          <Rocket className={cn("h-5 w-5 mb-0.5", pathname.endsWith("/sprints") && "text-accent")} />
+          <span>Sprints</span>
+        </Link>
+
+        <Link
+          href={`/projects/${project.id}/tickets`}
+          className={cn(
+            "flex flex-col items-center justify-center flex-1 h-full py-1 text-[10px] font-semibold transition-all",
+            pathname.endsWith("/tickets") ? "text-accent font-bold" : "text-muted hover:text-foreground"
+          )}
+        >
+          <LifeBuoy className={cn("h-5 w-5 mb-0.5", pathname.endsWith("/tickets") && "text-accent")} />
+          <span>Tickets</span>
+        </Link>
+
+        <button
+          type="button"
+          onClick={() => setMobileDrawerOpen(true)}
+          className={cn(
+            "flex flex-col items-center justify-center flex-1 h-full py-1 text-[10px] font-semibold transition-all cursor-pointer",
+            mobileDrawerOpen ? "text-accent font-bold" : "text-muted hover:text-foreground"
+          )}
+        >
+          <Menu className="h-5 w-5 mb-0.5" />
+          <span>Menu</span>
+        </button>
+      </nav>
+
       {/* ========================================================================= */}
       {/* MODAL: TẠO DỰ ÁN MỚI — HỖ TRỢ CHỌN TEAM AUTO-SELECT THÀNH VIÊN VÀ STATUS */}
       {/* ========================================================================= */}
@@ -742,7 +1067,7 @@ export function AppShell({
       >
         <form onSubmit={handleCreateProject} className="space-y-4 pt-2 max-h-[80vh] overflow-y-auto pr-1">
           {createProjectError && (
-            <div className="rounded-xl bg-red-500/10 border border-red-500/30 p-2.5 text-xs text-red-400 font-medium">
+            <div className="rounded-xl bg-accent-subtle border border-accent/30 p-2.5 text-xs text-accent font-medium">
               {createProjectError}
             </div>
           )}
@@ -971,6 +1296,32 @@ export function AppShell({
           </div>
         </form>
       </Dialog>
+
+      {/* Global Desktop Command Palette */}
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        onOpenCalculator={() => setIsCalculatorOpen(true)}
+        onOpenScratchpad={() => setIsScratchpadOpen(true)}
+        onOpenShortcuts={() => setIsShortcutsOpen(true)}
+        projects={projects}
+      />
+
+      {/* Desktop Shortcuts Cheat-sheet Modal */}
+      <ShortcutsModal
+        isOpen={isShortcutsOpen}
+        onClose={() => setIsShortcutsOpen(false)}
+      />
+
+      {/* Floating Smart Work Calculator */}
+      {isCalculatorOpen && (
+        <SmartWorkCalculator onClose={() => setIsCalculatorOpen(false)} />
+      )}
+
+      {/* Floating Desktop Scratchpad */}
+      {isScratchpadOpen && (
+        <DesktopScratchpad onClose={() => setIsScratchpadOpen(false)} />
+      )}
     </div>
   );
 }

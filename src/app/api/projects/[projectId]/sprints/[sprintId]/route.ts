@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { publish } from "@/lib/bus";
+import { checkUserPermission } from "@/lib/permissions-server";
 
 const updateSchema = z.object({
   status: z.enum(["PLANNING", "ACTIVE", "COMPLETED"]).optional(),
@@ -19,10 +20,10 @@ export async function PATCH(
   const user = await requireUser();
   const { projectId, sprintId } = await params;
 
-  const member = await prisma.projectMember.findUnique({
-    where: { projectId_userId: { projectId, userId: user.id } },
-  });
-  if (!member) return NextResponse.json({ error: "Không có quyền truy cập" }, { status: 403 });
+  const permCheck = await checkUserPermission(user.id, "sprints.manage", projectId, user.role);
+  if (!permCheck.allowed) {
+    return NextResponse.json({ error: permCheck.reason || "Không có quyền quản trị Sprint này" }, { status: 403 });
+  }
 
   const body = await req.json().catch(() => null);
   const parsed = updateSchema.safeParse(body);
@@ -61,10 +62,10 @@ export async function DELETE(
   const user = await requireUser();
   const { projectId, sprintId } = await params;
 
-  const member = await prisma.projectMember.findUnique({
-    where: { projectId_userId: { projectId, userId: user.id } },
-  });
-  if (!member) return NextResponse.json({ error: "Không có quyền truy cập" }, { status: 403 });
+  const permCheck = await checkUserPermission(user.id, "sprints.manage", projectId, user.role);
+  if (!permCheck.allowed) {
+    return NextResponse.json({ error: permCheck.reason || "Không có quyền xóa Sprint này" }, { status: 403 });
+  }
 
   // Gỡ liên kết sprint khỏi các task liên quan (chuyển về Backlog)
   await prisma.task.updateMany({

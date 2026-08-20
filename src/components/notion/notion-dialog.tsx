@@ -250,7 +250,7 @@ export function NotionDialog({
         {/* Thân Modal */}
         <div className="flex-1 overflow-y-auto py-3 space-y-4">
           {errorMsg && (
-            <div className="flex items-center gap-2 rounded-lg bg-red-500/10 p-3 text-xs text-red-400 border border-red-500/20">
+            <div className="flex items-center gap-2 rounded-lg bg-accent/10 p-3 text-xs text-accent border border-accent/20">
               <AlertCircle className="h-4 w-4 shrink-0" />
               <span>{errorMsg}</span>
             </div>
@@ -307,19 +307,19 @@ export function NotionDialog({
                 <div
                   className={`rounded-xl border p-4 text-xs space-y-2 ${
                     testResult.success
-                      ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-300"
-                      : "border-red-500/30 bg-red-500/5 text-red-300"
+                      ? "border-emerald-500/30 bg-emerald-500/15 text-emerald-600"
+                      : "border-accent/30 bg-accent/5 text-accent"
                   }`}
                 >
                   <div className="flex items-center gap-2 font-semibold text-sm">
                     {testResult.success ? (
                       <>
-                        <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                         Kết nối Notion thành công!
                       </>
                     ) : (
                       <>
-                        <AlertCircle className="h-4 w-4 text-red-400" />
+                        <AlertCircle className="h-4 w-4 text-accent" />
                         Kết nối thất bại
                       </>
                     )}
@@ -334,7 +334,7 @@ export function NotionDialog({
                       </div>
                     </div>
                   ) : (
-                    <p className="text-xs text-red-400">{testResult.error}</p>
+                    <p className="text-xs text-accent">{testResult.error}</p>
                   )}
                 </div>
               )}

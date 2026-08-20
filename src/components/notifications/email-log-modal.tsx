@@ -162,7 +162,7 @@ export function EmailLogModal({
         );
       case "FAILED":
         return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-semibold text-red-700 border border-red-200">
+          <span className="inline-flex items-center gap-1 rounded-full bg-[#FDE9E0] px-2 py-0.5 text-[10px] font-semibold text-accent border border-[#F9C7AA]">
             <AlertCircle className="h-3 w-3" /> Lỗi gửi
           </span>
         );
@@ -266,7 +266,7 @@ export function EmailLogModal({
                 </div>
               )}
               {testErrorMessage && (
-                <div className="rounded bg-red-500/10 border border-red-500/20 p-2 text-[11px] text-red-600 flex items-center gap-1.5">
+                <div className="rounded bg-accent/10 border border-accent/20 p-2 text-[11px] text-accent flex items-center gap-1.5">
                   <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {testErrorMessage}
                 </div>
               )}
@@ -299,7 +299,7 @@ export function EmailLogModal({
                 variant="ghost"
                 size="icon"
                 onClick={handleClearLogs}
-                className="h-7.5 w-7.5 shrink-0 text-muted hover:text-red-600 cursor-pointer"
+                className="h-7.5 w-7.5 shrink-0 text-muted hover:text-accent cursor-pointer"
                 title="Xóa lịch sử outbox"
               >
                 <Trash2 className="h-3.5 w-3.5" />
@@ -384,7 +384,7 @@ export function EmailLogModal({
                 </div>
 
                 {selectedLog.error && (
-                  <div className="rounded bg-red-500/10 border border-red-500/20 p-2 text-xs text-red-600">
+                  <div className="rounded bg-accent/10 border border-accent/20 p-2 text-xs text-accent">
                     <strong>Lỗi SMTP:</strong> {selectedLog.error}
                   </div>
                 )}

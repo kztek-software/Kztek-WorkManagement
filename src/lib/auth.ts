@@ -1,5 +1,5 @@
 import { SignJWT, jwtVerify } from "jose";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { scryptSync, randomBytes, timingSafeEqual } from "crypto";
 import { prisma } from "./prisma";
 
@@ -32,31 +32,83 @@ export type SessionUser = {
   role?: string;
 };
 
-export async function createSession(userId: string) {
-  const token = await new SignJWT({ sub: userId })
+export async function createJwtToken(userId: string): Promise<string> {
+  return await new SignJWT({ sub: userId })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(`${SESSION_DAYS}d`)
     .sign(SECRET);
+}
 
-  const store = await cookies();
-  store.set(COOKIE_NAME, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    maxAge: SESSION_DAYS * 24 * 60 * 60,
-    path: "/",
-  });
+export async function createSession(userId: string): Promise<string> {
+  const token = await createJwtToken(userId);
+
+  try {
+    const store = await cookies();
+    store.set(COOKIE_NAME, token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: SESSION_DAYS * 24 * 60 * 60,
+      path: "/",
+    });
+  } catch {
+    // In pure API context where cookie store cannot be modified, ignore
+  }
+
+  return token;
 }
 
 export async function destroySession() {
-  const store = await cookies();
-  store.delete(COOKIE_NAME);
+  try {
+    const store = await cookies();
+    store.delete(COOKIE_NAME);
+  } catch {
+    // Ignore error if cookie store cannot be modified
+  }
 }
 
-export async function getSessionUser(): Promise<SessionUser | null> {
-  const store = await cookies();
-  const token = store.get(COOKIE_NAME)?.value;
+export async function getSessionUser(req?: Request | null): Promise<SessionUser | null> {
+  let token: string | undefined;
+
+  // 1. Kiểm tra Header Authorization & Cookie từ request truyền vào
+  if (req) {
+    const authHeader = req.headers.get("authorization") || req.headers.get("Authorization");
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.substring(7).trim();
+    }
+    if (!token) {
+      const cookieHeader = req.headers.get("cookie");
+      if (cookieHeader) {
+        const match = cookieHeader.match(new RegExp(`${COOKIE_NAME}=([^;]+)`));
+        if (match) token = match[1];
+      }
+    }
+  }
+
+  // 2. Kiểm tra Header Authorization từ next/headers
+  if (!token) {
+    try {
+      const headerStore = await headers();
+      const authHeader = headerStore.get("authorization") || headerStore.get("Authorization");
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        token = authHeader.substring(7).trim();
+      }
+    } catch {
+      // headers() có thể ném exception nếu chạy ngoài request context
+    }
+  }
+
+  // 3. Fallback kiểm tra Cookie session
+  if (!token) {
+    try {
+      const store = await cookies();
+      token = store.get(COOKIE_NAME)?.value;
+    } catch {
+      // cookies() có thể ném exception
+    }
+  }
+
   if (!token) return null;
 
   try {
@@ -73,8 +125,8 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   }
 }
 
-export async function requireUser(): Promise<SessionUser> {
-  const user = await getSessionUser();
+export async function requireUser(req?: Request | null): Promise<SessionUser> {
+  const user = await getSessionUser(req);
   if (!user) throw new Response("Unauthorized", { status: 401 });
   return user;
 }

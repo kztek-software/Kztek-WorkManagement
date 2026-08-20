@@ -228,7 +228,12 @@ export type TicketCommentDto = {
 export type CustomerTicketDto = {
   id: string;
   trackingCode: string;
-  projectId: string;
+  projectId?: string | null;
+  project?: {
+    id: string;
+    name: string;
+    key: string;
+  } | null;
   title: string;
   description: string;
   type: string; // BUG | SUPPORT | INQUIRY | FEATURE_REQ

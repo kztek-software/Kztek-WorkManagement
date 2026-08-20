@@ -234,7 +234,7 @@ export type CustomerTicketGroupByArgs<ExtArgs extends runtime.Types.Extensions.I
 export type CustomerTicketGroupByOutputType = {
   id: string
   trackingCode: string
-  projectId: string
+  projectId: string | null
   title: string
   description: string
   type: string
@@ -277,7 +277,7 @@ export type CustomerTicketWhereInput = {
   NOT?: Prisma.CustomerTicketWhereInput | Prisma.CustomerTicketWhereInput[]
   id?: Prisma.StringFilter<"CustomerTicket"> | string
   trackingCode?: Prisma.StringFilter<"CustomerTicket"> | string
-  projectId?: Prisma.StringFilter<"CustomerTicket"> | string
+  projectId?: Prisma.StringNullableFilter<"CustomerTicket"> | string | null
   title?: Prisma.StringFilter<"CustomerTicket"> | string
   description?: Prisma.StringFilter<"CustomerTicket"> | string
   type?: Prisma.StringFilter<"CustomerTicket"> | string
@@ -294,7 +294,7 @@ export type CustomerTicketWhereInput = {
   resolvedAt?: Prisma.DateTimeNullableFilter<"CustomerTicket"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"CustomerTicket"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"CustomerTicket"> | Date | string
-  project?: Prisma.XOR<Prisma.ProjectScalarRelationFilter, Prisma.ProjectWhereInput>
+  project?: Prisma.XOR<Prisma.ProjectNullableScalarRelationFilter, Prisma.ProjectWhereInput> | null
   convertedTask?: Prisma.XOR<Prisma.TaskNullableScalarRelationFilter, Prisma.TaskWhereInput> | null
   comments?: Prisma.TicketCommentListRelationFilter
   attachments?: Prisma.AttachmentListRelationFilter
@@ -303,7 +303,7 @@ export type CustomerTicketWhereInput = {
 export type CustomerTicketOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   trackingCode?: Prisma.SortOrder
-  projectId?: Prisma.SortOrder
+  projectId?: Prisma.SortOrderInput | Prisma.SortOrder
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
   type?: Prisma.SortOrder
@@ -333,7 +333,7 @@ export type CustomerTicketWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.CustomerTicketWhereInput | Prisma.CustomerTicketWhereInput[]
   OR?: Prisma.CustomerTicketWhereInput[]
   NOT?: Prisma.CustomerTicketWhereInput | Prisma.CustomerTicketWhereInput[]
-  projectId?: Prisma.StringFilter<"CustomerTicket"> | string
+  projectId?: Prisma.StringNullableFilter<"CustomerTicket"> | string | null
   title?: Prisma.StringFilter<"CustomerTicket"> | string
   description?: Prisma.StringFilter<"CustomerTicket"> | string
   type?: Prisma.StringFilter<"CustomerTicket"> | string
@@ -349,7 +349,7 @@ export type CustomerTicketWhereUniqueInput = Prisma.AtLeast<{
   resolvedAt?: Prisma.DateTimeNullableFilter<"CustomerTicket"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"CustomerTicket"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"CustomerTicket"> | Date | string
-  project?: Prisma.XOR<Prisma.ProjectScalarRelationFilter, Prisma.ProjectWhereInput>
+  project?: Prisma.XOR<Prisma.ProjectNullableScalarRelationFilter, Prisma.ProjectWhereInput> | null
   convertedTask?: Prisma.XOR<Prisma.TaskNullableScalarRelationFilter, Prisma.TaskWhereInput> | null
   comments?: Prisma.TicketCommentListRelationFilter
   attachments?: Prisma.AttachmentListRelationFilter
@@ -358,7 +358,7 @@ export type CustomerTicketWhereUniqueInput = Prisma.AtLeast<{
 export type CustomerTicketOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   trackingCode?: Prisma.SortOrder
-  projectId?: Prisma.SortOrder
+  projectId?: Prisma.SortOrderInput | Prisma.SortOrder
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
   type?: Prisma.SortOrder
@@ -386,7 +386,7 @@ export type CustomerTicketScalarWhereWithAggregatesInput = {
   NOT?: Prisma.CustomerTicketScalarWhereWithAggregatesInput | Prisma.CustomerTicketScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"CustomerTicket"> | string
   trackingCode?: Prisma.StringWithAggregatesFilter<"CustomerTicket"> | string
-  projectId?: Prisma.StringWithAggregatesFilter<"CustomerTicket"> | string
+  projectId?: Prisma.StringNullableWithAggregatesFilter<"CustomerTicket"> | string | null
   title?: Prisma.StringWithAggregatesFilter<"CustomerTicket"> | string
   description?: Prisma.StringWithAggregatesFilter<"CustomerTicket"> | string
   type?: Prisma.StringWithAggregatesFilter<"CustomerTicket"> | string
@@ -423,7 +423,7 @@ export type CustomerTicketCreateInput = {
   resolvedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  project: Prisma.ProjectCreateNestedOneWithoutCustomerTicketsInput
+  project?: Prisma.ProjectCreateNestedOneWithoutCustomerTicketsInput
   convertedTask?: Prisma.TaskCreateNestedOneWithoutCustomerTicketInput
   comments?: Prisma.TicketCommentCreateNestedManyWithoutTicketInput
   attachments?: Prisma.AttachmentCreateNestedManyWithoutTicketInput
@@ -432,7 +432,7 @@ export type CustomerTicketCreateInput = {
 export type CustomerTicketUncheckedCreateInput = {
   id?: string
   trackingCode: string
-  projectId: string
+  projectId?: string | null
   title: string
   description: string
   type?: string
@@ -471,7 +471,7 @@ export type CustomerTicketUpdateInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  project?: Prisma.ProjectUpdateOneRequiredWithoutCustomerTicketsNestedInput
+  project?: Prisma.ProjectUpdateOneWithoutCustomerTicketsNestedInput
   convertedTask?: Prisma.TaskUpdateOneWithoutCustomerTicketNestedInput
   comments?: Prisma.TicketCommentUpdateManyWithoutTicketNestedInput
   attachments?: Prisma.AttachmentUpdateManyWithoutTicketNestedInput
@@ -480,7 +480,7 @@ export type CustomerTicketUpdateInput = {
 export type CustomerTicketUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   trackingCode?: Prisma.StringFieldUpdateOperationsInput | string
-  projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  projectId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
@@ -504,7 +504,7 @@ export type CustomerTicketUncheckedUpdateInput = {
 export type CustomerTicketCreateManyInput = {
   id?: string
   trackingCode: string
-  projectId: string
+  projectId?: string | null
   title: string
   description: string
   type?: string
@@ -546,7 +546,7 @@ export type CustomerTicketUpdateManyMutationInput = {
 export type CustomerTicketUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   trackingCode?: Prisma.StringFieldUpdateOperationsInput | string
-  projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  projectId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
@@ -832,7 +832,7 @@ export type CustomerTicketScalarWhereInput = {
   NOT?: Prisma.CustomerTicketScalarWhereInput | Prisma.CustomerTicketScalarWhereInput[]
   id?: Prisma.StringFilter<"CustomerTicket"> | string
   trackingCode?: Prisma.StringFilter<"CustomerTicket"> | string
-  projectId?: Prisma.StringFilter<"CustomerTicket"> | string
+  projectId?: Prisma.StringNullableFilter<"CustomerTicket"> | string | null
   title?: Prisma.StringFilter<"CustomerTicket"> | string
   description?: Prisma.StringFilter<"CustomerTicket"> | string
   type?: Prisma.StringFilter<"CustomerTicket"> | string
@@ -869,7 +869,7 @@ export type CustomerTicketCreateWithoutConvertedTaskInput = {
   resolvedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  project: Prisma.ProjectCreateNestedOneWithoutCustomerTicketsInput
+  project?: Prisma.ProjectCreateNestedOneWithoutCustomerTicketsInput
   comments?: Prisma.TicketCommentCreateNestedManyWithoutTicketInput
   attachments?: Prisma.AttachmentCreateNestedManyWithoutTicketInput
 }
@@ -877,7 +877,7 @@ export type CustomerTicketCreateWithoutConvertedTaskInput = {
 export type CustomerTicketUncheckedCreateWithoutConvertedTaskInput = {
   id?: string
   trackingCode: string
-  projectId: string
+  projectId?: string | null
   title: string
   description: string
   type?: string
@@ -931,7 +931,7 @@ export type CustomerTicketUpdateWithoutConvertedTaskInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  project?: Prisma.ProjectUpdateOneRequiredWithoutCustomerTicketsNestedInput
+  project?: Prisma.ProjectUpdateOneWithoutCustomerTicketsNestedInput
   comments?: Prisma.TicketCommentUpdateManyWithoutTicketNestedInput
   attachments?: Prisma.AttachmentUpdateManyWithoutTicketNestedInput
 }
@@ -939,7 +939,7 @@ export type CustomerTicketUpdateWithoutConvertedTaskInput = {
 export type CustomerTicketUncheckedUpdateWithoutConvertedTaskInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   trackingCode?: Prisma.StringFieldUpdateOperationsInput | string
-  projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  projectId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
@@ -977,7 +977,7 @@ export type CustomerTicketCreateWithoutCommentsInput = {
   resolvedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  project: Prisma.ProjectCreateNestedOneWithoutCustomerTicketsInput
+  project?: Prisma.ProjectCreateNestedOneWithoutCustomerTicketsInput
   convertedTask?: Prisma.TaskCreateNestedOneWithoutCustomerTicketInput
   attachments?: Prisma.AttachmentCreateNestedManyWithoutTicketInput
 }
@@ -985,7 +985,7 @@ export type CustomerTicketCreateWithoutCommentsInput = {
 export type CustomerTicketUncheckedCreateWithoutCommentsInput = {
   id?: string
   trackingCode: string
-  projectId: string
+  projectId?: string | null
   title: string
   description: string
   type?: string
@@ -1039,7 +1039,7 @@ export type CustomerTicketUpdateWithoutCommentsInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  project?: Prisma.ProjectUpdateOneRequiredWithoutCustomerTicketsNestedInput
+  project?: Prisma.ProjectUpdateOneWithoutCustomerTicketsNestedInput
   convertedTask?: Prisma.TaskUpdateOneWithoutCustomerTicketNestedInput
   attachments?: Prisma.AttachmentUpdateManyWithoutTicketNestedInput
 }
@@ -1047,7 +1047,7 @@ export type CustomerTicketUpdateWithoutCommentsInput = {
 export type CustomerTicketUncheckedUpdateWithoutCommentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   trackingCode?: Prisma.StringFieldUpdateOperationsInput | string
-  projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  projectId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1085,7 +1085,7 @@ export type CustomerTicketCreateWithoutAttachmentsInput = {
   resolvedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  project: Prisma.ProjectCreateNestedOneWithoutCustomerTicketsInput
+  project?: Prisma.ProjectCreateNestedOneWithoutCustomerTicketsInput
   convertedTask?: Prisma.TaskCreateNestedOneWithoutCustomerTicketInput
   comments?: Prisma.TicketCommentCreateNestedManyWithoutTicketInput
 }
@@ -1093,7 +1093,7 @@ export type CustomerTicketCreateWithoutAttachmentsInput = {
 export type CustomerTicketUncheckedCreateWithoutAttachmentsInput = {
   id?: string
   trackingCode: string
-  projectId: string
+  projectId?: string | null
   title: string
   description: string
   type?: string
@@ -1147,7 +1147,7 @@ export type CustomerTicketUpdateWithoutAttachmentsInput = {
   resolvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  project?: Prisma.ProjectUpdateOneRequiredWithoutCustomerTicketsNestedInput
+  project?: Prisma.ProjectUpdateOneWithoutCustomerTicketsNestedInput
   convertedTask?: Prisma.TaskUpdateOneWithoutCustomerTicketNestedInput
   comments?: Prisma.TicketCommentUpdateManyWithoutTicketNestedInput
 }
@@ -1155,7 +1155,7 @@ export type CustomerTicketUpdateWithoutAttachmentsInput = {
 export type CustomerTicketUncheckedUpdateWithoutAttachmentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   trackingCode?: Prisma.StringFieldUpdateOperationsInput | string
-  projectId?: Prisma.StringFieldUpdateOperationsInput | string
+  projectId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1323,60 +1323,14 @@ export type CustomerTicketSelect<ExtArgs extends runtime.Types.Extensions.Intern
   resolvedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
+  project?: boolean | Prisma.CustomerTicket$projectArgs<ExtArgs>
   convertedTask?: boolean | Prisma.CustomerTicket$convertedTaskArgs<ExtArgs>
   comments?: boolean | Prisma.CustomerTicket$commentsArgs<ExtArgs>
   attachments?: boolean | Prisma.CustomerTicket$attachmentsArgs<ExtArgs>
   _count?: boolean | Prisma.CustomerTicketCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["customerTicket"]>
 
-export type CustomerTicketSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
-  id?: boolean
-  trackingCode?: boolean
-  projectId?: boolean
-  title?: boolean
-  description?: boolean
-  type?: boolean
-  status?: boolean
-  priority?: boolean
-  customerName?: boolean
-  customerEmail?: boolean
-  customerPhone?: boolean
-  customerCompany?: boolean
-  environment?: boolean
-  convertedTaskId?: boolean
-  internalNotes?: boolean
-  resolutionNotes?: boolean
-  resolvedAt?: boolean
-  createdAt?: boolean
-  updatedAt?: boolean
-  project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
-  convertedTask?: boolean | Prisma.CustomerTicket$convertedTaskArgs<ExtArgs>
-}, ExtArgs["result"]["customerTicket"]>
 
-export type CustomerTicketSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
-  id?: boolean
-  trackingCode?: boolean
-  projectId?: boolean
-  title?: boolean
-  description?: boolean
-  type?: boolean
-  status?: boolean
-  priority?: boolean
-  customerName?: boolean
-  customerEmail?: boolean
-  customerPhone?: boolean
-  customerCompany?: boolean
-  environment?: boolean
-  convertedTaskId?: boolean
-  internalNotes?: boolean
-  resolutionNotes?: boolean
-  resolvedAt?: boolean
-  createdAt?: boolean
-  updatedAt?: boolean
-  project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
-  convertedTask?: boolean | Prisma.CustomerTicket$convertedTaskArgs<ExtArgs>
-}, ExtArgs["result"]["customerTicket"]>
 
 export type CustomerTicketSelectScalar = {
   id?: boolean
@@ -1402,25 +1356,17 @@ export type CustomerTicketSelectScalar = {
 
 export type CustomerTicketOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "trackingCode" | "projectId" | "title" | "description" | "type" | "status" | "priority" | "customerName" | "customerEmail" | "customerPhone" | "customerCompany" | "environment" | "convertedTaskId" | "internalNotes" | "resolutionNotes" | "resolvedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["customerTicket"]>
 export type CustomerTicketInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
+  project?: boolean | Prisma.CustomerTicket$projectArgs<ExtArgs>
   convertedTask?: boolean | Prisma.CustomerTicket$convertedTaskArgs<ExtArgs>
   comments?: boolean | Prisma.CustomerTicket$commentsArgs<ExtArgs>
   attachments?: boolean | Prisma.CustomerTicket$attachmentsArgs<ExtArgs>
   _count?: boolean | Prisma.CustomerTicketCountOutputTypeDefaultArgs<ExtArgs>
 }
-export type CustomerTicketIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
-  convertedTask?: boolean | Prisma.CustomerTicket$convertedTaskArgs<ExtArgs>
-}
-export type CustomerTicketIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  project?: boolean | Prisma.ProjectDefaultArgs<ExtArgs>
-  convertedTask?: boolean | Prisma.CustomerTicket$convertedTaskArgs<ExtArgs>
-}
 
 export type $CustomerTicketPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "CustomerTicket"
   objects: {
-    project: Prisma.$ProjectPayload<ExtArgs>
+    project: Prisma.$ProjectPayload<ExtArgs> | null
     convertedTask: Prisma.$TaskPayload<ExtArgs> | null
     comments: Prisma.$TicketCommentPayload<ExtArgs>[]
     attachments: Prisma.$AttachmentPayload<ExtArgs>[]
@@ -1428,7 +1374,7 @@ export type $CustomerTicketPayload<ExtArgs extends runtime.Types.Extensions.Inte
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     trackingCode: string
-    projectId: string
+    projectId: string | null
     title: string
     description: string
     type: string
@@ -1563,30 +1509,6 @@ export interface CustomerTicketDelegate<ExtArgs extends runtime.Types.Extensions
   createMany<T extends CustomerTicketCreateManyArgs>(args?: Prisma.SelectSubset<T, CustomerTicketCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
 
   /**
-   * Create many CustomerTickets and returns the data saved in the database.
-   * @param {CustomerTicketCreateManyAndReturnArgs} args - Arguments to create many CustomerTickets.
-   * @example
-   * // Create many CustomerTickets
-   * const customerTicket = await prisma.customerTicket.createManyAndReturn({
-   *   data: [
-   *     // ... provide data here
-   *   ]
-   * })
-   * 
-   * // Create many CustomerTickets and only return the `id`
-   * const customerTicketWithIdOnly = await prisma.customerTicket.createManyAndReturn({
-   *   select: { id: true },
-   *   data: [
-   *     // ... provide data here
-   *   ]
-   * })
-   * Note, that providing `undefined` is treated as the value not being there.
-   * Read more here: https://pris.ly/d/null-undefined
-   * 
-   */
-  createManyAndReturn<T extends CustomerTicketCreateManyAndReturnArgs>(args?: Prisma.SelectSubset<T, CustomerTicketCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CustomerTicketPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
-
-  /**
    * Delete a CustomerTicket.
    * @param {CustomerTicketDeleteArgs} args - Arguments to delete one CustomerTicket.
    * @example
@@ -1649,36 +1571,6 @@ export interface CustomerTicketDelegate<ExtArgs extends runtime.Types.Extensions
    * 
    */
   updateMany<T extends CustomerTicketUpdateManyArgs>(args: Prisma.SelectSubset<T, CustomerTicketUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<Prisma.BatchPayload>
-
-  /**
-   * Update zero or more CustomerTickets and returns the data updated in the database.
-   * @param {CustomerTicketUpdateManyAndReturnArgs} args - Arguments to update many CustomerTickets.
-   * @example
-   * // Update many CustomerTickets
-   * const customerTicket = await prisma.customerTicket.updateManyAndReturn({
-   *   where: {
-   *     // ... provide filter here
-   *   },
-   *   data: [
-   *     // ... provide data here
-   *   ]
-   * })
-   * 
-   * // Update zero or more CustomerTickets and only return the `id`
-   * const customerTicketWithIdOnly = await prisma.customerTicket.updateManyAndReturn({
-   *   select: { id: true },
-   *   where: {
-   *     // ... provide filter here
-   *   },
-   *   data: [
-   *     // ... provide data here
-   *   ]
-   * })
-   * Note, that providing `undefined` is treated as the value not being there.
-   * Read more here: https://pris.ly/d/null-undefined
-   * 
-   */
-  updateManyAndReturn<T extends CustomerTicketUpdateManyAndReturnArgs>(args: Prisma.SelectSubset<T, CustomerTicketUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CustomerTicketPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
 
   /**
    * Create or update one CustomerTicket.
@@ -1839,7 +1731,7 @@ readonly fields: CustomerTicketFieldRefs;
  */
 export interface Prisma__CustomerTicketClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  project<T extends Prisma.ProjectDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProjectDefaultArgs<ExtArgs>>): Prisma.Prisma__ProjectClient<runtime.Types.Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  project<T extends Prisma.CustomerTicket$projectArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CustomerTicket$projectArgs<ExtArgs>>): Prisma.Prisma__ProjectClient<runtime.Types.Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   convertedTask<T extends Prisma.CustomerTicket$convertedTaskArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CustomerTicket$convertedTaskArgs<ExtArgs>>): Prisma.Prisma__TaskClient<runtime.Types.Result.GetResult<Prisma.$TaskPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   comments<T extends Prisma.CustomerTicket$commentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CustomerTicket$commentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TicketCommentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   attachments<T extends Prisma.CustomerTicket$attachmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CustomerTicket$attachmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AttachmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -2128,28 +2020,6 @@ export type CustomerTicketCreateManyArgs<ExtArgs extends runtime.Types.Extension
 }
 
 /**
- * CustomerTicket createManyAndReturn
- */
-export type CustomerTicketCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the CustomerTicket
-   */
-  select?: Prisma.CustomerTicketSelectCreateManyAndReturn<ExtArgs> | null
-  /**
-   * Omit specific fields from the CustomerTicket
-   */
-  omit?: Prisma.CustomerTicketOmit<ExtArgs> | null
-  /**
-   * The data used to create many CustomerTickets.
-   */
-  data: Prisma.CustomerTicketCreateManyInput | Prisma.CustomerTicketCreateManyInput[]
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.CustomerTicketIncludeCreateManyAndReturn<ExtArgs> | null
-}
-
-/**
  * CustomerTicket update
  */
 export type CustomerTicketUpdateArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2191,36 +2061,6 @@ export type CustomerTicketUpdateManyArgs<ExtArgs extends runtime.Types.Extension
    * Limit how many CustomerTickets to update.
    */
   limit?: number
-}
-
-/**
- * CustomerTicket updateManyAndReturn
- */
-export type CustomerTicketUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the CustomerTicket
-   */
-  select?: Prisma.CustomerTicketSelectUpdateManyAndReturn<ExtArgs> | null
-  /**
-   * Omit specific fields from the CustomerTicket
-   */
-  omit?: Prisma.CustomerTicketOmit<ExtArgs> | null
-  /**
-   * The data used to update CustomerTickets.
-   */
-  data: Prisma.XOR<Prisma.CustomerTicketUpdateManyMutationInput, Prisma.CustomerTicketUncheckedUpdateManyInput>
-  /**
-   * Filter which CustomerTickets to update
-   */
-  where?: Prisma.CustomerTicketWhereInput
-  /**
-   * Limit how many CustomerTickets to update.
-   */
-  limit?: number
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.CustomerTicketIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -2287,6 +2127,25 @@ export type CustomerTicketDeleteManyArgs<ExtArgs extends runtime.Types.Extension
    * Limit how many CustomerTickets to delete.
    */
   limit?: number
+}
+
+/**
+ * CustomerTicket.project
+ */
+export type CustomerTicket$projectArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Project
+   */
+  select?: Prisma.ProjectSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Project
+   */
+  omit?: Prisma.ProjectOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ProjectInclude<ExtArgs> | null
+  where?: Prisma.ProjectWhereInput
 }
 
 /**

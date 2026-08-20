@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { publish } from "@/lib/bus";
 import { canCreateTask } from "@/lib/permissions";
 import { notifyTaskAssigned } from "@/lib/notifications";
+import { checkUserPermission } from "@/lib/permissions-server";
 
 const taskInclude = {
   assignee: { select: { id: true, name: true, avatarColor: true } },
@@ -18,13 +19,13 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
-  const user = await requireUser();
+  const user = await requireUser(_req);
   const { projectId } = await params;
 
   const member = await prisma.projectMember.findUnique({
     where: { projectId_userId: { projectId, userId: user.id } },
   });
-  if (!member) return NextResponse.json({ error: "Không có quyền truy cập" }, { status: 403 });
+  if (!member && user.role !== "ADMIN") return NextResponse.json({ error: "Không có quyền truy cập" }, { status: 403 });
 
   const [project, tasks, sprints, labels, members] = await Promise.all([
     prisma.project.findUnique({ where: { id: projectId } }),
@@ -43,7 +44,14 @@ export async function GET(
 
   if (!project) return NextResponse.json({ error: "Không tìm thấy project" }, { status: 404 });
 
-  return NextResponse.json({ project, tasks, sprints, labels, members, currentRole: member.role });
+  return NextResponse.json({
+    project,
+    tasks,
+    sprints,
+    labels,
+    members,
+    currentRole: member?.role ?? (user.role === "ADMIN" ? "OWNER" : "MEMBER"),
+  });
 }
 
 const createTaskSchema = z.object({
@@ -67,12 +75,9 @@ export async function POST(
   const user = await requireUser();
   const { projectId } = await params;
 
-  const member = await prisma.projectMember.findUnique({
-    where: { projectId_userId: { projectId, userId: user.id } },
-  });
-  if (!member) return NextResponse.json({ error: "Không có quyền truy cập" }, { status: 403 });
-  if (!canCreateTask(member.role)) {
-    return NextResponse.json({ error: "Người xem (Viewer) không có quyền tạo task" }, { status: 403 });
+  const permCheck = await checkUserPermission(user.id, "tasks.create", projectId, user.role);
+  if (!permCheck.allowed) {
+    return NextResponse.json({ error: permCheck.reason || "Bạn không có quyền tạo công việc mới" }, { status: 403 });
   }
 
   const body = await req.json().catch(() => null);
@@ -82,15 +87,18 @@ export async function POST(
   }
   const d = parsed.data;
 
-  const lastTask = await prisma.task.findFirst({
-    where: { projectId },
-    orderBy: { number: "desc" },
-    select: { number: true },
-  });
-  const maxPos = await prisma.task.aggregate({
-    where: { projectId, status: d.status },
-    _max: { position: true },
-  });
+  // Chạy song song 2 query độc lập để lấy số thứ tự và vị trí task mới
+  const [lastTask, maxPos] = await Promise.all([
+    prisma.task.findFirst({
+      where: { projectId },
+      orderBy: { number: "desc" },
+      select: { number: true },
+    }),
+    prisma.task.aggregate({
+      where: { projectId, status: d.status },
+      _max: { position: true },
+    }),
+  ]);
 
   const task = await prisma.task.create({
     data: {

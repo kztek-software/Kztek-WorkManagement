@@ -13,6 +13,20 @@ export type PermissionCategory = {
 
 export const PERMISSION_CATEGORIES: PermissionCategory[] = [
   {
+    id: "projects",
+    name: "Quản trị & Thiết lập Dự án",
+    description: "Quyền khởi tạo, cấu hình, chuyển trạng thái và quản trị các dự án",
+    permissions: [
+      { key: "projects.view_all", name: "Xem tất cả dự án", description: "Xem toàn bộ danh mục và tiến độ các dự án trong hệ thống" },
+      { key: "projects.create", name: "Tạo dự án mới", description: "Khởi tạo workspace và dự án mới trên hệ thống" },
+      { key: "projects.edit", name: "Chỉnh sửa thông tin dự án", description: "Đổi tên, mã key, mục tiêu và chủ sở hữu dự án" },
+      { key: "projects.status", name: "Đổi trạng thái dự án", description: "Cập nhật tiến độ: Đang chạy, Kế hoạch, Tạm dừng, Hoàn thành" },
+      { key: "projects.labels", name: "Quản lý Nhãn & Phân loại", description: "Tạo, sửa, xóa nhãn (labels/tags) gắn vào công việc" },
+      { key: "projects.archive", name: "Lưu trữ / Đóng dự án", description: "Đưa dự án vào kho lưu trữ khi hoàn tất" },
+      { key: "projects.delete", name: "Xóa vĩnh viễn dự án", description: "Xóa dự án và toàn bộ dữ liệu công việc khỏi hệ thống" },
+    ],
+  },
+  {
     id: "tasks",
     name: "Quản lý Công việc & Kanban",
     description: "Quyền xem, tạo, sửa, xóa, phân công và kéo thả công việc",
@@ -49,14 +63,25 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
   },
   {
     id: "members",
-    name: "Dự án & Phân bổ Thành viên",
-    description: "Quyền quản lý đội ngũ và thiết lập dự án",
+    name: "Đội ngũ & Thành viên Dự án",
+    description: "Quyền điều phối nhân sự và phân quyền trong dự án",
     permissions: [
       { key: "members.view", name: "Xem danh sách thành viên", description: "Xem những ai tham gia dự án" },
       { key: "members.add", name: "Thêm thành viên vào dự án", description: "Thêm tài khoản nhân sự vào dự án" },
-      { key: "members.change_role", name: "Đổi vai trò thành viên", description: "Thay đổi vai trò (ADMIN, MEMBER, VIEWER...)" },
+      { key: "members.change_role", name: "Đổi vai trò thành viên", description: "Thay đổi vai trò (ADMIN, TECH_LEAD, DEVELOPER...)" },
       { key: "members.remove", name: "Xóa thành viên khỏi dự án", description: "Loại bỏ người dùng khỏi dự án" },
-      { key: "project.edit", name: "Chỉnh sửa thông tin dự án", description: "Đổi tên, key và mô tả dự án" },
+    ],
+  },
+  {
+    id: "tickets",
+    name: "Khách hàng & Ticket Hỗ trợ",
+    description: "Quyền tiếp nhận, xử lý và phản hồi vé yêu cầu từ khách hàng",
+    permissions: [
+      { key: "tickets.view", name: "Xem danh sách Ticket", description: "Xem các yêu cầu và lỗi do khách hàng gửi" },
+      { key: "tickets.create", name: "Tạo / Tiếp nhận Ticket", description: "Tạo phiếu hỗ trợ hoặc ghi nhận yêu cầu mới" },
+      { key: "tickets.reply", name: "Phản hồi & Trao đổi", description: "Gửi phản hồi và bình luận trong ticket" },
+      { key: "tickets.convert", name: "Chuyển Ticket thành Task", description: "Chuyển đổi yêu cầu khách hàng thành task trên Board" },
+      { key: "tickets.delete", name: "Đóng & Xóa Ticket", description: "Đóng phiếu xử lý hoặc xóa vé rác" },
     ],
   },
   {
@@ -107,7 +132,9 @@ export const DEFAULT_ROLE_PRESETS: {
     description: "Toàn quyền trong phạm vi dự án, quản lý công việc, sprint, báo cáo và thành viên",
     color: "#8B5CF6",
     isSystem: true,
-    permissions: ALL_PERMISSION_KEYS.filter((k) => !k.startsWith("system.") && k !== "users.manage" && k !== "roles.manage" && k !== "email.config"),
+    permissions: ALL_PERMISSION_KEYS.filter(
+      (k) => !k.startsWith("system.") && k !== "users.manage" && k !== "roles.manage" && k !== "email.config"
+    ),
   },
   {
     key: "TECH_LEAD",
@@ -116,10 +143,12 @@ export const DEFAULT_ROLE_PRESETS: {
     color: "#3B82F6",
     isSystem: false,
     permissions: [
+      "projects.view_all", "projects.edit", "projects.status", "projects.labels",
       "tasks.view", "tasks.create", "tasks.edit", "tasks.move_status", "tasks.assign", "tasks.comment", "tasks.subtask",
       "sprints.view", "sprints.create", "sprints.manage",
       "reports.view_overview", "reports.view_accounts", "reports.export",
       "members.view", "members.add",
+      "tickets.view", "tickets.reply", "tickets.convert",
       "notion.migrate",
     ],
   },
@@ -134,6 +163,7 @@ export const DEFAULT_ROLE_PRESETS: {
       "sprints.view",
       "reports.view_overview",
       "members.view",
+      "tickets.view", "tickets.reply",
     ],
   },
   {
@@ -147,6 +177,7 @@ export const DEFAULT_ROLE_PRESETS: {
       "sprints.view",
       "reports.view_overview",
       "members.view",
+      "tickets.view", "tickets.create",
     ],
   },
   {
@@ -160,6 +191,7 @@ export const DEFAULT_ROLE_PRESETS: {
       "sprints.view",
       "reports.view_overview", "reports.view_accounts",
       "members.view",
+      "tickets.view", "tickets.create", "tickets.reply", "tickets.convert",
     ],
   },
   {
@@ -173,6 +205,7 @@ export const DEFAULT_ROLE_PRESETS: {
       "sprints.view",
       "reports.view_overview",
       "members.view",
+      "tickets.view",
     ],
   },
 ];
@@ -191,6 +224,30 @@ export function canManageMembers(role?: string | null): boolean {
   if (!role) return false;
   const norm = role.toUpperCase();
   return norm === "ADMIN" || norm === "OWNER" || norm === "TECH_LEAD";
+}
+
+export function canCreateProject(role?: string | null): boolean {
+  if (!role) return false;
+  const norm = role.toUpperCase();
+  return norm === "ADMIN" || norm === "OWNER";
+}
+
+export function canEditProject(role?: string | null): boolean {
+  if (!role) return false;
+  const norm = role.toUpperCase();
+  return norm === "ADMIN" || norm === "OWNER" || norm === "TECH_LEAD";
+}
+
+export function canDeleteProject(role?: string | null): boolean {
+  if (!role) return false;
+  const norm = role.toUpperCase();
+  return norm === "ADMIN" || norm === "OWNER";
+}
+
+export function canManageTickets(role?: string | null): boolean {
+  if (!role) return false;
+  const norm = role.toUpperCase();
+  return norm !== "VIEWER";
 }
 
 // Synchronous Helpers (Client & Server safe)

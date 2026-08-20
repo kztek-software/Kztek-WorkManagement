@@ -1,0 +1,61 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:KztekWorkManagement.Mobile.ViewModels"
+             x:Class="KztekWorkManagement.Mobile.Views.CreateTaskView"
+             x:DataType="vm:CreateTaskViewModel">
+
+  <ScrollViewer Background="{DynamicResource KzBackground}">
+    <StackPanel Margin="16,16,16,80" Spacing="16">
+
+      <!-- Form Card -->
+      <Border Classes="kz-card" Padding="20">
+        <StackPanel Spacing="16">
+          <TextBlock Text="Tạo công việc mới" FontSize="18" FontWeight="Bold" />
+
+          <!-- Title Input -->
+          <StackPanel Spacing="6">
+            <TextBlock Text="Tiêu đề công việc *" FontSize="13" FontWeight="SemiBold" />
+            <TextBox Classes="kz-input" Text="{Binding Title, Mode=TwoWay}" Watermark="Nhập tóm tắt công việc cần làm..." />
+          </StackPanel>
+
+          <!-- Description Input -->
+          <StackPanel Spacing="6">
+            <TextBlock Text="Mô tả chi tiết" FontSize="13" FontWeight="SemiBold" />
+            <TextBox Classes="kz-input" Height="100" AcceptsReturn="True" TextWrapping="Wrap" 
+                     Text="{Binding Description, Mode=TwoWay}" Watermark="Mô tả các bước, yêu cầu và tiêu chí nghiệm thu..." />
+          </StackPanel>
+
+          <!-- Priority Selector -->
+          <StackPanel Spacing="6">
+            <TextBlock Text="Mức độ ưu tiên" FontSize="13" FontWeight="SemiBold" />
+            <TextBox Classes="kz-input" Text="{Binding Priority, Mode=TwoWay}" Watermark="LOW / MEDIUM / HIGH / URGENT" />
+          </StackPanel>
+
+          <!-- Type Selector -->
+          <StackPanel Spacing="6">
+            <TextBlock Text="Loại công việc" FontSize="13" FontWeight="SemiBold" />
+            <TextBox Classes="kz-input" Text="{Binding Type, Mode=TwoWay}" Watermark="TASK / BUG / STORY" />
+          </StackPanel>
+
+          <!-- Error Alert -->
+          <Border Background="#FEE2E2" BorderBrush="#F87171" BorderThickness="1" CornerRadius="8" Padding="12"
+                  IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+            <TextBlock Text="{Binding ErrorMessage}" Foreground="#B91C1C" FontSize="13" TextWrapping="Wrap" />
+          </Border>
+
+          <!-- Actions Grid -->
+          <Grid ColumnDefinitions="*,*" Margin="0,12,0,0">
+            <Button Grid.Column="0" Classes="kz-btn-outline" Command="{Binding CancelCommand}" Margin="0,0,6,0">
+              <TextBlock Text="Hủy bỏ" />
+            </Button>
+            <Button Grid.Column="1" Classes="kz-btn-accent" Command="{Binding SubmitCommand}" Margin="6,0,0,0" IsEnabled="{Binding !IsBusy}">
+              <TextBlock Text="Lưu công việc" />
+            </Button>
+          </Grid>
+
+        </StackPanel>
+      </Border>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

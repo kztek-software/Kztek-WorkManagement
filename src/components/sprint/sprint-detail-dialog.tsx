@@ -400,7 +400,7 @@ export function SprintDetailDialog({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-5xl p-0 overflow-hidden border border-line bg-surface shadow-2xl rounded-2xl flex flex-col max-h-[90vh]">
           {/* Header */}
-          <div className="flex flex-col gap-3 border-b border-line bg-surface-2/60 px-6 py-4">
+          <div className="flex flex-col gap-2 border-b border-line bg-surface-2/60 px-5 py-3">
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-1.5 min-w-0">
                 <div className="flex items-center gap-2 text-xs font-semibold text-muted flex-wrap">
@@ -442,7 +442,7 @@ export function SprintDetailDialog({
                         sprint.status === "COMPLETED"
                           ? "bg-surface-2 text-muted border-line"
                           : timeInfo.daysLeft !== null && timeInfo.daysLeft <= 2
-                          ? "bg-red-500/10 text-red-400 border-red-500/20"
+                          ? "bg-accent/10 text-accent border-accent/20"
                           : "bg-accent/10 text-accent border-accent/20"
                       }`}
                     >
@@ -511,7 +511,7 @@ export function SprintDetailDialog({
                     variant="outline"
                     disabled={actionLoading}
                     onClick={() => updateSprintStatus("ACTIVE")}
-                    className="h-8 text-xs font-bold border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
+                    className="h-8 text-xs font-bold border-emerald-500/40 text-emerald-600 hover:bg-emerald-500/10"
                   >
                     <Play className="h-3.5 w-3.5 mr-1" /> Mở lại Sprint
                   </Button>
@@ -523,7 +523,7 @@ export function SprintDetailDialog({
                   variant="ghost"
                   disabled={actionLoading}
                   onClick={handleDeleteSprint}
-                  className="h-8 w-8 p-0 text-muted hover:text-red-400 hover:bg-red-950/30"
+                  className="h-8 w-8 p-0 text-muted hover:text-accent hover:bg-accent/10"
                   title="Xóa Sprint (chuyển tasks về Backlog)"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -571,15 +571,19 @@ export function SprintDetailDialog({
           </div>
 
           {/* Body Content */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          <div className="flex-1 overflow-y-auto p-5 space-y-4">
             {/* KPI Progress Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Bố cục 2 hàng x 2 cột: mỗi hàng gồm 2 thẻ có mật độ nội dung tương đương nhau
+                (hàng 1: 2 thẻ progress bar; hàng 2: 2 thẻ danh sách phân bổ) nên chiều cao
+                trong cùng 1 hàng luôn khớp nhau tự nhiên — không còn thẻ to/nhỏ lệch nhau
+                như khi xếp chung 1 hàng 4 cột với 2 loại nội dung khác mật độ. */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* Story Points Burn */}
-              <div className="rounded-2xl border border-line bg-surface-2/40 p-4 space-y-2">
+              <div className="rounded-2xl border border-line bg-surface-2/40 p-3 space-y-1.5">
                 <div className="flex items-center justify-between text-xs text-muted font-semibold">
                   <span className="flex items-center gap-1.5">
                     <Flame className="h-4 w-4 text-accent" />
-                    Story Points
+                    Điểm Story Points
                   </span>
                   <span className="font-mono font-bold text-accent">{stats.progress}%</span>
                 </div>
@@ -609,7 +613,7 @@ export function SprintDetailDialog({
               </div>
 
               {/* Tasks Count Progress */}
-              <div className="rounded-2xl border border-line bg-surface-2/40 p-4 space-y-2">
+              <div className="rounded-2xl border border-line bg-surface-2/40 p-3 space-y-1.5">
                 <div className="flex items-center justify-between text-xs text-muted font-semibold">
                   <span className="flex items-center gap-1.5">
                     <CheckSquare className="h-4 w-4 text-emerald-400" />
@@ -637,41 +641,41 @@ export function SprintDetailDialog({
               </div>
 
               {/* Priority Distribution */}
-              <div className="rounded-2xl border border-line bg-surface-2/40 p-4 space-y-2">
+              <div className="rounded-2xl border border-line bg-surface-2/40 p-3 space-y-1.5">
                 <div className="flex items-center justify-between text-xs text-muted font-semibold">
                   <span className="flex items-center gap-1.5">
-                    <TrendingUp className="h-4 w-4 text-red-400" />
+                    <TrendingUp className="h-4 w-4 text-accent" />
                     Mức độ ưu tiên
                   </span>
                 </div>
-                <div className="grid grid-cols-2 gap-2 pt-1">
-                  <div className="flex items-center justify-between bg-surface px-2 py-1 rounded-lg border border-line text-[11px]">
-                    <span className="text-red-400 font-bold flex items-center gap-1">
-                      <span className="h-1.5 w-1.5 rounded-full bg-red-500" /> Khẩn cấp
+                <div className="grid grid-cols-2 gap-1.5 pt-0.5">
+                  <div className="flex items-center justify-between bg-surface px-2.5 py-1 rounded-lg border border-line text-[11px]">
+                    <span className="text-accent font-bold flex items-center gap-1.5 whitespace-nowrap">
+                      <span className="h-1.5 w-1.5 rounded-full bg-accent shrink-0" /> Khẩn cấp
                     </span>
                     <span className="font-bold font-mono text-foreground">
                       {stats.priorityCounts.URGENT || 0}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between bg-surface px-2 py-1 rounded-lg border border-line text-[11px]">
-                    <span className="text-orange-400 font-bold flex items-center gap-1">
-                      <span className="h-1.5 w-1.5 rounded-full bg-orange-500" /> Cao
+                  <div className="flex items-center justify-between bg-surface px-2.5 py-1 rounded-lg border border-line text-[11px]">
+                    <span className="text-orange-600 font-bold flex items-center gap-1.5 whitespace-nowrap">
+                      <span className="h-1.5 w-1.5 rounded-full bg-orange-500 shrink-0" /> Cao
                     </span>
                     <span className="font-bold font-mono text-foreground">
                       {stats.priorityCounts.HIGH || 0}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between bg-surface px-2 py-1 rounded-lg border border-line text-[11px]">
-                    <span className="text-blue-400 font-bold flex items-center gap-1">
-                      <span className="h-1.5 w-1.5 rounded-full bg-blue-500" /> Trung bình
+                  <div className="flex items-center justify-between bg-surface px-2.5 py-1 rounded-lg border border-line text-[11px]">
+                    <span className="text-blue-600 font-bold flex items-center gap-1.5 whitespace-nowrap">
+                      <span className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" /> Trung bình
                     </span>
                     <span className="font-bold font-mono text-foreground">
                       {stats.priorityCounts.MEDIUM || 0}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between bg-surface px-2 py-1 rounded-lg border border-line text-[11px]">
-                    <span className="text-muted font-bold flex items-center gap-1">
-                      <span className="h-1.5 w-1.5 rounded-full bg-muted" /> Thấp
+                  <div className="flex items-center justify-between bg-surface px-2.5 py-1 rounded-lg border border-line text-[11px]">
+                    <span className="text-muted font-bold flex items-center gap-1.5 whitespace-nowrap">
+                      <span className="h-1.5 w-1.5 rounded-full bg-muted shrink-0" /> Thấp
                     </span>
                     <span className="font-bold font-mono text-foreground">
                       {stats.priorityCounts.LOW || 0}
@@ -681,36 +685,44 @@ export function SprintDetailDialog({
               </div>
 
               {/* Task Types */}
-              <div className="rounded-2xl border border-line bg-surface-2/40 p-4 space-y-2">
+              <div className="rounded-2xl border border-line bg-surface-2/40 p-3 space-y-1.5">
                 <div className="flex items-center justify-between text-xs text-muted font-semibold">
                   <span className="flex items-center gap-1.5">
                     <Tag className="h-4 w-4 text-purple-400" />
                     Phân loại việc
                   </span>
                 </div>
-                <div className="grid grid-cols-2 gap-2 pt-1">
-                  <div className="flex items-center justify-between bg-surface px-2 py-1 rounded-lg border border-line text-[11px]">
-                    <span className="text-blue-400 font-bold">📋 Task</span>
+                <div className="grid grid-cols-2 gap-1.5 pt-0.5">
+                  <div className="flex items-center justify-between bg-surface px-2.5 py-1 rounded-lg border border-line text-[11px]">
+                    <span className="text-purple-600 font-bold flex items-center gap-1.5 whitespace-nowrap">
+                      <span className="h-1.5 w-1.5 rounded-full bg-purple-500 shrink-0" /> Hạng mục lớn
+                    </span>
                     <span className="font-bold font-mono text-foreground">
-                      {stats.typeCounts.TASK || 0}
+                      {stats.typeCounts.EPIC || 0}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between bg-surface px-2 py-1 rounded-lg border border-line text-[11px]">
-                    <span className="text-emerald-400 font-bold">📖 Story</span>
-                    <span className="font-bold font-mono text-foreground">
-                      {stats.typeCounts.STORY || 0}
+                  <div className="flex items-center justify-between bg-surface px-2.5 py-1 rounded-lg border border-line text-[11px]">
+                    <span className="text-accent font-bold flex items-center gap-1.5 whitespace-nowrap">
+                      <span className="h-1.5 w-1.5 rounded-full bg-accent shrink-0" /> Lỗi
                     </span>
-                  </div>
-                  <div className="flex items-center justify-between bg-surface px-2 py-1 rounded-lg border border-line text-[11px]">
-                    <span className="text-red-400 font-bold">🐛 Bug</span>
                     <span className="font-bold font-mono text-foreground">
                       {stats.typeCounts.BUG || 0}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between bg-surface px-2 py-1 rounded-lg border border-line text-[11px]">
-                    <span className="text-purple-400 font-bold">⚡ Epic</span>
+                  <div className="flex items-center justify-between bg-surface px-2.5 py-1 rounded-lg border border-line text-[11px]">
+                    <span className="text-emerald-600 font-bold flex items-center gap-1.5 whitespace-nowrap">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" /> Tính năng
+                    </span>
                     <span className="font-bold font-mono text-foreground">
-                      {stats.typeCounts.EPIC || 0}
+                      {stats.typeCounts.STORY || 0}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between bg-surface px-2.5 py-1 rounded-lg border border-line text-[11px]">
+                    <span className="text-blue-600 font-bold flex items-center gap-1.5 whitespace-nowrap">
+                      <span className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" /> Công việc
+                    </span>
+                    <span className="font-bold font-mono text-foreground">
+                      {stats.typeCounts.TASK || 0}
                     </span>
                   </div>
                 </div>
@@ -719,14 +731,14 @@ export function SprintDetailDialog({
 
             {/* Member Workload Avatars */}
             {stats.workloads.length > 0 && (
-              <div className="rounded-2xl border border-line bg-surface-2/30 p-4 space-y-3">
+              <div className="rounded-2xl border border-line bg-surface-2/30 p-3 space-y-2">
                 <div className="flex items-center justify-between text-xs font-bold text-foreground">
                   <span className="flex items-center gap-1.5">
                     <Users className="h-4 w-4 text-accent" />
                     Phân bổ công việc theo nhân sự trong Sprint ({stats.workloads.length})
                   </span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                   {stats.workloads.map((w) => {
                     const pct = w.total > 0 ? Math.round((w.done / w.total) * 100) : 0;
                     return (
@@ -769,7 +781,7 @@ export function SprintDetailDialog({
                         ?
                       </div>
                       <div className="min-w-0 flex-1 space-y-0.5">
-                        <p className="text-xs font-bold text-amber-300">Chưa phân công</p>
+                        <p className="text-xs font-bold text-amber-600">Chưa phân công</p>
                         <p className="text-[10px] text-muted">
                           {stats.unassignedCount} việc ({stats.unassignedPoints} pts)
                         </p>
@@ -781,88 +793,16 @@ export function SprintDetailDialog({
             )}
 
             {/* Sprint Task Backlog Table / List */}
-            <div className="space-y-3">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+            <div className="space-y-2.5">
+              {/* Row 1: Tiêu đề + nhóm hành động (tách riêng khỏi khu vực filter bên dưới) */}
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                  <Layers className="h-4 w-4 text-accent" />
+                  Danh sách công việc ({sprintTasks.length})
+                </h3>
+
+                {/* Actions: Add From Backlog, Create Task */}
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5 mr-2">
-                    <Layers className="h-4 w-4 text-accent" />
-                    Danh sách công việc ({sprintTasks.length})
-                  </h3>
-
-                  {/* Filter Tabs */}
-                  <div className="flex rounded-lg border border-line bg-surface p-0.5 text-xs font-medium">
-                    <button
-                      onClick={() => setTaskFilterStatus("ALL")}
-                      className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
-                        taskFilterStatus === "ALL"
-                          ? "bg-accent text-white font-bold shadow-sm"
-                          : "text-muted hover:text-foreground"
-                      }`}
-                    >
-                      Tất cả ({sprintTasks.length})
-                    </button>
-                    <button
-                      onClick={() => setTaskFilterStatus("TODO")}
-                      className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
-                        taskFilterStatus === "TODO"
-                          ? "bg-accent text-white font-bold shadow-sm"
-                          : "text-muted hover:text-foreground"
-                      }`}
-                    >
-                      Cần làm ({stats.todoCount})
-                    </button>
-                    <button
-                      onClick={() => setTaskFilterStatus("IN_PROGRESS")}
-                      className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
-                        taskFilterStatus === "IN_PROGRESS"
-                          ? "bg-accent text-white font-bold shadow-sm"
-                          : "text-muted hover:text-foreground"
-                      }`}
-                    >
-                      Đang làm ({stats.inProgressCount})
-                    </button>
-                    <button
-                      onClick={() => setTaskFilterStatus("DONE")}
-                      className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
-                        taskFilterStatus === "DONE"
-                          ? "bg-accent text-white font-bold shadow-sm"
-                          : "text-muted hover:text-foreground"
-                      }`}
-                    >
-                      Đã xong ({stats.doneCount})
-                    </button>
-                  </div>
-                </div>
-
-                {/* Actions: Add Task, Add From Backlog, Search */}
-                <div className="flex items-center gap-2 flex-wrap">
-                  {/* Search */}
-                  <div className="relative">
-                    <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
-                    <Input
-                      placeholder="Tìm công việc..."
-                      value={taskSearch}
-                      onChange={(e) => setTaskSearch(e.target.value)}
-                      className="h-8 w-44 pl-8 text-xs bg-surface border-line"
-                    />
-                  </div>
-
-                  {/* Assignee Filter */}
-                  <select
-                    value={taskAssigneeFilter}
-                    onChange={(e) => setTaskAssigneeFilter(e.target.value)}
-                    className="h-8 rounded-lg border border-line bg-surface px-2 text-xs text-foreground focus:outline-none cursor-pointer"
-                  >
-                    <option value="ALL">👤 Mọi nhân sự</option>
-                    <option value="UNASSIGNED">Chưa giao</option>
-                    {members.map((m) => (
-                      <option key={m.user.id} value={m.user.id}>
-                        {m.user.name}
-                      </option>
-                    ))}
-                  </select>
-
-                  {/* Add from Backlog button */}
                   <Button
                     size="sm"
                     variant="outline"
@@ -877,7 +817,6 @@ export function SprintDetailDialog({
                     Thêm từ Backlog ({backlogTasks.length})
                   </Button>
 
-                  {/* Create Task directly in this Sprint */}
                   <Button
                     size="sm"
                     onClick={() => setNewTaskOpen(true)}
@@ -887,6 +826,81 @@ export function SprintDetailDialog({
                     Tạo Task mới
                   </Button>
                 </div>
+              </div>
+
+              {/* Row 2: Khu vực filter — gom chung tab trạng thái + tìm kiếm + lọc theo nhân sự */}
+              <div className="flex items-center gap-2 flex-wrap rounded-xl border border-line bg-surface-2/30 p-2">
+                {/* Filter Tabs */}
+                <div className="flex rounded-lg border border-line bg-surface p-0.5 text-xs font-medium shrink-0">
+                  <button
+                    onClick={() => setTaskFilterStatus("ALL")}
+                    className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                      taskFilterStatus === "ALL"
+                        ? "bg-accent text-white font-bold shadow-sm"
+                        : "text-muted hover:text-foreground"
+                    }`}
+                  >
+                    Tất cả ({sprintTasks.length})
+                  </button>
+                  <button
+                    onClick={() => setTaskFilterStatus("TODO")}
+                    className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                      taskFilterStatus === "TODO"
+                        ? "bg-accent text-white font-bold shadow-sm"
+                        : "text-muted hover:text-foreground"
+                    }`}
+                  >
+                    Cần làm ({stats.todoCount})
+                  </button>
+                  <button
+                    onClick={() => setTaskFilterStatus("IN_PROGRESS")}
+                    className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                      taskFilterStatus === "IN_PROGRESS"
+                        ? "bg-accent text-white font-bold shadow-sm"
+                        : "text-muted hover:text-foreground"
+                    }`}
+                  >
+                    Đang làm ({stats.inProgressCount})
+                  </button>
+                  <button
+                    onClick={() => setTaskFilterStatus("DONE")}
+                    className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                      taskFilterStatus === "DONE"
+                        ? "bg-accent text-white font-bold shadow-sm"
+                        : "text-muted hover:text-foreground"
+                    }`}
+                  >
+                    Đã xong ({stats.doneCount})
+                  </button>
+                </div>
+
+                <div className="h-5 w-px bg-line shrink-0" />
+
+                {/* Search */}
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
+                  <Input
+                    placeholder="Tìm công việc..."
+                    value={taskSearch}
+                    onChange={(e) => setTaskSearch(e.target.value)}
+                    className="h-8 w-44 pl-8 text-xs bg-surface border-line"
+                  />
+                </div>
+
+                {/* Assignee Filter */}
+                <select
+                  value={taskAssigneeFilter}
+                  onChange={(e) => setTaskAssigneeFilter(e.target.value)}
+                  className="h-8 rounded-lg border border-line bg-surface px-2 text-xs text-foreground focus:outline-none cursor-pointer"
+                >
+                  <option value="ALL">👤 Mọi nhân sự</option>
+                  <option value="UNASSIGNED">Chưa giao</option>
+                  {members.map((m) => (
+                    <option key={m.user.id} value={m.user.id}>
+                      {m.user.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Task Items List Table */}
@@ -908,7 +922,7 @@ export function SprintDetailDialog({
                     {/* Table Body */}
                     <div className="divide-y divide-line">
                   {filteredSprintTasks.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center gap-2 py-12 px-4 text-center">
+                    <div className="flex flex-col items-center justify-center gap-2 py-6 px-4 text-center">
                       <Layers className="h-8 w-8 text-muted" />
                       <p className="text-xs font-bold text-foreground">
                         {sprintTasks.length === 0
@@ -1029,7 +1043,7 @@ export function SprintDetailDialog({
                               <span
                                 className={`text-[11px] font-medium flex items-center gap-1 px-2 py-0.5 rounded-md ${
                                   isOverdue
-                                    ? "bg-red-500/15 text-red-400 border border-red-500/30"
+                                    ? "bg-accent/15 text-accent border border-accent/30"
                                     : "text-muted bg-surface-2 border border-line/60"
                                 }`}
                               >
@@ -1086,7 +1100,7 @@ export function SprintDetailDialog({
                           <div className="flex items-center justify-end">
                             <button
                               onClick={(e) => handleRemoveTaskFromSprint(t.id, e)}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-muted hover:text-red-400 p-1 rounded hover:bg-surface-2 cursor-pointer"
+                              className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-muted hover:text-accent p-1 rounded hover:bg-surface-2 cursor-pointer"
                               title="Gỡ khỏi Sprint (chuyển về Backlog)"
                             >
                               <X className="h-3.5 w-3.5" />
@@ -1104,7 +1118,7 @@ export function SprintDetailDialog({
       </div>
 
       {/* Footer */}
-          <div className="flex items-center justify-between border-t border-line bg-surface-2/60 px-6 py-3 text-xs text-muted">
+          <div className="flex items-center justify-between border-t border-line bg-surface-2/60 px-5 py-2.5 text-xs text-muted">
             <div className="flex items-center gap-2">
               <span className="font-semibold text-foreground">
                 Tổng cộng: {sprintTasks.length} công việc
@@ -1137,7 +1151,7 @@ export function SprintDetailDialog({
 
           <form onSubmit={handleSaveSprintEdit} className="mt-2 space-y-3.5">
             {editError && (
-              <div className="rounded-lg bg-red-500/10 p-2.5 text-xs text-red-400 border border-red-500/20">
+              <div className="rounded-lg bg-accent/10 p-2.5 text-xs text-accent border border-accent/20">
                 {editError}
               </div>
             )}

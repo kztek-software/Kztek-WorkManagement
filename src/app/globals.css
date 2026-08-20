@@ -1,6 +1,9 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
+  color-scheme: dark;
   --background: #090B10;
   --foreground: #F1F4F9;
   --surface: #111520;
@@ -18,62 +21,218 @@
   --accent-emerald: #10B981;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-surface: var(--surface);
-  --color-surface-2: var(--surface-2);
-  --color-surface-3: var(--surface-3);
-  --color-line: var(--border);
-  --color-line-strong: var(--border-strong);
-  --color-muted: var(--muted);
-  --color-muted-light: var(--muted-light);
-  --color-accent: var(--accent);
-  --color-accent-hover: var(--accent-hover);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ========================================================================= */
+/* KZTEK LIGHT THEME — bảng màu thương hiệu KZTEK (bật bằng data-theme="light") */
+/* ========================================================================= */
+[data-theme="light"] {
+  color-scheme: light;
+  --background: #FFFFFF;
+  --foreground: #251C53;
+  --surface: #F7F6FB;
+  --surface-2: #F0EDF7;
+  --surface-3: #E8E3F0;
+  --border: rgba(37, 28, 83, 0.12);
+  --border-strong: rgba(37, 28, 83, 0.22);
+  --muted: #6B6485;
+  --muted-light: #4A3F8C;
+  --accent: #F05922;
+  --accent-hover: #FFAA80;
+  --accent-subtle: rgba(240, 89, 34, 0.10);
+  --accent-blue: #3B82F6;
+  --accent-purple: #8B5CF6;
+  --accent-emerald: #10B981;
 }
 
-html,
-body {
+html {
   height: 100%;
+  height: -webkit-fill-available;
   background-color: var(--background);
   color: var(--foreground);
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
 }
 
-/* Custom Sleek Scrollbars */
+body {
+  min-height: 100%;
+  min-height: -webkit-fill-available;
+  height: 100%;
+  background-color: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+/* Màu bôi đen (text selection) theo brand KZTEK — tránh trường hợp trình duyệt
+   dùng màu mặc định của hệ thống khiến chữ (kể cả chữ trắng trên nút Cam) bị
+   trùng/gần màu nền khi người dùng bôi đen, gây khó đọc hoặc như "biến mất". */
+::selection {
+  background-color: rgba(240, 89, 34, 0.35);
+  color: inherit;
+}
+
+/* ========================================================================= */
+/* LEGACY BROWSER COMPATIBILITY & VENDOR PREFIX FALLBACKS                     */
+/* ========================================================================= */
+
+/* Backdrop Filter Fallbacks for older Safari, WebKit, and mobile browsers */
+.backdrop-blur-sm,
+[class*="backdrop-blur-sm"] {
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+.backdrop-blur-md,
+[class*="backdrop-blur-md"] {
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+.backdrop-blur-lg,
+[class*="backdrop-blur-lg"] {
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+.backdrop-blur-xl,
+[class*="backdrop-blur-xl"] {
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
+}
+
+/* Native Select, Option & Form Controls Dark Theme Enforcing */
+select {
+  color-scheme: dark;
+  background-color: #111520;
+  color: #F1F4F9;
+}
+
+select option,
+select optgroup {
+  background-color: #181E2E !important;
+  color: #F1F4F9 !important;
+}
+
+/* Light theme override for native select */
+[data-theme="light"] select {
+  color-scheme: light;
+  background-color: #FFFFFF;
+  color: #251C53;
+}
+
+[data-theme="light"] select option,
+[data-theme="light"] select optgroup {
+  background-color: #F7F6FB !important;
+  color: #251C53 !important;
+}
+
+/* Safe Area Inset Fallbacks (iOS Safari legacy vs modern) */
+.safe-top {
+  padding-top: max(0.75rem, constant(safe-area-inset-top));
+  padding-top: max(0.75rem, env(safe-area-inset-top));
+}
+
+.safe-bottom {
+  padding-bottom: max(0.75rem, constant(safe-area-inset-bottom));
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+/* Touch & Momentum Scrolling for iOS / Android WebViews */
+.touch-pan-x {
+  touch-action: pan-x;
+  -webkit-overflow-scrolling: touch;
+}
+
+.touch-pan-y {
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Smooth Touch Scrolling on all overflow containers */
+.overflow-y-auto,
+.overflow-x-auto,
+.overflow-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Cross-browser Text Selection Control */
+.select-none {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Hide scrollbar for clean horizontal mobile tabs across all engines */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+
+/* Custom Sleek & Accessible Scrollbars — Dark (default) */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.25) rgba(0, 0, 0, 0.15);
 }
 
 *::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-*::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.14);
-  border-radius: 9999px;
-}
-*::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.24);
+  width: 8px;
+  height: 8px;
 }
 *::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 9999px;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(240, 89, 34, 0.75);
+}
+
+/* Light theme scrollbar */
+[data-theme="light"] * {
+  scrollbar-color: rgba(37, 28, 83, 0.25) rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] *::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.04);
+}
+[data-theme="light"] *::-webkit-scrollbar-thumb {
+  background: rgba(37, 28, 83, 0.25);
+  border: 1px solid rgba(37, 28, 83, 0.08);
+}
+[data-theme="light"] *::-webkit-scrollbar-thumb:hover {
+  background: rgba(240, 89, 34, 0.6);
 }
 
 /* Micro-interactions & animations */
+/* Dùng property `translate`/`scale` độc lập (không phải `transform` shorthand)
+   để animation này KẾT HỢP được với các utility class `-translate-x-1/2 -translate-y-1/2`
+   (dùng để canh giữa DialogContent trong dialog.tsx) thay vì ghi đè mất chúng.
+   Nếu dùng `transform: translateY(...)` ở đây, animation sẽ thắng static utility class
+   cho cùng property `transform`, xoá mất translate canh giữa -> modal bị lệch ra góc
+   dưới-phải màn hình khi animation kết thúc (forwards). */
 @keyframes fade-in-up {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(0.99);
+    translate: 0 8px;
+    scale: 0.99;
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    translate: 0 0;
+    scale: 1;
   }
 }
 
@@ -97,6 +256,13 @@ body {
 /* Glassmorphism & Card Glows */
 .glass-panel {
   background: rgba(17, 21, 32, 0.75);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+}
+
+/* Light theme glass-panel */
+[data-theme="light"] .glass-panel {
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(12px);
   border: 1px solid var(--border);
 }
@@ -278,4 +444,208 @@ body {
 .p-dialog .p-dialog-header-icons button:hover {
   background: rgba(255, 255, 255, 0.1) !important;
   color: #FFFFFF !important;
+}
+
+/* ========================================================================= */
+/* TOAST OVERRIDES — Dark (default) & Light                                   */
+/* ========================================================================= */
+
+/* Dark Toast */
+.p-toast .p-toast-message {
+  background: #181E2E !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #F1F4F9 !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.6) !important;
+}
+.p-toast .p-toast-message .p-toast-message-text .p-toast-summary {
+  color: #F1F4F9 !important;
+  font-weight: 700 !important;
+}
+.p-toast .p-toast-message .p-toast-message-text .p-toast-detail {
+  color: #8E98B0 !important;
+}
+.p-toast .p-toast-message .p-toast-icon-close {
+  color: #8E98B0 !important;
+}
+.p-toast .p-toast-message .p-toast-icon-close:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #F1F4F9 !important;
+}
+
+/* Light Toast */
+[data-theme="light"] .p-toast .p-toast-message {
+  background: #FFFFFF !important;
+  border: 1px solid rgba(37, 28, 83, 0.14) !important;
+  color: #251C53 !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 8px 24px -4px rgba(37, 28, 83, 0.12) !important;
+}
+[data-theme="light"] .p-toast .p-toast-message .p-toast-message-text .p-toast-summary {
+  color: #251C53 !important;
+  font-weight: 700 !important;
+}
+[data-theme="light"] .p-toast .p-toast-message .p-toast-message-text .p-toast-detail {
+  color: #6B6485 !important;
+}
+[data-theme="light"] .p-toast .p-toast-message .p-toast-icon-close {
+  color: #6B6485 !important;
+}
+[data-theme="light"] .p-toast .p-toast-message .p-toast-icon-close:hover {
+  background: rgba(37, 28, 83, 0.08) !important;
+  color: #251C53 !important;
+}
+
+/* ========================================================================= */
+/* PRIMEREACT KZTEK LIGHT THEME OVERRIDES                                     */
+/* ========================================================================= */
+
+/* DataTable Container */
+[data-theme="light"] .p-datatable {
+  background: transparent !important;
+  color: #251C53 !important;
+}
+[data-theme="light"] .p-datatable .p-datatable-wrapper {
+  border-radius: 0.75rem;
+  background: transparent;
+}
+[data-theme="light"] .p-datatable .p-datatable-header {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 0 1rem 0 !important;
+}
+
+/* Table Header */
+[data-theme="light"] .p-datatable .p-datatable-thead > tr > th {
+  background: #F0EDF7 !important;
+  color: #6B6485 !important;
+  font-size: 0.6875rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  border-color: rgba(37, 28, 83, 0.12) !important;
+  border-top: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-bottom: 1px solid rgba(37, 28, 83, 0.15) !important;
+  padding: 0.75rem 1rem !important;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+[data-theme="light"] .p-datatable .p-datatable-thead > tr > th:hover {
+  background: #E8E3F0 !important;
+  color: #251C53 !important;
+}
+[data-theme="light"] .p-datatable .p-sortable-column.p-highlight {
+  background: #E8E3F0 !important;
+  color: #F05922 !important;
+}
+[data-theme="light"] .p-datatable .p-sortable-column .p-sortable-column-icon {
+  font-size: 0.75rem !important;
+  margin-left: 0.35rem !important;
+  color: #6B6485 !important;
+}
+[data-theme="light"] .p-datatable .p-sortable-column.p-highlight .p-sortable-column-icon {
+  color: #F05922 !important;
+}
+
+/* Table Body */
+[data-theme="light"] .p-datatable .p-datatable-tbody > tr {
+  background: #FFFFFF !important;
+  color: #251C53 !important;
+  transition: all 0.15s ease !important;
+  border-bottom: 1px solid rgba(37, 28, 83, 0.08) !important;
+}
+[data-theme="light"] .p-datatable .p-datatable-tbody > tr:nth-child(even) {
+  background: #F7F6FB !important;
+}
+[data-theme="light"] .p-datatable .p-datatable-tbody > tr:hover {
+  background: #F0EDF7 !important;
+}
+[data-theme="light"] .p-datatable .p-datatable-tbody > tr > td {
+  padding: 0.85rem 1rem !important;
+  border: none !important;
+  border-bottom: 1px solid rgba(37, 28, 83, 0.08) !important;
+  vertical-align: middle !important;
+}
+
+/* Paginator */
+[data-theme="light"] .p-paginator {
+  background: transparent !important;
+  border: none !important;
+  border-top: 1px solid rgba(37, 28, 83, 0.10) !important;
+  padding: 0.75rem 1rem !important;
+  gap: 0.25rem;
+}
+[data-theme="light"] .p-paginator .p-paginator-page,
+[data-theme="light"] .p-paginator .p-paginator-first,
+[data-theme="light"] .p-paginator .p-paginator-prev,
+[data-theme="light"] .p-paginator .p-paginator-next,
+[data-theme="light"] .p-paginator .p-paginator-last {
+  background: #F0EDF7 !important;
+  color: #6B6485 !important;
+  border: 1px solid rgba(37, 28, 83, 0.12) !important;
+  border-radius: 0.5rem !important;
+  min-width: 2rem !important;
+  height: 2rem !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  transition: all 0.15s ease;
+}
+[data-theme="light"] .p-paginator .p-paginator-page:hover,
+[data-theme="light"] .p-paginator .p-paginator-first:hover,
+[data-theme="light"] .p-paginator .p-paginator-prev:hover,
+[data-theme="light"] .p-paginator .p-paginator-next:hover,
+[data-theme="light"] .p-paginator .p-paginator-last:hover {
+  background: #E8E3F0 !important;
+  color: #251C53 !important;
+  border-color: rgba(37, 28, 83, 0.22) !important;
+}
+[data-theme="light"] .p-paginator .p-paginator-page.p-highlight {
+  background: #F05922 !important;
+  color: #FFFFFF !important;
+  border-color: #F05922 !important;
+  box-shadow: 0 0 10px rgba(240, 89, 34, 0.35);
+}
+[data-theme="light"] .p-paginator .p-dropdown {
+  background: #F0EDF7 !important;
+  border: 1px solid rgba(37, 28, 83, 0.12) !important;
+  border-radius: 0.5rem !important;
+  height: 2rem !important;
+}
+[data-theme="light"] .p-paginator .p-dropdown .p-dropdown-label {
+  padding: 0.25rem 0.6rem !important;
+  font-size: 0.75rem !important;
+  color: #251C53 !important;
+  display: flex;
+  align-items: center;
+}
+
+/* Dialog */
+[data-theme="light"] .p-dialog {
+  background: #FFFFFF !important;
+  border: 1px solid rgba(37, 28, 83, 0.14) !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 20px 40px -15px rgba(37, 28, 83, 0.18), 0 0 20px rgba(240, 89, 34, 0.08) !important;
+  overflow: hidden !important;
+}
+[data-theme="light"] .p-dialog .p-dialog-header {
+  background: #F7F6FB !important;
+  color: #251C53 !important;
+  border-bottom: 1px solid rgba(37, 28, 83, 0.10) !important;
+  padding: 1rem 1.25rem !important;
+  font-size: 0.9375rem !important;
+  font-weight: 700 !important;
+}
+[data-theme="light"] .p-dialog .p-dialog-content {
+  background: #FFFFFF !important;
+  color: #251C53 !important;
+  padding: 1.25rem !important;
+}
+[data-theme="light"] .p-dialog .p-dialog-header-icons button {
+  color: #6B6485 !important;
+  border-radius: 0.375rem !important;
+}
+[data-theme="light"] .p-dialog .p-dialog-header-icons button:hover {
+  background: rgba(37, 28, 83, 0.08) !important;
+  color: #251C53 !important;
 }

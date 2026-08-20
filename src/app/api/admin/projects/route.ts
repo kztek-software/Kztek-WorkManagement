@@ -2,16 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 
+import { checkUserPermission } from "@/lib/permissions-server";
+
 export async function GET(_req: NextRequest) {
   const user = await getSessionUser();
   if (!user) {
     return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
   }
 
-  // BẢO VỆ PHÂN QUYỀN: Chỉ tài khoản có vai trò ADMIN mới được truy cập
-  if (user.role !== "ADMIN") {
+  const permCheck = await checkUserPermission(user.id, "projects.view_all", undefined, user.role);
+  if (!permCheck.allowed) {
     return NextResponse.json(
-      { error: "Từ chối truy cập: Bạn không có quyền quản trị toàn bộ dự án" },
+      { error: "Từ chối truy cập: Bạn không có quyền quản trị toàn bộ dự án (Yêu cầu quyền projects.view_all)" },
       { status: 403 }
     );
   }

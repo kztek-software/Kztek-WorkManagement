@@ -101,7 +101,7 @@ const PROJECT_GRADIENTS = [
   "from-blue-600 to-indigo-600",
   "from-emerald-500 to-teal-600",
   "from-purple-600 to-pink-600",
-  "from-rose-500 to-red-600",
+  "from-[#F05922] to-orange-600",
   "from-cyan-500 to-blue-600",
 ];
 
@@ -395,8 +395,8 @@ export default function AllProjectsManagementPage() {
   if (isAuthorized === false) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center bg-background p-6">
-        <div className="rounded-3xl border border-red-500/30 bg-surface p-8 max-w-md text-center space-y-4 shadow-2xl">
-          <div className="h-16 w-16 rounded-2xl bg-red-500/15 border border-red-500/30 flex items-center justify-center mx-auto text-red-400">
+        <div className="rounded-3xl border border-accent/30 bg-surface p-8 max-w-md text-center space-y-4 shadow-2xl">
+          <div className="h-16 w-16 rounded-2xl bg-accent-subtle border border-accent/30 flex items-center justify-center mx-auto text-accent">
             <ShieldAlert className="h-9 w-9 stroke-[2]" />
           </div>
           <div className="space-y-1.5">
@@ -479,11 +479,11 @@ export default function AllProjectsManagementPage() {
           <div className="rounded-2xl border border-line bg-surface p-4 flex flex-col justify-between shadow-sm">
             <div className="flex items-center justify-between text-xs text-muted">
               <span className="font-semibold uppercase tracking-wider text-[10px]">Đang thực hiện</span>
-              <Briefcase className="h-4 w-4 text-emerald-400" />
+              <Briefcase className="h-4 w-4 text-emerald-600" />
             </div>
             <div className="mt-2 flex items-baseline justify-between">
-              <span className="text-2xl font-black text-emerald-400">{stats.inProgress}</span>
-              <span className="text-xs text-emerald-400/80 font-bold">
+              <span className="text-2xl font-black text-emerald-600">{stats.inProgress}</span>
+              <span className="text-xs text-emerald-600/80 font-bold">
                 {stats.total > 0 ? Math.round((stats.inProgress / stats.total) * 100) : 0}% tổng dự án
               </span>
             </div>
@@ -495,10 +495,10 @@ export default function AllProjectsManagementPage() {
           <div className="rounded-2xl border border-line bg-surface p-4 flex flex-col justify-between shadow-sm">
             <div className="flex items-center justify-between text-xs text-muted">
               <span className="font-semibold uppercase tracking-wider text-[10px]">Lên kế hoạch / Tạm dừng</span>
-              <Clock className="h-4 w-4 text-amber-400" />
+              <Clock className="h-4 w-4 text-amber-600" />
             </div>
             <div className="mt-2 flex items-baseline justify-between">
-              <span className="text-2xl font-black text-amber-400">{stats.planning + stats.onHold}</span>
+              <span className="text-2xl font-black text-amber-600">{stats.planning + stats.onHold}</span>
               <span className="text-xs text-muted font-medium">
                 {stats.planning} chuẩn bị • {stats.onHold} dừng
               </span>
@@ -511,10 +511,10 @@ export default function AllProjectsManagementPage() {
           <div className="rounded-2xl border border-line bg-surface p-4 flex flex-col justify-between shadow-sm">
             <div className="flex items-center justify-between text-xs text-muted">
               <span className="font-semibold uppercase tracking-wider text-[10px]">Dự án hoàn thành</span>
-              <CheckCircle2 className="h-4 w-4 text-purple-400" />
+              <CheckCircle2 className="h-4 w-4 text-purple-600" />
             </div>
             <div className="mt-2 flex items-baseline justify-between">
-              <span className="text-2xl font-black text-purple-400">{stats.completed}</span>
+              <span className="text-2xl font-black text-purple-600">{stats.completed}</span>
               <span className="text-xs text-muted font-medium">
                 {stats.totalTasks} tasks hệ thống
               </span>
@@ -726,7 +726,7 @@ export default function AllProjectsManagementPage() {
                           <div className="min-w-0">
                             <div className="font-bold text-foreground text-xs truncate flex items-center gap-1">
                               <span>{p.owner?.name || "Chưa gán"}</span>
-                              <Crown className="h-3 w-3 text-amber-400 shrink-0" />
+                              <Crown className="h-3 w-3 text-amber-600 shrink-0" />
                             </div>
                             <div className="text-[10px] text-muted truncate font-mono">
                               {p.owner?.email}
@@ -770,7 +770,7 @@ export default function AllProjectsManagementPage() {
                       <td className="px-4 py-4 text-center">
                         <div className="space-y-1 max-w-[130px] mx-auto">
                           <div className="flex items-center justify-between text-[11px]">
-                            <span className="font-bold text-emerald-400">
+                            <span className="font-bold text-emerald-600">
                               {p.metrics.doneTasks}/{p.metrics.totalTasks} tasks
                             </span>
                             <span className="font-bold text-foreground">
@@ -825,7 +825,7 @@ export default function AllProjectsManagementPage() {
                               size="sm"
                               variant="ghost"
                               onClick={() => setMemberDialogProjectId(p.id)}
-                              className="h-7.5 w-7.5 p-0 text-muted hover:text-emerald-400 hover:bg-emerald-950/20 cursor-pointer"
+                              className="h-7.5 w-7.5 p-0 text-muted hover:text-emerald-600 hover:bg-emerald-500/15 cursor-pointer"
                             >
                               <Users className="h-3.5 w-3.5" />
                             </Button>
@@ -837,7 +837,7 @@ export default function AllProjectsManagementPage() {
                               size="sm"
                               variant="ghost"
                               onClick={() => openEditModal(p)}
-                              className="h-7.5 w-7.5 p-0 text-muted hover:text-blue-400 hover:bg-blue-950/20 cursor-pointer"
+                              className="h-7.5 w-7.5 p-0 text-muted hover:text-blue-600 hover:bg-blue-500/15 cursor-pointer"
                             >
                               <Edit2 className="h-3.5 w-3.5" />
                             </Button>
@@ -849,7 +849,7 @@ export default function AllProjectsManagementPage() {
                               size="sm"
                               variant="ghost"
                               onClick={() => openDeleteModal(p)}
-                              className="h-7.5 w-7.5 p-0 text-muted hover:text-red-400 hover:bg-red-950/20 cursor-pointer"
+                              className="h-7.5 w-7.5 p-0 text-muted hover:text-accent hover:bg-accent-subtle cursor-pointer"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </Button>
@@ -884,7 +884,7 @@ export default function AllProjectsManagementPage() {
       >
         <form onSubmit={handleSaveEdit} className="space-y-4 pt-2">
           {editError && (
-            <div className="rounded-xl bg-red-500/10 border border-red-500/30 p-2.5 text-xs text-red-400 font-medium">
+            <div className="rounded-xl bg-accent-subtle border border-accent/30 p-2.5 text-xs text-accent font-medium">
               {editError}
             </div>
           )}
@@ -933,7 +933,7 @@ export default function AllProjectsManagementPage() {
           <div className="space-y-1">
             <div className="flex items-center justify-between">
               <Label className="text-xs font-semibold">Chủ dự án (Owner)</Label>
-              <span className="text-[10px] text-amber-400 font-medium">Toàn quyền quản trị dự án</span>
+              <span className="text-[10px] text-amber-600 font-medium">Toàn quyền quản trị dự án</span>
             </div>
             <select
               value={editOwnerId}
@@ -957,6 +957,33 @@ export default function AllProjectsManagementPage() {
               className="text-xs bg-surface-2"
               placeholder="Mô tả phạm vi và mục tiêu triển khai..."
             />
+          </div>
+
+          {/* Danger Zone: Xóa dự án */}
+          <div className="rounded-xl border border-accent/30 bg-accent-subtle p-3 space-y-2 mt-2">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-xs font-bold text-accent flex items-center gap-1.5">
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Khu vực nguy hiểm: Xóa dự án
+                </div>
+                <div className="text-[10px] text-muted mt-0.5">
+                  Xóa vĩnh viễn dự án này cùng toàn bộ công việc, sprint và dữ liệu liên quan.
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setEditModalOpen(false);
+                  if (editingProject) openDeleteModal(editingProject);
+                }}
+                className="text-xs font-bold text-accent hover:bg-accent-subtle border border-accent/30 shrink-0"
+              >
+                Xóa dự án này
+              </Button>
+            </div>
           </div>
 
           <div className="flex justify-end gap-2 pt-3 border-t border-line">
@@ -988,11 +1015,11 @@ export default function AllProjectsManagementPage() {
         header="Xác Nhận Xóa Dự Án Vĩnh Viễn"
         visible={deleteModalOpen}
         onHide={() => setDeleteModalOpen(false)}
-        className="w-full max-w-md border border-red-500/40 bg-surface rounded-2xl shadow-2xl"
+        className="w-full max-w-md border border-accent/40 bg-surface rounded-2xl shadow-2xl"
       >
         <div className="space-y-4 pt-2">
-          <div className="rounded-xl bg-red-500/10 border border-red-500/30 p-3 text-xs text-red-300 space-y-1.5">
-            <div className="font-bold flex items-center gap-1.5 text-red-400">
+          <div className="rounded-xl bg-accent-subtle border border-accent/30 p-3 text-xs text-foreground space-y-1.5">
+            <div className="font-bold flex items-center gap-1.5 text-accent">
               <AlertTriangle className="h-4 w-4 shrink-0" />
               CẢNH BÁO NGUY HIỂM: Hành động không thể hoàn tác!
             </div>
@@ -1028,7 +1055,7 @@ export default function AllProjectsManagementPage() {
               size="sm"
               disabled={deleting || confirmKeyInput !== deletingProject?.key}
               onClick={handleConfirmDelete}
-              className="font-bold bg-red-600 hover:bg-red-700 text-white shadow-md shadow-red-600/25"
+              className="font-bold bg-accent hover:bg-accent-hover text-white shadow-md shadow-accent/25"
             >
               {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Trash2 className="h-3.5 w-3.5 mr-1" />}
               Xác nhận xóa vĩnh viễn

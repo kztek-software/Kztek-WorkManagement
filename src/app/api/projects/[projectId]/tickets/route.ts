@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { getTicketsByProject, createTicket } from "@/lib/tickets";
+import { checkUserPermission } from "@/lib/permissions-server";
 
 export async function GET(
   req: NextRequest,
@@ -24,13 +25,27 @@ export async function GET(
     const priority = searchParams.get("priority") || "ALL";
     const type = searchParams.get("type") || "ALL";
     const search = searchParams.get("search") || "";
+    const scope = searchParams.get("scope") || "PROJECT"; // PROJECT | UNASSIGNED | ALL
 
-    const [project, data] = await Promise.all([
+    const unassignedOnly = scope === "UNASSIGNED";
+    const isAll = scope === "ALL";
+
+    const [project, data, allProjects] = await Promise.all([
       prisma.project.findUnique({
         where: { id: projectId },
         select: { id: true, name: true, key: true },
       }),
-      getTicketsByProject(projectId, { status, priority, type, search }),
+      getTicketsByProject(unassignedOnly ? "UNASSIGNED" : isAll ? "ALL" : projectId, {
+        status,
+        priority,
+        type,
+        search,
+        unassignedOnly,
+      }),
+      prisma.project.findMany({
+        select: { id: true, name: true, key: true },
+        orderBy: { name: "asc" },
+      }),
     ]);
 
     if (!project) {
@@ -42,6 +57,8 @@ export async function GET(
       tickets: data.tickets,
       stats: data.stats,
       currentRole: member.role,
+      userRole: user.role,
+      allProjects,
     });
   } catch (error) {
     console.error("Lỗi khi tải danh sách ticket dự án:", error);
@@ -69,11 +86,9 @@ export async function POST(
     const user = await requireUser();
     const { projectId } = await params;
 
-    const member = await prisma.projectMember.findUnique({
-      where: { projectId_userId: { projectId, userId: user.id } },
-    });
-    if (!member) {
-      return NextResponse.json({ error: "Không có quyền truy cập dự án" }, { status: 403 });
+    const permCheck = await checkUserPermission(user.id, "tickets.create", projectId, user.role);
+    if (!permCheck.allowed) {
+      return NextResponse.json({ error: permCheck.reason || "Không có quyền tạo Ticket cho dự án này" }, { status: 403 });
     }
 
     const body = await req.json().catch(() => null);

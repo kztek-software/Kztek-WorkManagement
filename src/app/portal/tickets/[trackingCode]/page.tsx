@@ -54,6 +54,7 @@ export default function TicketTrackingPage({
   const [commentError, setCommentError] = useState("");
 
   async function loadTicket() {
+    setLoading(true);
     setError("");
     try {
       const res = await fetch(`/api/tickets/${encodeURIComponent(trackingCode)}`);
@@ -144,10 +145,10 @@ export default function TicketTrackingPage({
   const isRejected = ticket?.status === "REJECTED";
 
   const priorityMeta: Record<string, { label: string; color: string }> = {
-    LOW: { label: "Thấp", color: "bg-slate-500/20 text-slate-300 border-slate-500/30" },
-    MEDIUM: { label: "Trung bình", color: "bg-yellow-500/20 text-yellow-300 border-yellow-500/30" },
-    HIGH: { label: "Cao", color: "bg-orange-500/20 text-orange-300 border-orange-500/30" },
-    URGENT: { label: "Khẩn cấp", color: "bg-red-500/20 text-red-300 border-red-500/30" },
+    LOW: { label: "Thấp", color: "bg-slate-500/15 text-slate-600 border-slate-500/30" },
+    MEDIUM: { label: "Trung bình", color: "bg-yellow-500/15 text-yellow-600 border-yellow-500/30" },
+    HIGH: { label: "Cao", color: "bg-orange-500/15 text-orange-600 border-orange-500/30" },
+    URGENT: { label: "Khẩn cấp", color: "bg-accent-subtle text-accent border-accent/30" },
   };
 
   const typeMeta: Record<string, { label: string; icon: any }> = {
@@ -158,14 +159,14 @@ export default function TicketTrackingPage({
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col selection:bg-accent/30 selection:text-accent-foreground">
+    <div className="min-h-screen bg-background text-foreground flex flex-col selection:bg-accent/30">
       {/* Header */}
       <header className="border-b border-line bg-surface/80 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link
               href="/portal"
-              className="flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-surface-2 transition-colors"
+              className="flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-foreground px-2.5 py-1.5 rounded-lg hover:bg-surface-2 transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Gửi yêu cầu mới</span>
@@ -180,7 +181,7 @@ export default function TicketTrackingPage({
             variant="ghost"
             size="sm"
             onClick={loadTicket}
-            className="text-xs text-muted hover:text-white flex items-center gap-1.5 cursor-pointer"
+            className="text-xs text-muted hover:text-foreground flex items-center gap-1.5 cursor-pointer"
             title="Làm mới trạng thái"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
@@ -197,13 +198,13 @@ export default function TicketTrackingPage({
             <p className="text-sm text-muted">Đang tải thông tin tiến độ xử lý...</p>
           </div>
         ) : error || !ticket ? (
-          <div className="max-w-md mx-auto py-12 p-6 rounded-2xl border border-red-500/30 bg-surface/90 text-center space-y-4">
-            <div className="w-12 h-12 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center mx-auto">
+          <div className="max-w-md mx-auto py-12 p-6 rounded-2xl border border-accent/30 bg-surface/90 text-center space-y-4">
+            <div className="w-12 h-12 rounded-full bg-accent-subtle text-accent flex items-center justify-center mx-auto">
               <AlertCircle className="w-6 h-6" />
             </div>
-            <h2 className="text-lg font-bold text-white">Không tìm thấy mã tra cứu</h2>
+            <h2 className="text-lg font-bold text-foreground">Không tìm thấy mã tra cứu</h2>
             <p className="text-xs text-muted leading-relaxed">
-              Mã <span className="font-mono font-bold text-red-400">{trackingCode}</span> không tồn tại trong hệ thống hoặc đã bị xóa. Vui lòng kiểm tra lại.
+              Mã <span className="font-mono font-bold text-accent">{trackingCode}</span> không tồn tại trong hệ thống hoặc đã bị xóa. Vui lòng kiểm tra lại.
             </p>
             <Link
               href="/portal"
@@ -222,9 +223,13 @@ export default function TicketTrackingPage({
                     <span className="font-mono text-xs font-black text-accent bg-accent/15 px-2 py-0.5 rounded border border-accent/30">
                       {ticket.trackingCode}
                     </span>
-                    {ticket.project && (
+                    {ticket.project ? (
                       <span className="text-xs font-semibold text-muted bg-surface-2 px-2 py-0.5 rounded border border-line">
-                        Dự án: {ticket.project.name} ({ticket.project.key})
+                        Dự án: {ticket.project.name}
+                      </span>
+                    ) : (
+                      <span className="text-xs font-semibold text-cyan-600 bg-cyan-500/15 px-2 py-0.5 rounded border border-cyan-500/30">
+                        Đang tiếp nhận & điều phối
                       </span>
                     )}
                     <span className={`text-[11px] font-bold px-2 py-0.5 rounded border ${priorityMeta[ticket.priority]?.color}`}>
@@ -234,7 +239,7 @@ export default function TicketTrackingPage({
                       Loại: {typeMeta[ticket.type]?.label || ticket.type}
                     </span>
                   </div>
-                  <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">{ticket.title}</h1>
+                  <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">{ticket.title}</h1>
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
@@ -242,9 +247,9 @@ export default function TicketTrackingPage({
                     variant="outline"
                     size="sm"
                     onClick={copyCode}
-                    className="h-8 text-xs border-line hover:border-accent text-muted hover:text-white cursor-pointer"
+                    className="h-8 text-xs border-line hover:border-accent text-muted hover:text-foreground cursor-pointer"
                   >
-                    {copied ? <Check className="w-3.5 h-3.5 text-emerald-400 mr-1" /> : <Copy className="w-3.5 h-3.5 mr-1" />}
+                    {copied ? <Check className="w-3.5 h-3.5 text-emerald-600 mr-1" /> : <Copy className="w-3.5 h-3.5 mr-1" />}
                     <span>{copied ? "Đã chép" : "Sao chép mã"}</span>
                   </Button>
                 </div>
@@ -252,8 +257,8 @@ export default function TicketTrackingPage({
 
               {/* Progress Stepper */}
               {isRejected ? (
-                <div className="p-4 rounded-xl border border-red-500/30 bg-red-950/25 text-red-300 flex items-center gap-3">
-                  <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
+                <div className="p-4 rounded-xl border border-accent/30 bg-accent-subtle text-foreground flex items-center gap-3">
+                  <AlertCircle className="w-5 h-5 text-accent shrink-0" />
                   <div className="text-xs">
                     <div className="font-bold">Yêu cầu đã bị từ chối / Không thuộc phạm vi hỗ trợ</div>
                     <div className="text-muted mt-0.5">Vui lòng kiểm tra ghi chú phản hồi từ đội ngũ hỗ trợ bên dưới.</div>
@@ -270,9 +275,9 @@ export default function TicketTrackingPage({
                           key={s.key}
                           className={`p-3 rounded-xl border transition-all ${
                             isCurrent
-                              ? "border-accent bg-accent/15 ring-1 ring-accent text-white"
+                              ? "border-accent bg-accent/15 ring-1 ring-accent text-accent"
                               : isDone
-                              ? "border-emerald-500/40 bg-emerald-950/20 text-foreground"
+                              ? "border-emerald-500/40 bg-emerald-500/15 text-foreground"
                               : "border-line bg-surface-2/40 text-muted opacity-60"
                           }`}
                         >
@@ -322,7 +327,7 @@ export default function TicketTrackingPage({
               <div className="lg:col-span-2 space-y-6">
                 {/* Description Box */}
                 <div className="p-6 rounded-2xl border border-line bg-surface/90 shadow-xl space-y-3">
-                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
                     <span>Mô tả chi tiết sự cố</span>
                   </h3>
                   <div className="p-4 rounded-xl bg-surface-2 border border-line text-xs sm:text-sm leading-relaxed text-foreground whitespace-pre-wrap">
@@ -349,7 +354,7 @@ export default function TicketTrackingPage({
                   <div className="flex items-center justify-between border-b border-line/60 pb-3">
                     <div className="flex items-center gap-2">
                       <MessageSquare className="w-4 h-4 text-accent" />
-                      <h3 className="text-sm font-bold text-white">
+                      <h3 className="text-sm font-bold text-foreground">
                         Trao đổi & Phản hồi ({ticket.comments?.length || 0})
                       </h3>
                     </div>
@@ -374,7 +379,7 @@ export default function TicketTrackingPage({
                         >
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-1.5">
-                              <span className="font-bold text-white">{c.authorName}</span>
+                              <span className="font-bold text-foreground">{c.authorName}</span>
                               {c.isStaff && (
                                 <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-accent text-white">
                                   KZTEK Staff
@@ -394,7 +399,7 @@ export default function TicketTrackingPage({
                   {/* Reply Form */}
                   <form onSubmit={handleSendComment} className="pt-3 border-t border-line/60 space-y-3">
                     {commentError && (
-                      <p className="text-xs text-red-400">{commentError}</p>
+                      <p className="text-xs text-accent">{commentError}</p>
                     )}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <Input

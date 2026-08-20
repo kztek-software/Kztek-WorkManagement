@@ -90,7 +90,7 @@ export default function RegisterPage() {
               />
             </div>
             {error && (
-              <p className="rounded-md bg-red-500/10 px-3 py-2 text-sm text-red-400">{error}</p>
+              <p className="rounded-md bg-accent-subtle px-3 py-2 text-sm text-accent font-medium">{error}</p>
             )}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Đang tạo..." : "Đăng ký"}

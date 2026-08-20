@@ -97,7 +97,7 @@ export function MediaGallery({
                           e.stopPropagation();
                           onDelete(img.id);
                         }}
-                        className="p-1 rounded-lg bg-black/60 text-white hover:text-red-400 hover:bg-black/90 transition-colors"
+                        className="p-1 rounded-lg bg-black/60 text-white hover:text-accent hover:bg-black/90 transition-colors"
                         title="Xóa ảnh"
                       >
                         <Trash2 className="w-3 h-3" />
@@ -117,8 +117,8 @@ export function MediaGallery({
       {/* Video Gallery Grid */}
       {videos.length > 0 && (
         <div className="space-y-1.5">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-purple-400 flex items-center gap-1">
-            <Video className="w-3 h-3 text-purple-400" />
+          <span className="text-[10px] font-bold uppercase tracking-wider text-purple-600 flex items-center gap-1">
+            <Video className="w-3 h-3 text-purple-600" />
             <span>Video quay lỗi ({videos.length})</span>
           </span>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -135,7 +135,7 @@ export function MediaGallery({
                     <a
                       href={vid.fileUrl}
                       download={vid.fileName}
-                      className="text-muted hover:text-white transition-colors"
+                      className="text-muted hover:text-accent transition-colors"
                       title="Tải video"
                     >
                       <Download className="w-3.5 h-3.5" />
@@ -144,7 +144,7 @@ export function MediaGallery({
                       <button
                         type="button"
                         onClick={() => onDelete(vid.id)}
-                        className="text-muted hover:text-red-400 transition-colors"
+                        className="text-muted hover:text-accent transition-colors"
                         title="Xóa video"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -169,8 +169,8 @@ export function MediaGallery({
       {/* Documents & Log Files List */}
       {documents.length > 0 && (
         <div className="space-y-1.5">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1">
-            <FileText className="w-3 h-3 text-blue-400" />
+          <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 flex items-center gap-1">
+            <FileText className="w-3 h-3 text-blue-600" />
             <span>Tài liệu & Log đính kèm ({documents.length})</span>
           </span>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -180,7 +180,7 @@ export function MediaGallery({
                 className="flex items-center justify-between gap-2.5 p-2.5 rounded-xl border border-line bg-surface-2/60 hover:bg-surface-2 transition-all"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="p-2 rounded-lg bg-surface-3 text-blue-400 border border-line shrink-0">
+                  <div className="p-2 rounded-lg bg-surface-3 text-blue-600 border border-line shrink-0">
                     <FileText className="w-4 h-4" />
                   </div>
                   <div className="min-w-0">
@@ -200,7 +200,7 @@ export function MediaGallery({
                   <a
                     href={doc.fileUrl}
                     download={doc.fileName}
-                    className="p-1.5 rounded-lg text-muted hover:text-white hover:bg-surface-3 transition-colors"
+                    className="p-1.5 rounded-lg text-muted hover:text-accent hover:bg-surface-3 transition-colors"
                     title="Tải về"
                   >
                     <Download className="w-3.5 h-3.5" />
@@ -209,7 +209,7 @@ export function MediaGallery({
                     <button
                       type="button"
                       onClick={() => onDelete(doc.id)}
-                      className="p-1.5 rounded-lg text-muted hover:text-red-400 hover:bg-surface-3 transition-colors cursor-pointer"
+                      className="p-1.5 rounded-lg text-muted hover:text-accent hover:bg-surface-3 transition-colors cursor-pointer"
                       title="Xóa tệp"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -229,7 +229,7 @@ export function MediaGallery({
           onHide={() => setLightboxImage(null)}
           header={
             <div className="flex items-center justify-between w-full pr-4 text-xs">
-              <span className="font-bold text-white truncate max-w-md">{lightboxImage.fileName}</span>
+              <span className="font-bold text-foreground truncate max-w-md">{lightboxImage.fileName}</span>
               <a
                 href={lightboxImage.fileUrl}
                 download={lightboxImage.fileName}

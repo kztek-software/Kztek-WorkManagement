@@ -161,30 +161,32 @@ export default function SprintsPage() {
   return (
     <div className="flex flex-1 flex-col overflow-hidden bg-background">
       {/* Header */}
-      <div className="flex h-14 shrink-0 items-center justify-between border-b border-line px-5 bg-surface/40 backdrop-blur-md">
-        <div className="flex items-center gap-2.5">
+      <div className="flex h-14 shrink-0 items-center justify-between border-b border-line px-3 sm:px-5 bg-surface/40 backdrop-blur-md">
+        <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 text-xs font-semibold text-muted">
-            <span>Dự án</span>
+            <span className="hidden sm:inline">Dự án</span>
+            <ChevronRight className="h-3.5 w-3.5 text-muted/60 hidden sm:inline" />
+            <span className="text-foreground font-bold truncate max-w-[120px] sm:max-w-none">{projectName}</span>
             <ChevronRight className="h-3.5 w-3.5 text-muted/60" />
-            <span className="text-foreground font-bold">{projectName}</span>
-            <ChevronRight className="h-3.5 w-3.5 text-muted/60" />
-            <span className="text-accent font-bold">Kế hoạch Sprint</span>
+            <span className="text-accent font-bold">Sprints</span>
           </div>
         </div>
 
         <Button
           size="sm"
           onClick={() => setCreateOpen(true)}
-          className="h-8 text-xs font-bold bg-accent hover:bg-accent/90 text-white shadow-md shadow-accent/25"
+          className="h-8 px-3 text-xs font-bold bg-accent hover:bg-accent/90 text-white shadow-md shadow-accent/25"
         >
-          <Plus className="h-3.5 w-3.5 mr-1" /> Sprint mới
+          <Plus className="h-3.5 w-3.5 sm:mr-1" />
+          <span className="hidden sm:inline">Sprint mới</span>
+          <span className="sm:hidden">Tạo</span>
         </Button>
       </div>
 
       {/* Main Sprints List */}
-      <div className="flex-1 space-y-4 overflow-y-auto p-5 max-w-5xl mx-auto w-full">
+      <div className="flex-1 space-y-3 sm:space-y-4 overflow-y-auto p-3 sm:p-5 max-w-5xl mx-auto w-full">
         {sprints.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 py-20 text-center rounded-2xl border border-dashed border-line bg-surface/30">
+          <div className="flex flex-col items-center justify-center gap-3 py-16 sm:py-20 text-center rounded-2xl border border-dashed border-line bg-surface/30 px-4">
             <div className="h-12 w-12 rounded-2xl bg-surface-2 flex items-center justify-center text-muted">
               <Rocket className="h-6 w-6 text-accent" />
             </div>
@@ -206,9 +208,9 @@ export default function SprintsPage() {
               <div
                 key={sprint.id}
                 onClick={() => setSelectedSprintId(sprint.id)}
-                className="group relative rounded-2xl border border-line bg-surface p-5 shadow-sm hover:border-accent/60 hover:shadow-lg hover:bg-surface-2/40 transition-all space-y-4 cursor-pointer"
+                className="group relative rounded-2xl border border-line bg-surface p-4 sm:p-5 shadow-sm hover:border-accent/60 hover:shadow-lg hover:bg-surface-2/40 transition-all space-y-4 cursor-pointer"
               >
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4">
                   <div className="space-y-1.5 min-w-0 flex-1">
                     <div className="flex items-center gap-2.5 flex-wrap">
                       <h3 className="text-base font-bold text-foreground group-hover:text-accent transition-colors flex items-center gap-1.5">
@@ -216,7 +218,7 @@ export default function SprintsPage() {
                       </h3>
 
                       {sprint.status === "ACTIVE" && (
-                        <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 text-[11px] font-bold text-emerald-400">
+                        <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 text-[11px] font-bold text-emerald-600">
                           <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
                           Đang hoạt động
                         </span>
@@ -224,12 +226,12 @@ export default function SprintsPage() {
 
                       {sprint.status === "COMPLETED" && (
                         <span className="flex items-center gap-1 rounded-full bg-surface-2 border border-line px-2.5 py-0.5 text-[11px] font-semibold text-muted">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> Đã hoàn thành
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> Đã hoàn thành
                         </span>
                       )}
 
                       {sprint.status === "PLANNING" && (
-                        <span className="flex items-center gap-1 rounded-full bg-amber-500/15 border border-amber-500/30 px-2.5 py-0.5 text-[11px] font-semibold text-amber-400">
+                        <span className="flex items-center gap-1 rounded-full bg-amber-500/15 border border-amber-500/30 px-2.5 py-0.5 text-[11px] font-semibold text-amber-600">
                           <Clock className="h-3.5 w-3.5" /> Lên kế hoạch
                         </span>
                       )}
@@ -369,7 +371,7 @@ export default function SprintsPage() {
 
           <form onSubmit={createSprint} className="mt-2 space-y-3.5">
             {error && (
-              <div className="rounded-lg bg-red-500/10 p-2.5 text-xs text-red-400 border border-red-500/20">
+              <div className="rounded-lg bg-accent-subtle p-2.5 text-xs text-accent border border-accent/20">
                 {error}
               </div>
             )}

@@ -1,200 +1,74 @@
 # CODE-GRAPH.md — Bản đồ codebase: KZTEK Multi-Agent Workspace
-**Cập nhật lần cuối:** 2026-07-12 | **Bởi:** senior-developer | **Version:** 1.0
+**Cập nhật lần cuối:** 2026-08-19 | **Bởi:** senior-developer | **Version:** 2.2
 
 > File này được duy trì tự động bởi coding agents.
 > **Đọc file này TRƯỚC khi đọc source code** để hiểu cấu trúc dự án mà không cần mở từng file.
-
-> **LƯU Ý QUAN TRỌNG:** Đây là AI Agent Framework workspace, KHÔNG phải codebase sản phẩm. Thư mục `src/` không tồn tại. File này mô tả cấu trúc framework agent orchestration + thư viện UI C# WinForms. **File này sẽ được điền đầy đủ chi tiết khi có project sản phẩm thực tế bắt đầu phát triển trong workspace này.**
 
 ---
 
 ## Tổng quan dự án
 
-Workspace điều phối AI agents cho KZTEK — Multi-Agent Orchestration Framework. Định nghĩa chain of command, routing table, và workflow cho 17+ agents. Không có backend/frontend sản phẩm riêng tại workspace này — chỉ có định nghĩa agent, templates, scripts hỗ trợ, và thư viện UI C# WinForms dùng chung.
-
-**Tech stack:**
-- Agent framework: Gemini Agent (`.gemini/` config, GEMINI.md, RULES.md, WORKFLOW.md)
-- UI Component Library: C# WinForms (`KztekComponent/` — .NET, dùng cho các project sản phẩm C# KZTEK)
-- Scripting: Python 3 (`scripts/md_to_docx_kztek.py`), Bash (`scripts/review-package.sh`)
-
-**Deploy:** N/A — workspace agent configuration, không deploy độc lập
-
-**Môi trường:** Cloud sandbox (claude.ai) hoặc Local (VSCode Extension)
+Hệ thống quản lý công việc và dự án toàn diện **KZTEK Work Management**:
+- **Backend & Web App**: Next.js 16 (App Router), React 19, TailwindCSS, Prisma ORM 7, **Microsoft SQL Server (`14.160.26.45:9999`, DB `WorkingManager`)** via `@prisma/adapter-mssql`.
+- **Desktop Web Workstation (Phase 4)**: Không gian làm việc máy tính chuyên dụng (`/desktop`), Dual-Pane Split View, Global Command Palette (`Ctrl+K`), Shortcuts Hub, Smart Work Calculator (Story Points, Sprint Capacity, KPI, Office Calc), Desktop Scratchpad, Desktop PWA Standalone Mode (`manifest.json`).
+- **Mobile Client (Phase 3)**: C# .NET 8 / Avalonia UI XAML (Cross-platform Android, iOS, Windows, macOS, Linux).
+- **Agent Orchestration**: Gemini Agent Framework (`.gemini/`, GEMINI.md, RULES.md, WORKFLOW.md).
 
 ---
 
 ## Cấu trúc thư mục
 
 ```
-/home/user/claude/               ← Workspace root
-├── .gemini/                     ← Agent framework configuration
-│   ├── agents/                  ← Định nghĩa 17+ agents (task-planner, senior-developer, ...)
-│   ├── commands/                ← Skills/commands (/ship, /verify-pr, scope-check, ...)
-│   ├── evals/                   ← Eval files theo EDD (task-planner, senior-developer, qa-engineer)
-│   ├── hooks/                   ← Hook bảo vệ config (config-protection.js)
-│   ├── plans/                   ← Plan files (docs/plans/PLAN-*.md) — runtime, không commit
-│   ├── shared/                  ← CORE.md (context chung), GOTCHAS.md
-│   └── templates/               ← PLAN-template.md, EVAL-template.md, CODE-GRAPH-template.md
-├── KztekComponent/              ← Thư viện C# WinForms components (xem chi tiết bên dưới)
-│   ├── Controls/                ← 28 custom controls (KzButton, KzDataGrid, KzTextBox, ...)
-│   ├── Theme/                   ← KzEnums.cs, KzTokens.cs, KzThemeHelper.cs
-│   └── Properties/              ← AssemblyInfo.cs
-├── code-graph/                  ← Bản đồ codebase (file này)
-├── docs/                        ← Tài liệu dự án (agents, research, planning)
-│   └── research/                ← Báo cáo nghiên cứu repo ngoài (RESEARCH-*.md)
-├── scripts/                     ← Helper scripts
-│   ├── md_to_docx_kztek.py     ← Xuất .md → .docx + .pdf với brand KZTEK
-│   └── review-package.sh        ← Tạo diff handoff cho code review
-├── GEMINI.md                    ← Quy tắc bắt buộc cho Gemini Agent (agent config gốc)
-├── RULES.md                     ← Quy tắc tổ chức, phân cấp, luồng giao việc
-├── WORKFLOW.md                  ← Ví dụ workflow mẫu theo từng scenario
-└── setup-gemini-link.ps1        ← Script PowerShell cấu hình Junction Link dùng chung
+kztek-work-management/
+├── src/                         ← Next.js App Router (Backend APIs & Web Frontend)
+│   ├── app/
+│   │   ├── api/                 ← REST API Endpoints (auth, projects, tasks, tickets, notifications, upload)
+│   │   ├── desktop/             ← Desktop Workstation Portal (/desktop)
+│   │   ├── mobile/              ← Mobile Web Simulator
+│   │   └── projects/            ← Project Pages (dashboard, board, sprints, tickets, users, reports, settings)
+│   ├── components/
+│   │   ├── desktop/             ← Desktop Components (SplitView, StatusBar, CommandPalette, Shortcuts, SmartCalc, Scratchpad)
+│   │   ├── app-shell.tsx        ← Root Application Shell & Global Keybindings
+│   │   └── board/               ← Kanban Board Components
+│   ├── lib/                     ← Utilities, Auth, DB Client (PrismaMssql), Permissions & Domain Services
+│   └── generated/prisma/        ← Prisma Client Generated for SQL Server
+├── public/
+│   └── manifest.json            ← Desktop PWA Manifest (Standalone Mode & Desktop Shortcuts)
+├── mobile/                      ← C# Avalonia Mobile Application (Cross-Platform)
+├── docs/                        ← Tài liệu kỹ thuật, API Specs & Plans
+│   └── plans/
+│       ├── PLAN-upgrade-sqlserver-2026-08-19/ ← Plan Nâng cấp CSDL Microsoft SQL Server
+│       └── PLAN-desktop-web-app-2026-08-18/   ← Plan Master & Steps Phase 4
+├── scripts/                     ← Automation, Migration & Verification scripts (migrate-sqlite-to-sqlserver.ts, test_e2e_sqlserver.ts)
+└── GEMINI.md                    ← Quy tắc điều phối Multi-Agent KZTEK
 ```
 
 ---
 
 ## Module chính
 
-| Module | Path | Mục đích | Files quan trọng |
-|--------|------|----------|-----------------|
-| Sprint Detail Hub & Management | `src/components/sprint/sprint-detail-dialog.tsx`, `src/app/projects/[projectId]/sprints/page.tsx`, `src/app/api/projects/[projectId]/sprints/[sprintId]/` | Trung tâm Chi tiết Sprint, xem Story Points Burn, danh sách việc trong sprint, đổi trạng thái, gán từ backlog, xoá và điều hướng sang Board | `src/components/sprint/sprint-detail-dialog.tsx`, `src/app/projects/[projectId]/sprints/page.tsx`, `src/app/api/projects/[projectId]/sprints/[sprintId]/route.ts` |
-| Comment & Tag Mentions | `src/components/board/mention-comment-input.tsx`, `src/app/api/projects/[projectId]/tasks/[taskId]/comments/` | Bình luận có gắn thẻ (@mention), gợi ý autocomplete thành viên, highlight badge và gửi email tự động | `src/components/board/mention-comment-input.tsx`, `src/app/api/projects/[projectId]/tasks/[taskId]/comments/route.ts` |
-| Attachment & Bug Media Gallery | `src/components/board/task-attachment-gallery.tsx`, `src/app/api/upload/`, `src/app/api/projects/[projectId]/tasks/[taskId]/attachments/` | Kéo thả upload ảnh chụp màn hình, video quay lỗi (MP4/WebM), tệp logs/tài liệu và xem trước đa phương tiện | `src/components/board/task-attachment-gallery.tsx`, `src/app/api/upload/route.ts`, `src/app/api/projects/[projectId]/tasks/[taskId]/attachments/route.ts` |
-| Notification Center & Mail Service | `src/components/notifications/notification-bell.tsx`, `src/lib/mail.ts`, `src/lib/notifications.ts` | Trung tâm thông báo đa năng với Tabs phân loại (Giao việc, Tag @, Bình luận, Trạng thái), Deep-linking mở task và gửi HTML Email tự động | `src/components/notifications/notification-bell.tsx`, `src/lib/mail.ts`, `src/lib/notifications.ts`, `src/app/api/notifications/email-logs/route.ts` |
-| Admin System Config & Header | `src/lib/system-config.ts`, `src/app/api/system/config/`, `src/app/projects/[projectId]/settings/` | Cấu hình hệ thống dành riêng cho ADMIN (SMTP, Branding, Notification rules) & Header góc trên phải | `src/lib/system-config.ts`, `src/app/api/system/config/route.ts`, `src/app/projects/[projectId]/settings/page.tsx`, `src/components/app-shell.tsx` |
-| TodoApp (C# WinForms) | `src/TodoApp/` | Ứng dụng Quản lý công việc (Todo) C# Windows Forms | `Program.cs`, `Form1.cs`, `Models/TodoItem.cs`, `Services/TodoService.cs` |
-| Agent Definitions | `.gemini/agents/` | Định nghĩa vai trò, model, tools, quy trình cho mỗi agent | `task-planner.md`, `senior-developer.md`, `qa-engineer.md`, `tech-lead.md`, ... |
-| Skills/Commands | `.gemini/commands/` | Các skill có thể gọi qua slash command | `ship.md`, `verify-pr.md`, `scope-check.md`, `security-audit-stride.md` |
-| Eval Files | `.gemini/evals/` | Capability Eval theo EDD cho từng agent | `task-planner.md`, `senior-developer.md`, `qa-engineer.md` |
-| Shared Context | `.gemini/shared/` | Context chung đọc đầu mỗi session | `CORE.md`, `GOTCHAS.md` |
-| Templates | `.gemini/templates/` | Khung mẫu cho plan, eval, code-graph | `PLAN-template.md`, `EVAL-template.md`, `CODE-GRAPH-template.md` |
-| KztekComponent | `KztekComponent/` | Thư viện UI C# WinForms — dùng tối đa cho mọi project C# KZTEK | Xem bảng Controls bên dưới |
-| Scripts | `scripts/` | Automation scripts hỗ trợ agent | `md_to_docx_kztek.py`, `review-package.sh` |
+| Tên Module | Đường dẫn | Chức năng chính | Files liên quan |
+|---|---|---|---|
+| Database & ORM Engine (SQL Server) | `prisma/`, `src/lib/prisma.ts`, `prisma.config.ts` | Kết nối CSDL quan hệ Microsoft SQL Server (`WorkingManager`), Driver Adapter `PrismaMssql`, 16 bảng dữ liệu toàn diện | `prisma/schema.prisma`, `src/lib/prisma.ts`, `prisma.config.ts`, `.env` |
+| Desktop Web Workstation (Phase 4) | `src/app/desktop/`, `src/components/desktop/` | Giao diện làm việc máy tính chuyên dụng, Dual-Pane Split-View (50:50, 65:35), System Status Bar, Global Command Palette (`Ctrl+K`), Shortcuts Hub, PWA Standalone | `page.tsx`, `desktop-split-view.tsx`, `desktop-status-bar.tsx`, `command-palette.tsx`, `shortcuts-modal.tsx`, `manifest.json` |
+| Smart Work Calculator Suite | `src/components/desktop/smart-work-calculator.tsx` | Bộ công cụ máy tính năng suất: Máy tính số học, Ước lượng Sprint Capacity & Story Points (Fibonacci), KPI & Chi phí | `smart-work-calculator.tsx`, `desktop-scratchpad.tsx` |
+| C# Avalonia Mobile App | `mobile/KztekWorkManagement.Mobile/` | Ứng dụng di động đa nền tảng (Android/iOS/Desktop) chuẩn MVVM, nhận diện thương hiệu KZTEK, 9 màn hình chức năng | `MainView.axaml`, `LoginView.axaml`, `DashboardView.axaml`, `KanbanBoardView.axaml`, `ApiService.cs`, `BrandTokens.axaml` |
+| REST API & Bearer Auth | `src/lib/auth.ts`, `src/app/api/` | Hệ thống REST API chuẩn RFC 6750 hỗ trợ song song Bearer Token JWT và Cookie Session | `src/lib/auth.ts`, `src/app/api/auth/login/route.ts`, `src/app/api/tickets/route.ts`, `src/app/api/projects/route.ts` |
+| Custom Roles & Permission Matrix | `src/app/api/roles/`, `src/app/projects/[projectId]/users/page.tsx` | Quản trị vai trò tùy ý (Custom Roles), ma trận phân quyền hệ thống & dự án | `src/lib/permissions-server.ts`, `src/app/api/roles/route.ts` |
+| Sprint Detail Hub & Management | `src/components/sprint/sprint-detail-dialog.tsx` | Trung tâm Chi tiết Sprint, Thống kê Story Points, Gán việc từ Backlog | `src/components/sprint/sprint-detail-dialog.tsx`, `src/app/api/projects/[id]/sprints/` |
+| Customer Tickets Hub | `src/lib/tickets.ts`, `src/app/api/tickets/` | Cổng tiếp nhận và xử lý phiếu báo lỗi khách hàng | `src/lib/tickets.ts`, `src/app/api/tickets/route.ts` |
+| Notification Center & Mail | `src/components/notifications/`, `src/lib/mail.ts` | Trung tâm thông báo đa năng và gửi Email thông báo tự động | `src/lib/mail.ts`, `src/lib/notifications.ts`, `src/app/api/notifications/` |
 
 ---
 
-## KztekComponent — Controls có sẵn (C# WinForms)
-
-> **Coding agents BẮT BUỘC dùng các control này thay vì control .NET gốc** khi làm project C# WinForms (§20 GEMINI.md).
-
-| Control | Path | Tương đương .NET gốc | Ghi chú |
-|---------|------|---------------------|---------|
-| `KzButton` | `Controls/KzButton.cs` | `Button` | Button theo brand KZTEK |
-| `KzTextBox` | `Controls/KzTextBox.cs` | `TextBox` | TextBox với validation |
-| `KzPasswordTextBox` | `Controls/KzPasswordTextBox.cs` | `TextBox (PasswordChar)` | Input mật khẩu |
-| `KzIPTextbox` | `Controls/KzIPTextbox.cs` | `TextBox` (custom) | Input địa chỉ IP |
-| `KzDataGrid` | `Controls/KzDataGrid.cs` | `DataGridView` | Grid với virtualization |
-| `KzCombobox` | `Controls/KzCombobox.cs` | `ComboBox` | Dropdown theo brand |
-| `KzCheckBox` | `Controls/KzCheckBox.cs` | `CheckBox` | Checkbox theo brand |
-| `KzCheckedListBox` | `Controls/KzCheckedListBox.cs` | `CheckedListBox` | Multi-select list |
-| `KzRadioButton` | `Controls/KzRadioButton.cs` | `RadioButton` | Radio theo brand |
-| `KzLabel` | `Controls/KzLabel.cs` | `Label` | Label theo brand |
-| `KzNumericUpDown` | `Controls/KzNumericUpDown.cs` | `NumericUpDown` | Numeric input |
-| `KzDateTimePicker` | `Controls/KzDateTimePicker.cs` | `DateTimePicker` | Date/time picker |
-| `KzPanel` | `Controls/KzPanel.cs` | `Panel` | Panel container |
-| `KzGroupBox` | `Controls/KzGroupBox.cs` | `GroupBox` | Group container |
-| `KzTabControl` | `Controls/KzTabControl.cs` | `TabControl` | Tab navigation |
-| `KzMenuStrip` | `Controls/KzMenuStrip.cs` | `MenuStrip` | Top menu |
-| `KzContextMenuStrip` | `Controls/KzContextMenuStrip.cs` | `ContextMenuStrip` | Right-click menu |
-| `KzProgressBar` | `Controls/KzProgressBar.cs` | `ProgressBar` | Progress indicator |
-| `KzToggleSwitch` | `Controls/KzToggleSwitch.cs` | (không có tương đương) | Toggle on/off |
-| `KzBadge` | `Controls/KzBadge.cs` | (không có tương đương) | Badge/tag hiển thị |
-| `KzCard` | `Controls/KzCard.cs` | (không có tương đương) | Card layout |
-| `KzKpiCard` | `Controls/KzKpiCard.cs` | (không có tương đương) | KPI metric card |
-| `KzPictureBox` | `Controls/KzPictureBox.cs` | `PictureBox` | Image display |
-| `KzNavigation` | `Controls/KzNavigation.cs` | (không có tương đương) | Navigation bar |
-| `KzSidebar` | `Controls/KzSidebar.cs` | (không có tương đương) | Sidebar layout |
-| `KzSidebarItem` | `Controls/KzSidebarItem.cs` | (không có tương đương) | Sidebar menu item |
-| `KzDeviceTreeview` | `Controls/KzDeviceTreeview.cs` | `TreeView` | Device tree KZTEK |
-| `KzKeyboard` | `Controls/KzKeyboard.cs` | (không có tương đương) | Soft keyboard |
-| `KzCountDown` | `Controls/KzCountDown.cs` | (không có tương đương) | Countdown timer |
-| `KzRoundCountdown` | `Controls/KzRoundCountdown.cs` | (không có tương đương) | Circular countdown |
-| `KzTelexEngine` | `Controls/KzTelexEngine.cs` | (không có tương đương) | Telex input engine |
-
-**Theme files:**
-| File | Mục đích |
-|------|---------|
-| `Theme/KzEnums.cs` | Enums dùng chung trong library (ThemeMode, ButtonStyle, ...) |
-| `Theme/KzTokens.cs` | Design tokens: màu brand (#251C53, #F05922, ...), spacing, font |
-| `Theme/KzThemeHelper.cs` | Helper methods áp dụng theme lên controls |
-
----
-
-## Entry Points
-
-| Tên | File | Mô tả |
-|-----|------|-------|
-| Agent config gốc | `GEMINI.md` | Toàn bộ quy tắc bắt buộc cho Gemini Agent |
-| Shared context | `.gemini/shared/CORE.md` | Context ngắn gọn đọc đầu session |
-| Export script | `scripts/md_to_docx_kztek.py` | `python scripts/md_to_docx_kztek.py <file.md>` |
-| Review script | `scripts/review-package.sh` | `scripts/review-package.sh <BASE> <HEAD>` |
-| Link setup script | `setup-gemini-link.ps1` | `.\setup-gemini-link.ps1 -ProjectDir <path>` |
-
----
-
-## API / Interface chính
-
-> Workspace này là agent configuration — không có HTTP API. Interface chính là các agent definitions và skill commands.
-
-| Interface | File | Mô tả |
-|-----------|------|-------|
-| `task-planner` agent | `.gemini/agents/task-planner.md` | Quản lý plan file, điều phối workflow |
-| `senior-developer` agent | `.gemini/agents/senior-developer.md` | Code phức tạp, review Junior PR |
-| `qa-engineer` agent | `.gemini/agents/qa-engineer.md` | Viết test case, reproduce bug |
-| `/ship` skill | `.gemini/commands/ship.md` | Gate GO/NO-GO trước deploy |
-| `/verify-pr` skill | `.gemini/commands/verify-pr.md` | Pre-PR verification checklist |
-| `scope-check` skill | `.gemini/commands/scope-check.md` | Làm rõ scope trước khi tạo plan |
-| `security-audit-stride` skill | `.gemini/commands/security-audit-stride.md` | OWASP + STRIDE audit |
-
----
-
-## Dependencies quan trọng
-
-| Package | Version | Dùng cho |
-|---------|---------|---------|
-| `python-docx` | latest | `md_to_docx_kztek.py` — xuất DOCX từ Markdown |
-| `Pillow` | latest | `md_to_docx_kztek.py` — xử lý ảnh/logo trong DOCX |
-| `.NET` (WinForms) | compatible | `KztekComponent/` — thư viện UI C# |
-
----
-
-## Config / Environment Variables
-
-> Workspace hiện tại không có env variable riêng. Project sản phẩm khi phát triển sẽ bổ sung mục này.
-
-| Key | Default | Bắt buộc | Mô tả |
-|-----|---------|---------|-------|
-| (Chưa có) | — | — | Điền khi có project sản phẩm thực tế |
-
----
-
-## Thay đổi gần đây
+## Lịch sử Thay đổi (Change Log)
 
 | Ngày | File/Module | Loại | Mô tả ngắn | Agent |
 |------|------------|------|------------|-------|
-| 2026-08-18 | `sprint-detail-dialog.tsx`, `src/app/projects/[projectId]/sprints/page.tsx`, `sprints/[sprintId]/route.ts` | Add | Xây dựng Trung tâm Xem Chi Tiết Sprint, Thống kê Story Points, Danh sách việc, Đổi trạng thái, Gán việc từ Backlog | senior-developer |
-| 2026-08-18 | `mention-comment-input.tsx`, `task-attachment-gallery.tsx`, `notification-bell.tsx`, `mail.ts` | Add | Bổ sung Comment gắn thẻ (@mention), Gửi Email khi được tag, Upload ảnh/video lỗi cạnh mô tả & Notification Center | senior-developer |
-| 2026-08-18 | `src/app/projects/[projectId]/settings/`, `system-config.ts` | Add | Xây dựng Trung tâm Cấu hình Hệ thống (Admin Config) & Chuyển thông tin tài khoản lên góc trên phải | senior-developer |
-| 2026-08-18 | `src/lib/mail.ts`, `notifications.ts`, `email-log-modal.tsx` | Add | Xây dựng Notify & Email Service, Branded HTML templates, Email Logs Modal | senior-developer |
-| 2026-07-27 | `setup-gemini-link.ps1` | Add | Tạo script tự động hóa thiết lập Junction Link cấu hình dùng chung | senior-developer |
-| 2026-07-23 | `src/TodoApp/` | Add | Xây dựng ứng dụng TodoApp C# Windows Forms (.NET 10) | senior-developer |
-| 2026-07-12 | `.gemini/evals/` | Add | Tạo thư mục + 3 eval mẫu (task-planner, senior-developer, qa-engineer) | senior-developer |
-| 2026-07-12 | `code-graph/CODE-GRAPH.md` | Add | Tạo bản đồ codebase ban đầu cho workspace | senior-developer |
-
----
-
-## Lessons & Quyết định quan trọng
-
-| Ngày | Quyết định / Bài học | Lý do (WHY) | Agent ghi nhận |
-|------|----------------------|--------------|-----------------|
-| 2026-07-12 | Dùng `--no-pdf` làm mặc định khi chạy `md_to_docx_kztek.py` trên môi trường cloud/sandbox | PDF export yêu cầu LibreOffice/docx2pdf không có sẵn trong sandbox — DOCX đủ dùng; PDF optional | senior-developer |
-| 2026-07-12 | `src/` không tạo cho workspace agent — không có codebase sản phẩm tại đây | Workspace này chỉ là framework orchestration; codebase sản phẩm sẽ có project riêng khi bắt đầu | senior-developer |
-
----
-
-## Ghi chú đặc biệt
-
-- **Không có codebase sản phẩm:** `src/`, `tests/` không tồn tại trong workspace này. Tất cả code sản phẩm nằm trong project riêng được quản lý bởi workspace này.
-- **KztekComponent là shared library thật:** Các controls trong `KztekComponent/Controls/` là C# WinForms components thực tế, dùng chung cho tất cả project C# KZTEK. Mọi coding agent PHẢI tra cứu trước khi tự viết control mới.
-- **PDF export là optional trong sandbox:** Môi trường cloud không có LibreOffice — chỉ xuất DOCX; PDF có thể xuất ở môi trường local với `docx2pdf` hoặc LibreOffice.
-- **Plan files không commit:** `docs/plans/PLAN-*.md` là scratchpad runtime — đã thêm vào `.gitignore` (hoặc cần thêm nếu chưa có).
+| 2026-08-19 | `prisma/schema.prisma`, `src/lib/prisma.ts`, `prisma.config.ts`, `.env`, `scripts/migrate-sqlite-to-sqlserver.ts`, `scripts/test_e2e_sqlserver.ts` | Refactor/Upgrade | Nâng cấp toàn diện CSDL từ SQLite sang Microsoft SQL Server (`14.160.26.45:9999`, Database `WorkingManager`). Tối ưu kiểu dữ liệu NVARCHAR(MAX), chống chu trình Cascade (Error 1785), cấu hình adapter `@prisma/adapter-mssql`, di chuyển 100% dữ liệu SQLite hiện có (Users, Teams, Roles, Projects, Tasks, Tickets, Attachments, Notifications) và chạy E2E Test toàn bộ PASS. | tech-lead, senior-developer, qa-engineer |
+| 2026-08-18 | `prisma/schema.prisma`, `src/components/board/task-card.tsx`, `src/components/board/sortable-task-card.tsx`, `src/app/projects/[projectId]/board/page.tsx`, `mobile/.../Views/KanbanBoardView.axaml`, `TicketsView.axaml`, `NotificationsView.axaml` | Optimization | Tối ưu hóa toàn diện hiệu năng tải dữ liệu & kết xuất giao diện (31 Performance Indexes cho SQLite, React.memo cho TaskCard/SortableTaskCard, Dynamic Lazy Loading Dialogs, Skeleton Loading UI, useDeferredValue cho search filter, và Virtualized ListBox trên C# Avalonia Mobile App) | tech-lead, senior-developer, qa-engineer |
+| 2026-08-18 | `src/app/desktop/`, `src/components/desktop/`, `public/manifest.json`, `src/components/app-shell.tsx`, `scripts/test-desktop-web-app-e2e.js` | Feature (Phase 4) | Triển khai toàn diện Giai đoạn 4: Ứng dụng máy tính dạng Web App (Desktop Workstation Portal `/desktop`, Dual-Pane Split View, Command Palette `Ctrl+K`, Shortcuts Hub `?`, Smart Work Calculator đa năng, Desktop Scratchpad, Desktop PWA Manifest, E2E Test 33/33 PASS) | senior-developer, junior-developer, ux-ui-reviewer, qa-engineer |
+| 2026-08-18 | `mobile/KztekWorkManagement.Mobile/`, `src/lib/auth.ts`, `src/app/api/tickets/route.ts`, `docs/api/REST-API-SPECIFICATION.md` | Feature (Phase 3) | Mở toàn diện REST API hỗ trợ xác thực Bearer Token JWT; Dựng ứng dụng di động hoàn chỉnh C# Avalonia Mobile (9 màn hình MVVM, Design System KZTEK, Services, E2E Test 18/18 PASS) | senior-developer & qa-engineer |
+| 2026-08-18 | `src/components/app-shell.tsx`, `src/app/projects/[projectId]/board/page.tsx` | Feature (Phase 2) | Tối ưu hóa toàn diện Web chạy hoàn hảo trên điện thoại di động (Mobile Responsive Web, Drawer, Bottom Nav) | senior-developer |
+| 2026-08-18 | `tasks/route.ts`, `tickets/route.ts`, `dispatch/route.ts`, `task-card.tsx` | Audit/Fix | Rà soát toàn diện dự án: sửa import, hỗ trợ alias targetProjectId, defensive null checks | qa-engineer |
+| 2026-08-18 | `permissions-context.tsx`, `permissions-server.ts`, `app-shell.tsx` | Fix/Add | Cập nhật phân quyền thời gian thực, kiểm tra đa lớp API routes | senior-developer |

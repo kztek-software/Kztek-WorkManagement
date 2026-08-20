@@ -1,9 +1,5 @@
-import { PrismaClient } from "../src/generated/prisma/client";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { prisma } from "../src/lib/prisma";
 import { scryptSync, randomBytes } from "crypto";
-
-const adapter = new PrismaBetterSqlite3({ url: "file:./prisma/dev.db" });
-const prisma = new PrismaClient({ adapter });
 
 export function hashPassword(password: string): string {
   const salt = randomBytes(16).toString("hex");
@@ -144,7 +140,7 @@ async function main() {
     { title: "Xây dựng hệ thống đăng nhập/đăng ký", description: "JWT + httpOnly cookie, scrypt hashing, validation bằng zod.", type: "STORY", status: "DONE", priority: "URGENT", points: 8, assignee: binh.id, sprint: sprint1.id, labels: ["backend"], completedDaysAgo: 22 },
     { title: "Thiết kế design system", description: "Bảng màu, typography, component tokens theo hướng Linear-style.", type: "TASK", status: "DONE", priority: "HIGH", points: 3, assignee: chi.id, sprint: sprint1.id, labels: ["design"], completedDaysAgo: 23 },
     { title: "Kanban board kéo thả", description: "5 cột trạng thái, drag & drop mượt với dnd-kit, optimistic updates.", type: "STORY", status: "DONE", priority: "URGENT", points: 8, assignee: chi.id, sprint: sprint1.id, labels: ["frontend"], completedDaysAgo: 19 },
-    { title: "Task detail dialog", description: "Modal chỉnh sửa đầy đủ: mô tả, assignee, priority, labels, comments.", type: "STORY", status: "DONE", priority: "HIGH", points: 5, assignee: chi.id, sprint: sprint1.id, labels: ["frontend"], completedDaysAgo: 17 },
+    { title: "Task detail dialog", description: "Modal chỉnh sửa đầy đủ: mô tả, assignee, priority, labels, comments.", type: "STORY", status: "HIGH", points: 5, assignee: chi.id, sprint: sprint1.id, labels: ["frontend"], completedDaysAgo: 17 },
     { title: "Realtime qua SSE", description: "Server-Sent Events broadcast thay đổi task tới mọi client đang mở board.", type: "STORY", status: "DONE", priority: "HIGH", points: 5, assignee: binh.id, sprint: sprint1.id, labels: ["backend"], completedDaysAgo: 16 },
     { title: "Lỗi drag thả mất thứ tự khi reload", description: "Position không được persist đúng khi thả vào cột khác.", type: "BUG", status: "DONE", priority: "URGENT", points: 2, assignee: chi.id, sprint: sprint1.id, labels: ["bug", "frontend"], completedDaysAgo: 15 },
     { title: "Seed dữ liệu demo", description: "3 users, 1 project, 2 sprints, ~20 tasks để demo báo cáo.", type: "TASK", status: "DONE", priority: "LOW", points: 1, assignee: alice.id, sprint: sprint1.id, labels: ["backend"], completedDaysAgo: 14 },
@@ -213,7 +209,7 @@ async function main() {
   }
 
   console.log("✅ Seed hoàn tất:");
-  console.log("   Users: alice@demo.dev / binh@demo.dev / chi@demo.dev (mật khẩu: demo123)");
+  console.log("   Users: admin@kztek.net / alice@demo.dev / binh@demo.dev / chi@demo.dev");
   console.log(`   Project: ${project.name} (${project.key}) — ${number} tasks`);
 }
 

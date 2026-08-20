@@ -27,6 +27,9 @@ import {
   RefreshCw,
   ArrowRight,
   Lock,
+  FolderKanban,
+  ArrowRightLeft,
+  AlertTriangle,
 } from "lucide-react";
 import { Dialog } from "primereact/dialog";
 import { Button } from "@/components/ui/button";
@@ -43,6 +46,8 @@ interface TicketDrawerProps {
   projectId: string;
   sprints: SprintDto[];
   members: MemberDto[];
+  allProjects?: Array<{ id: string; name: string; key: string }>;
+  userRole?: string;
   isOpen: boolean;
   onClose: () => void;
   onTicketUpdated: () => void;
@@ -53,6 +58,8 @@ export function TicketDrawer({
   projectId,
   sprints,
   members,
+  allProjects = [],
+  userRole,
   isOpen,
   onClose,
   onTicketUpdated,
@@ -68,6 +75,12 @@ export function TicketDrawer({
   const [newComment, setNewComment] = useState("");
   const [isInternalOnly, setIsInternalOnly] = useState(false);
   const [sendingComment, setSendingComment] = useState(false);
+
+  // Dispatch state
+  const [dispatchModalOpen, setDispatchModalOpen] = useState(false);
+  const [targetProjectId, setTargetProjectId] = useState(ticket?.projectId || projectId);
+  const [dispatching, setDispatching] = useState(false);
+  const [dispatchError, setDispatchError] = useState("");
 
   // Convert to Task state
   const [convertModalOpen, setConvertModalOpen] = useState(false);
@@ -88,10 +101,39 @@ export function TicketDrawer({
       setInternalNotes(ticket.internalNotes || "");
       setResolutionNotes(ticket.resolutionNotes || "");
       setConvertCustomTitle(`[${ticket.trackingCode}] ${ticket.title}`);
+      setTargetProjectId(ticket.projectId || projectId);
     }
-  }, [ticket]);
+  }, [ticket, projectId]);
 
   if (!isOpen || !ticket) return null;
+
+  async function handleDispatch() {
+    if (!targetProjectId) {
+      setDispatchError("Vui lòng chọn dự án đích");
+      return;
+    }
+    setDispatching(true);
+    setDispatchError("");
+    try {
+      const res = await fetch(`/api/tickets/${ticket!.id}/dispatch`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetProjectId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setDispatchError(data.error || "Không thể điều phối ticket");
+      } else {
+        setDispatchModalOpen(false);
+        onTicketUpdated();
+      }
+    } catch (err) {
+      console.error("Lỗi điều phối:", err);
+      setDispatchError("Lỗi kết nối khi điều phối ticket");
+    } finally {
+      setDispatching(false);
+    }
+  }
 
   async function handleQuickUpdate(newStatus?: string, newPriority?: string, newType?: string) {
     try {
@@ -240,7 +282,7 @@ export function TicketDrawer({
     { id: "IN_PROGRESS", label: "Đang xử lý (IN_PROGRESS)", color: "text-amber-400" },
     { id: "RESOLVED", label: "Đã giải quyết (RESOLVED)", color: "text-emerald-400" },
     { id: "CLOSED", label: "Đã đóng (CLOSED)", color: "text-slate-400" },
-    { id: "REJECTED", label: "Từ chối / Spam (REJECTED)", color: "text-red-400" },
+    { id: "REJECTED", label: "Từ chối / Spam (REJECTED)", color: "text-accent" },
   ];
 
   const priorityList = [
@@ -324,6 +366,38 @@ export function TicketDrawer({
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* Project Assignment & Dispatch Badge */}
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted block">Dự án phụ trách</span>
+                <div className="flex items-center gap-1.5">
+                  {ticket.project ? (
+                    <span className="h-8 px-2.5 rounded-lg border border-line bg-surface-3 text-xs font-bold text-foreground flex items-center gap-1.5">
+                      <FolderKanban className="w-3.5 h-3.5 text-accent" />
+                      <span>{ticket.project.name}</span>
+                    </span>
+                  ) : (
+                    <span className="h-8 px-2.5 rounded-lg border border-amber-500/30 bg-amber-500/15 text-xs font-bold text-amber-600 flex items-center gap-1.5 animate-pulse">
+                      <AlertTriangle className="w-3.5 h-3.5" />
+                      <span>Chờ điều phối</span>
+                    </span>
+                  )}
+
+                  {allProjects && allProjects.length > 0 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setDispatchModalOpen(true)}
+                      className="h-8 px-2.5 text-xs border-line hover:border-accent text-muted hover:text-white cursor-pointer flex items-center gap-1"
+                      title="Điều phối ticket tới dự án cụ thể"
+                    >
+                      <ArrowRightLeft className="w-3.5 h-3.5 text-accent" />
+                      <span>{ticket.projectId ? "Chuyển dự án" : "Điều phối dự án"}</span>
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -428,7 +502,7 @@ export function TicketDrawer({
               <div className="space-y-4 pt-2 border-t border-line/60">
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <Label className="text-xs font-bold text-amber-400 flex items-center gap-1.5">
+                    <Label className="text-xs font-bold text-amber-600 flex items-center gap-1.5">
                       <Lock className="w-3.5 h-3.5" />
                       <span>Ghi chú nội bộ (Chỉ nhân viên thấy)</span>
                     </Label>
@@ -568,7 +642,7 @@ export function TicketDrawer({
       >
         <div className="space-y-4 pt-2 text-xs">
           {convertError && (
-            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400">
+            <div className="p-3 rounded-xl bg-accent/10 border border-accent/30 text-accent">
               {convertError}
             </div>
           )}
@@ -590,9 +664,9 @@ export function TicketDrawer({
               onChange={(e) => setConvertStatus(e.target.value as any)}
               className="w-full h-9 px-3 rounded-xl border border-line bg-surface-2 text-xs font-medium focus:border-accent"
             >
-              <option value="TODO">To Do (Cần làm)</option>
-              <option value="BACKLOG">Backlog</option>
-              <option value="IN_PROGRESS">In Progress (Đang làm)</option>
+              <option value="TODO">Cần làm (To do)</option>
+              <option value="BACKLOG">Tồn đọng (Backlog)</option>
+              <option value="IN_PROGRESS">Đang thực hiện (In progress)</option>
             </select>
           </div>
 
@@ -613,7 +687,7 @@ export function TicketDrawer({
           </div>
 
           <div className="space-y-1">
-            <Label className="text-xs font-bold">Người phụ trách xử lý (Assignee)</Label>
+            <Label className="text-xs font-bold">Người phụ trách xử lý</Label>
             <select
               value={convertAssigneeId}
               onChange={(e) => setConvertAssigneeId(e.target.value)}
@@ -646,6 +720,78 @@ export function TicketDrawer({
             >
               {converting ? <RefreshCw className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <KanbanSquare className="w-3.5 h-3.5 mr-1.5" />}
               <span>Tạo Task & Chuyển Đổi</span>
+            </Button>
+          </div>
+        </div>
+      </Dialog>
+
+      {/* Admin Dispatch Modal */}
+      <Dialog
+        visible={dispatchModalOpen}
+        onHide={() => setDispatchModalOpen(false)}
+        header={
+          <div className="flex items-center gap-2 text-white font-bold text-sm">
+            <ArrowRightLeft className="w-4 h-4 text-accent" />
+            <span>Điều Phối Ticket Tới Dự Án Cụ Thể (Admin)</span>
+          </div>
+        }
+        className="w-full max-w-md border border-line bg-surface rounded-2xl shadow-2xl"
+      >
+        <div className="space-y-4 pt-2">
+          {dispatchError && (
+            <div className="p-3 rounded-xl bg-accent/10 border border-accent/30 text-accent text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-accent shrink-0" />
+              <span>{dispatchError}</span>
+            </div>
+          )}
+
+          <div className="p-3 rounded-xl bg-surface-2 border border-line text-xs space-y-1">
+            <div className="font-bold text-foreground truncate">{ticket.title}</div>
+            <div className="text-muted">
+              Khách hàng: <strong>{ticket.customerName}</strong> ({ticket.customerEmail})
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs font-bold text-foreground">Chọn Dự án phụ trách xử lý sự cố này:</Label>
+            <select
+              value={targetProjectId}
+              onChange={(e) => setTargetProjectId(e.target.value)}
+              className="w-full h-10 px-3 rounded-xl border border-line bg-surface-2 text-xs font-semibold text-foreground focus:border-accent focus:outline-none"
+            >
+              {allProjects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name} ({p.key})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="p-3 rounded-xl bg-accent/10 border border-accent/20 text-[11px] text-muted-light space-y-1">
+            <p className="font-bold text-accent">💡 Sau khi điều phối:</p>
+            <ul className="list-disc list-inside space-y-0.5 text-muted">
+              <li>Ticket tự động chuyển sang trạng thái <strong>TRIAGED (Đã phân loại)</strong>.</li>
+              <li>Hệ thống gửi thông báo tới đội ngũ kỹ thuật của dự án đích.</li>
+              <li>Kỹ sư dự án có thể bấm 1-Click chuyển đổi ticket thành Kanban Task.</li>
+            </ul>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-line/60">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setDispatchModalOpen(false)}
+              className="text-xs text-muted hover:text-white"
+            >
+              Hủy bỏ
+            </Button>
+            <Button
+              type="button"
+              onClick={handleDispatch}
+              disabled={dispatching}
+              className="bg-accent hover:bg-accent-hover text-white text-xs font-bold px-4"
+            >
+              {dispatching ? "Đang điều phối..." : "Xác nhận Điều Phối"}
             </Button>
           </div>
         </div>

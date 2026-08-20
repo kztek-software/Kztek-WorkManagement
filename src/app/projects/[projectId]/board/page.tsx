@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useDeferredValue } from "react";
+import dynamic from "next/dynamic";
 import { useParams, useSearchParams } from "next/navigation";
 import {
   DndContext,
@@ -36,18 +37,30 @@ import {
   Calendar,
   Layers,
   ChevronRight,
+  X,
 } from "lucide-react";
 import { STATUSES, PRIORITIES, TASK_TYPES } from "@/lib/constants";
 import type { BoardData, TaskDto } from "@/lib/types";
 import { canCreateTask, isViewer } from "@/lib/permissions";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { BoardColumn } from "@/components/board/board-column";
 import { TaskCard } from "@/components/board/task-card";
-import { TaskDialog } from "@/components/board/task-dialog";
-import { NewTaskDialog } from "@/components/board/new-task-dialog";
-import { NotionDialog } from "@/components/notion/notion-dialog";
-import { MemberDialog } from "@/components/project/member-dialog";
+
+// Lazy-loaded Dialogs to reduce initial JS bundle and render latency
+const TaskDialog = dynamic(() => import("@/components/board/task-dialog").then((m) => m.TaskDialog), {
+  ssr: false,
+});
+const NewTaskDialog = dynamic(() => import("@/components/board/new-task-dialog").then((m) => m.NewTaskDialog), {
+  ssr: false,
+});
+const NotionDialog = dynamic(() => import("@/components/notion/notion-dialog").then((m) => m.NotionDialog), {
+  ssr: false,
+});
+const MemberDialog = dynamic(() => import("@/components/project/member-dialog").then((m) => m.MemberDialog), {
+  ssr: false,
+});
 
 const PRIORITY_ORDER: Record<string, number> = {
   URGENT: 4,
@@ -70,7 +83,13 @@ const dropAnimationConfig: DropAnimation = {
 
 export default function BoardPage() {
   const params = useParams<{ projectId: string }>();
-  const projectId = params.projectId;
+  
+  // Trích xuất projectId an toàn kể cả khi useParams chậm/null trên trình duyệt cũ
+  let projectId = params?.projectId;
+  if (!projectId && typeof window !== "undefined") {
+    const match = window.location.pathname.match(/\/projects\/([^\/]+)/);
+    if (match) projectId = match[1];
+  }
 
   const searchParams = useSearchParams();
   const urlTaskId = searchParams.get("taskId");
@@ -100,9 +119,74 @@ export default function BoardPage() {
   const [newTaskStatus, setNewTaskStatus] = useState("TODO");
   const [notionOpen, setNotionOpen] = useState(false);
   const [memberOpen, setMemberOpen] = useState(false);
+  const [activeMobileColumn, setActiveMobileColumn] = useState<string>("TODO");
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
+  const boardContainerRef = useRef<HTMLDivElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
+
+  // Helper sync tab active với vị trí cuộn thực tế của board
+  function scrollToMobileColumn(statusId: string) {
+    setActiveMobileColumn(statusId);
+    const container = boardContainerRef.current;
+    const colEl = document.getElementById(`board-col-${statusId}`);
+    if (container && colEl) {
+      const targetLeft = colEl.offsetLeft - container.offsetLeft - 12;
+      container.scrollTo({ left: targetLeft, behavior: "smooth" });
+    }
+  }
+
+  function handleBoardScroll() {
+    const container = boardContainerRef.current;
+    if (!container) return;
+    const currentScrollLeft = container.scrollLeft;
+    let closestId: string = STATUSES[0].id;
+    let minDiff = Infinity;
+    for (const s of STATUSES) {
+      const colEl = document.getElementById(`board-col-${s.id}`);
+      if (colEl) {
+        const target = colEl.offsetLeft - container.offsetLeft - 12;
+        const diff = Math.abs(target - currentScrollLeft);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closestId = s.id;
+        }
+      }
+    }
+    setActiveMobileColumn(closestId);
+  }
+
+  // Horizontal wheel scroll handler for board
+  useEffect(() => {
+    const el = boardContainerRef.current;
+    if (!el) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      const target = e.target as HTMLElement;
+      const verticalScrollable = target.closest(".overflow-y-auto");
+
+      // Nếu đang hover trên cột có thể cuộn dọc và chưa chạm đáy/đỉnh -> cho phép cuộn dọc
+      if (verticalScrollable) {
+        const canScrollUp = verticalScrollable.scrollTop > 0 && e.deltaY < 0;
+        const canScrollDown =
+          verticalScrollable.scrollTop + verticalScrollable.clientHeight < verticalScrollable.scrollHeight - 2 &&
+          e.deltaY > 0;
+        if (canScrollUp || canScrollDown) {
+          return;
+        }
+      }
+
+      // Ngược lại, cuộn ngang cả board
+      if (e.deltaY !== 0) {
+        e.preventDefault();
+        el.scrollLeft += e.deltaY * 0.8;
+      }
+    };
+
+    el.addEventListener("wheel", handleWheel, { passive: false });
+    return () => el.removeEventListener("wheel", handleWheel);
+  }, []);
 
   useEffect(() => {
     if (urlTaskId) {
@@ -117,8 +201,18 @@ export default function BoardPage() {
   }, [urlSprintId]);
 
   const loadBoard = useCallback(async () => {
+    if (!projectId) return;
     try {
-      const res = await fetch(`/api/projects/${projectId}/tasks`);
+      const headers: Record<string, string> = {};
+      try {
+        const token = localStorage.getItem("flowboard_session");
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+      } catch {}
+
+      const res = await fetch(`/api/projects/${projectId}/tasks`, {
+        credentials: "same-origin",
+        headers,
+      });
       if (res.ok) {
         const json = await res.json();
         setData(json);
@@ -131,6 +225,20 @@ export default function BoardPage() {
   useEffect(() => {
     loadBoard();
   }, [loadBoard]);
+
+  // Quick-assign straight from the card, without opening the full task dialog
+  const quickAssign = useCallback(
+    async (taskId: string, userId: string | null) => {
+      if (isViewer(data?.currentRole)) return;
+      await fetch(`/api/projects/${projectId}/tasks/${taskId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assigneeId: userId }),
+      });
+      loadBoard();
+    },
+    [projectId, data?.currentRole, loadBoard]
+  );
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -201,13 +309,15 @@ export default function BoardPage() {
     return closestCorners(args);
   }, []);
 
+  const deferredSearch = useDeferredValue(search);
+
   // Filter & Sort Calculation
   const tasksByStatus = useMemo(() => {
     const map: Record<string, TaskDto[]> = {};
     for (const s of STATUSES) map[s.id] = [];
     if (!data) return map;
 
-    const q = search.trim().toLowerCase();
+    const q = deferredSearch.trim().toLowerCase();
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const endOfToday = new Date(startOfToday.getTime() + 86400000 - 1);
@@ -427,10 +537,53 @@ export default function BoardPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-1 items-center justify-center">
-        <div className="text-xs font-semibold text-muted flex items-center gap-2">
-          <div className="h-4 w-4 rounded-full border-2 border-accent border-t-transparent animate-spin" />
-          Đang tải dữ liệu Board...
+      <div className="flex flex-1 flex-col overflow-hidden bg-background">
+        {/* Skeleton Header */}
+        <div className="flex h-11 sm:h-14 shrink-0 items-center justify-between border-b border-line px-2.5 sm:px-5 gap-2 bg-surface/40">
+          <div className="flex items-center gap-2">
+            <div className="h-4 w-24 rounded bg-surface-2 animate-pulse" />
+            <div className="h-4 w-32 rounded bg-surface-2 animate-pulse" />
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-7 w-20 rounded-lg bg-surface-2 animate-pulse" />
+            <div className="h-7 w-24 rounded-lg bg-surface-2 animate-pulse" />
+          </div>
+        </div>
+
+        {/* Skeleton Filter Bar */}
+        <div className="flex items-center border-b border-line bg-surface/50 px-2.5 sm:px-5 py-2 gap-2 overflow-x-auto no-scrollbar">
+          <div className="h-8 w-48 rounded-lg bg-surface-2 animate-pulse shrink-0" />
+          <div className="h-8 w-32 rounded-lg bg-surface-2 animate-pulse shrink-0" />
+          <div className="h-8 w-28 rounded-lg bg-surface-2 animate-pulse shrink-0" />
+          <div className="h-8 w-28 rounded-lg bg-surface-2 animate-pulse shrink-0" />
+        </div>
+
+        {/* Skeleton Columns */}
+        <div className="flex flex-1 gap-4 p-4 overflow-hidden">
+          {[1, 2, 3, 4].map((col) => (
+            <div key={col} className="w-80 shrink-0 rounded-2xl border border-line bg-surface/40 p-2.5 space-y-3">
+              <div className="flex items-center justify-between px-2 py-1">
+                <div className="h-4 w-24 rounded bg-surface-2 animate-pulse" />
+                <div className="h-4 w-6 rounded-full bg-surface-2 animate-pulse" />
+              </div>
+              <div className="space-y-2.5">
+                {[1, 2, 3].map((card) => (
+                  <div key={card} className="rounded-xl border border-line bg-surface/80 p-3.5 space-y-2.5">
+                    <div className="flex justify-between">
+                      <div className="h-3 w-16 rounded bg-surface-2 animate-pulse" />
+                      <div className="h-3 w-8 rounded bg-surface-2 animate-pulse" />
+                    </div>
+                    <div className="h-4 w-full rounded bg-surface-2 animate-pulse" />
+                    <div className="h-3 w-3/4 rounded bg-surface-2 animate-pulse" />
+                    <div className="flex justify-between pt-2 border-t border-line/40">
+                      <div className="h-3 w-12 rounded bg-surface-2 animate-pulse" />
+                      <div className="h-5 w-5 rounded-full bg-surface-2 animate-pulse" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -450,38 +603,38 @@ export default function BoardPage() {
     <div className="flex flex-1 flex-col overflow-hidden bg-background">
       {/* Viewer Notice Banner */}
       {isUserViewer && (
-        <div className="flex items-center justify-center gap-2 bg-amber-950/40 border-b border-amber-800/40 py-1.5 px-4 text-xs text-amber-200">
-          <Eye className="h-3.5 w-3.5 text-amber-400" />
+        <div className="flex items-center justify-center gap-2 bg-amber-500/15 border-b border-amber-500/30 py-1.5 px-4 text-xs text-amber-700">
+          <Eye className="h-3.5 w-3.5 text-amber-600" />
           <span>Bạn đang xem dự án ở chế độ <strong>Người xem (Viewer)</strong> — không thể tạo, chỉnh sửa hoặc kéo thả công việc.</span>
         </div>
       )}
 
       {/* Top Header Bar */}
-      <div className="flex h-14 shrink-0 items-center justify-between border-b border-line px-5 gap-3 bg-surface/40 backdrop-blur-md">
+      <div className="flex h-11 sm:h-14 shrink-0 items-center justify-between border-b border-line px-2.5 sm:px-5 gap-2 sm:gap-3 bg-surface/40 backdrop-blur-md">
         {/* Breadcrumb & Live Status */}
-        <div className="flex items-center gap-2.5">
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-muted">
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+          <div className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-muted">
             <span>Dự án</span>
             <ChevronRight className="h-3.5 w-3.5 text-muted/60" />
-            <span className="text-foreground font-bold">{data.project.name}</span>
+            <span className="text-foreground font-bold truncate max-w-[120px] sm:max-w-none">{data.project.name}</span>
           </div>
 
           {activeSprint && (
-            <span className="rounded-full bg-accent/15 border border-accent/30 px-2.5 py-0.5 text-[11px] font-bold text-accent flex items-center gap-1">
+            <span className="rounded-full bg-accent/15 border border-accent/30 px-2 py-0.5 text-[10px] sm:text-[11px] font-bold text-accent flex items-center gap-1 shrink-0">
               <Sparkles className="h-3 w-3" />
-              {activeSprint.name}
+              <span className="truncate max-w-[100px] sm:max-w-none">{activeSprint.name}</span>
             </span>
           )}
 
           {data.currentRole && (
-            <span className="rounded-md bg-surface-2 border border-line px-2 py-0.5 text-[10px] font-bold text-muted font-mono flex items-center gap-1">
+            <span className="hidden md:flex rounded-md bg-surface-2 border border-line px-2 py-0.5 text-[10px] font-bold text-muted font-mono items-center gap-1 shrink-0">
               <Shield className="h-3 w-3 text-accent" />
               {data.currentRole}
             </span>
           )}
 
           <div
-            className={`flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full ${
+            className={`hidden sm:flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full shrink-0 ${
               connected
                 ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
                 : "bg-neutral-800 text-muted"
@@ -493,16 +646,18 @@ export default function BoardPage() {
         </div>
 
         {/* Primary Action Buttons */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* Members Button */}
           <Button
             size="sm"
             variant="outline"
             onClick={() => setMemberOpen(true)}
-            className="h-8 text-xs font-semibold border-line bg-surface hover:bg-surface-2 shadow-sm flex items-center gap-1.5"
+            className="h-7 sm:h-8 px-2 sm:px-3 text-[11px] sm:text-xs font-semibold border-line bg-surface hover:bg-surface-2 shadow-sm flex items-center gap-1 sm:gap-1.5"
+            title="Quản lý thành viên"
           >
             <Users className="h-3.5 w-3.5 text-accent" />
-            Thành viên ({data.members.length})
+            <span className="hidden sm:inline">Thành viên ({data.members.length})</span>
+            <span className="sm:hidden">{data.members.length}</span>
           </Button>
 
           {/* Notion Hub Button */}
@@ -510,12 +665,13 @@ export default function BoardPage() {
             size="sm"
             variant="outline"
             onClick={() => setNotionOpen(true)}
-            className="h-8 text-xs font-semibold border-neutral-700 bg-neutral-900 hover:bg-neutral-800 shadow-sm flex items-center gap-1.5 text-white"
+            className="h-7 sm:h-8 px-2 sm:px-3 text-[11px] sm:text-xs font-semibold border-neutral-700 bg-neutral-900 hover:bg-neutral-800 shadow-sm flex items-center gap-1 sm:gap-1.5 text-white"
+            title="Notion Hub"
           >
-            <span className="flex h-4 w-4 items-center justify-center rounded bg-neutral-800 text-[10px] font-bold text-white border border-neutral-700">
+            <span className="flex h-3.5 w-3.5 sm:h-4 sm:w-4 items-center justify-center rounded bg-neutral-800 text-[9px] sm:text-[10px] font-bold text-white border border-neutral-700">
               N
             </span>
-            Notion Hub
+            <span className="hidden sm:inline">Notion Hub</span>
           </Button>
 
           {/* New Task Button */}
@@ -526,30 +682,32 @@ export default function BoardPage() {
                 setNewTaskStatus("TODO");
                 setNewTaskOpen(true);
               }}
-              className="h-8 text-xs font-bold bg-accent hover:bg-accent/90 text-white shadow-md shadow-accent/25"
+              className="h-7 sm:h-8 px-2.5 sm:px-3 text-[11px] sm:text-xs font-bold bg-accent hover:bg-accent/90 text-white shadow-md shadow-accent/25"
             >
-              <Plus className="h-3.5 w-3.5 mr-1" /> Task mới
+              <Plus className="h-3.5 w-3.5 sm:mr-1" />
+              <span className="hidden sm:inline">Task mới</span>
+              <span className="sm:hidden">Tạo</span>
             </Button>
           ) : (
-            <span className="rounded-lg bg-surface-2 px-2.5 py-1 text-xs text-muted font-medium flex items-center gap-1 border border-line">
-              <Eye className="h-3.5 w-3.5" /> Chỉ xem
+            <span className="rounded-lg bg-surface-2 px-2 py-1 text-xs text-muted font-medium flex items-center gap-1 border border-line">
+              <Eye className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Chỉ xem</span>
             </span>
           )}
         </div>
       </div>
 
-      {/* Filter & Sorting Control Toolbar */}
-      <div className="flex items-center justify-between border-b border-line bg-surface/50 px-5 py-2.5 text-xs gap-3 overflow-x-auto">
-        <div className="flex items-center gap-2 flex-wrap">
+      {/* Filter & Sorting Control Toolbar — Desktop (>= sm) */}
+      <div className="hidden sm:flex items-center justify-between border-b border-line bg-surface/50 px-5 py-2 text-xs gap-3 overflow-x-auto no-scrollbar shrink-0">
+        <div className="flex items-center gap-2 flex-nowrap shrink-0">
           {/* Search Box */}
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
             <Input
               ref={searchInputRef}
-              placeholder="Tìm theo tên/mã task... (bấm /)"
+              placeholder="Tìm task... (bấm /)"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="h-8 w-56 pl-8 text-xs bg-surface border-line focus:border-accent"
+              className="h-7 sm:h-8 w-36 sm:w-56 pl-7 sm:pl-8 text-[11px] sm:text-xs bg-surface border-line focus:border-accent"
             />
           </div>
 
@@ -557,12 +715,12 @@ export default function BoardPage() {
           <select
             value={sprintFilter}
             onChange={(e) => setSprintFilter(e.target.value)}
-            className="h-8 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none cursor-pointer hover:border-line-strong transition-colors"
+            className="h-7 sm:h-8 rounded-lg border border-line bg-surface px-1.5 sm:px-2 text-[11px] sm:text-xs text-foreground focus:outline-none cursor-pointer hover:border-line-strong transition-colors"
           >
-            <option value="ALL">🚀 Tất cả Sprint</option>
-            <option value="NONE">Chưa gán Sprint (Backlog)</option>
+            <option value="ALL" className="bg-[#181E2E] text-foreground">🚀 Tất cả Sprint</option>
+            <option value="NONE" className="bg-[#181E2E] text-foreground">Chưa gán Sprint (Backlog)</option>
             {data.sprints.map((s) => (
-              <option key={s.id} value={s.id}>
+              <option key={s.id} value={s.id} className="bg-[#181E2E] text-foreground">
                 {s.name} ({s.status === "ACTIVE" ? "Đang chạy" : s.status === "COMPLETED" ? "Đã xong" : "Kế hoạch"})
               </option>
             ))}
@@ -572,13 +730,13 @@ export default function BoardPage() {
           <select
             value={assigneeFilter}
             onChange={(e) => setAssigneeFilter(e.target.value)}
-            className="h-8 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none cursor-pointer hover:border-line-strong transition-colors"
+            className="h-7 sm:h-8 rounded-lg border border-line bg-surface px-1.5 sm:px-2 text-[11px] sm:text-xs text-foreground focus:outline-none cursor-pointer hover:border-line-strong transition-colors"
           >
-            <option value="ALL">👤 Tất cả nhân sự</option>
-            <option value="UNASSIGNED">Chưa giao người nhận</option>
+            <option value="ALL" className="bg-[#181E2E] text-foreground">👤 Nhân sự</option>
+            <option value="UNASSIGNED" className="bg-[#181E2E] text-foreground">Chưa giao</option>
             {data.members.map((m) => (
-              <option key={m.user.id} value={m.user.id}>
-                {m.user.name} ({m.role})
+              <option key={m.user.id} value={m.user.id} className="bg-[#181E2E] text-foreground">
+                {m.user.name}
               </option>
             ))}
           </select>
@@ -587,11 +745,11 @@ export default function BoardPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-8 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none cursor-pointer hover:border-line-strong transition-colors"
+            className="h-7 sm:h-8 rounded-lg border border-line bg-surface px-1.5 sm:px-2 text-[11px] sm:text-xs text-foreground focus:outline-none cursor-pointer hover:border-line-strong transition-colors"
           >
-            <option value="ALL">📋 Tất cả trạng thái</option>
+            <option value="ALL" className="bg-[#181E2E] text-foreground">📋 Trạng thái</option>
             {STATUSES.map((s) => (
-              <option key={s.id} value={s.id}>
+              <option key={s.id} value={s.id} className="bg-[#181E2E] text-foreground">
                 {s.label}
               </option>
             ))}
@@ -601,11 +759,11 @@ export default function BoardPage() {
           <select
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
-            className="h-8 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none cursor-pointer hover:border-line-strong transition-colors"
+            className="h-7 sm:h-8 rounded-lg border border-line bg-surface px-1.5 sm:px-2 text-[11px] sm:text-xs text-foreground focus:outline-none cursor-pointer hover:border-line-strong transition-colors"
           >
-            <option value="ALL">🔥 Tất cả độ ưu tiên</option>
+            <option value="ALL" className="bg-[#181E2E] text-foreground">🔥 Ưu tiên</option>
             {PRIORITIES.map((p) => (
-              <option key={p.id} value={p.id}>
+              <option key={p.id} value={p.id} className="bg-[#181E2E] text-foreground">
                 {p.label}
               </option>
             ))}
@@ -615,24 +773,24 @@ export default function BoardPage() {
           <select
             value={timeFilter}
             onChange={(e) => setTimeFilter(e.target.value)}
-            className="h-8 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none cursor-pointer hover:border-line-strong transition-colors"
+            className="h-7 sm:h-8 rounded-lg border border-line bg-surface px-1.5 sm:px-2 text-[11px] sm:text-xs text-foreground focus:outline-none cursor-pointer hover:border-line-strong transition-colors"
           >
-            <option value="ALL">⏰ Mọi mốc thời gian</option>
-            <option value="TODAY">Hạn chót hôm nay</option>
-            <option value="THIS_WEEK">Hạn chót tuần này</option>
-            <option value="OVERDUE">⚠️ Đã quá hạn (Overdue)</option>
-            <option value="NO_DUE_DATE">Không có hạn chót</option>
+            <option value="ALL" className="bg-[#181E2E] text-foreground">⏰ Thời gian</option>
+            <option value="TODAY" className="bg-[#181E2E] text-foreground">Hôm nay</option>
+            <option value="THIS_WEEK" className="bg-[#181E2E] text-foreground">Tuần này</option>
+            <option value="OVERDUE" className="bg-[#181E2E] text-foreground">⚠️ Quá hạn</option>
+            <option value="NO_DUE_DATE" className="bg-[#181E2E] text-foreground">Không hạn</option>
           </select>
 
           {/* Type Filter */}
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="h-8 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none cursor-pointer hover:border-line-strong transition-colors"
+            className="h-7 sm:h-8 rounded-lg border border-line bg-surface px-1.5 sm:px-2 text-[11px] sm:text-xs text-foreground focus:outline-none cursor-pointer hover:border-line-strong transition-colors"
           >
-            <option value="ALL">🏷️ Tất cả loại</option>
+            <option value="ALL" className="bg-[#181E2E] text-foreground">🏷️ Loại task</option>
             {TASK_TYPES.map((t) => (
-              <option key={t.id} value={t.id}>
+              <option key={t.id} value={t.id} className="bg-[#181E2E] text-foreground">
                 {t.label}
               </option>
             ))}
@@ -640,30 +798,28 @@ export default function BoardPage() {
         </div>
 
         {/* Sorting & Clear Controls */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
           <div className="flex items-center gap-1 rounded-lg border border-line bg-surface p-0.5">
-            <span className="text-[11px] text-muted pl-2 font-medium">Sắp xếp:</span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="h-7 border-none bg-transparent px-2 text-xs text-foreground focus:outline-none cursor-pointer font-medium"
+              className="h-6 sm:h-7 border-none bg-surface px-1 sm:px-1.5 text-[11px] sm:text-xs text-foreground focus:outline-none cursor-pointer font-medium"
             >
-              <option value="MANUAL">Thứ tự kéo thả</option>
-              <option value="PRIORITY">Độ ưu tiên (Khẩn cấp $\rightarrow$ Thấp)</option>
-              <option value="DUE_DATE">Hạn chót (Gần nhất)</option>
-              <option value="CREATED_AT">Ngày tạo (Mới nhất)</option>
-              <option value="STORY_POINTS">Story Points (Điểm cao)</option>
-              <option value="TITLE">Tiêu đề (A-Z)</option>
+              <option value="MANUAL" className="bg-[#181E2E] text-foreground">Kéo thả</option>
+              <option value="PRIORITY" className="bg-[#181E2E] text-foreground">Ưu tiên</option>
+              <option value="DUE_DATE" className="bg-[#181E2E] text-foreground">Hạn chót</option>
+              <option value="CREATED_AT" className="bg-[#181E2E] text-foreground">Mới nhất</option>
+              <option value="STORY_POINTS" className="bg-[#181E2E] text-foreground">Points</option>
+              <option value="TITLE" className="bg-[#181E2E] text-foreground">Tên A-Z</option>
             </select>
 
             {sortBy !== "MANUAL" && (
               <button
                 onClick={() => setSortOrder((o) => (o === "asc" ? "desc" : "asc"))}
-                className="h-7 px-2 rounded hover:bg-surface-2 text-muted hover:text-foreground cursor-pointer flex items-center gap-1 text-[11px]"
-                title={sortOrder === "asc" ? "Đang tăng dần" : "Đang giảm dần"}
+                className="h-6 sm:h-7 px-1 sm:px-1.5 rounded hover:bg-surface-2 text-muted hover:text-foreground cursor-pointer flex items-center text-[11px]"
+                title={sortOrder === "asc" ? "Tăng dần" : "Giảm dần"}
               >
                 <ArrowUpDown className="h-3 w-3" />
-                {sortOrder === "asc" ? "Tăng" : "Giảm"}
               </button>
             )}
           </div>
@@ -673,13 +829,219 @@ export default function BoardPage() {
               size="sm"
               variant="ghost"
               onClick={resetFilters}
-              className="h-8 text-xs text-amber-400 hover:text-amber-300 hover:bg-amber-950/30 flex items-center gap-1 font-semibold"
+              className="h-7 sm:h-8 px-1.5 sm:px-2 text-[11px] sm:text-xs text-amber-600 hover:text-amber-700 hover:bg-amber-500/15 flex items-center gap-1 font-semibold"
             >
               <RotateCcw className="h-3 w-3" />
-              Xóa bộ lọc ({activeFilterCount})
+              <span className="hidden sm:inline">Xóa lọc ({activeFilterCount})</span>
+              <span className="sm:hidden">({activeFilterCount})</span>
             </Button>
           )}
         </div>
+      </div>
+
+      {/* Filter & Sorting Control Toolbar — Mobile compact trigger (< sm) */}
+      <div className="flex sm:hidden items-center gap-2 border-b border-line bg-surface/50 px-2.5 py-1.5 shrink-0">
+        <div className="relative flex-1 min-w-0">
+          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
+          <Input
+            placeholder="Tìm task..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="h-8 w-full pl-7 text-[11px] bg-surface border-line focus:border-accent"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() => setMobileFilterOpen(true)}
+          className="relative h-8 w-8 shrink-0 flex items-center justify-center rounded-lg border border-line bg-surface hover:bg-surface-2 text-muted hover:text-foreground cursor-pointer transition-colors"
+          title="Bộ lọc & sắp xếp"
+        >
+          <Filter className="h-4 w-4" />
+          {activeFilterCount > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-accent text-[9px] font-bold text-white flex items-center justify-center ring-2 ring-background">
+              {activeFilterCount}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* Mobile Filter & Sort Bottom Sheet (< sm) */}
+      {mobileFilterOpen && (
+        <div className="sm:hidden fixed inset-0 z-50 flex flex-col justify-end">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setMobileFilterOpen(false)}
+          />
+          <div className="relative bg-surface border-t border-line rounded-t-2xl p-4 max-h-[85vh] overflow-y-auto space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                <Filter className="h-4 w-4 text-accent" />
+                Bộ lọc &amp; Sắp xếp
+              </h3>
+              <button
+                onClick={() => setMobileFilterOpen(false)}
+                className="h-8 w-8 rounded-lg flex items-center justify-center text-muted hover:bg-surface-2 hover:text-foreground cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5">
+              <select
+                value={sprintFilter}
+                onChange={(e) => setSprintFilter(e.target.value)}
+                className="col-span-2 h-10 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none focus:border-accent"
+              >
+                <option value="ALL" className="bg-[#181E2E] text-foreground">🚀 Tất cả Sprint</option>
+                <option value="NONE" className="bg-[#181E2E] text-foreground">Chưa gán Sprint (Backlog)</option>
+                {data.sprints.map((s) => (
+                  <option key={s.id} value={s.id} className="bg-[#181E2E] text-foreground">
+                    {s.name} ({s.status === "ACTIVE" ? "Đang chạy" : s.status === "COMPLETED" ? "Đã xong" : "Kế hoạch"})
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={assigneeFilter}
+                onChange={(e) => setAssigneeFilter(e.target.value)}
+                className="h-10 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none focus:border-accent"
+              >
+                <option value="ALL" className="bg-[#181E2E] text-foreground">👤 Nhân sự</option>
+                <option value="UNASSIGNED" className="bg-[#181E2E] text-foreground">Chưa giao</option>
+                {data.members.map((m) => (
+                  <option key={m.user.id} value={m.user.id} className="bg-[#181E2E] text-foreground">
+                    {m.user.name}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="h-10 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none focus:border-accent"
+              >
+                <option value="ALL" className="bg-[#181E2E] text-foreground">📋 Trạng thái</option>
+                {STATUSES.map((s) => (
+                  <option key={s.id} value={s.id} className="bg-[#181E2E] text-foreground">
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={priorityFilter}
+                onChange={(e) => setPriorityFilter(e.target.value)}
+                className="h-10 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none focus:border-accent"
+              >
+                <option value="ALL" className="bg-[#181E2E] text-foreground">🔥 Ưu tiên</option>
+                {PRIORITIES.map((p) => (
+                  <option key={p.id} value={p.id} className="bg-[#181E2E] text-foreground">
+                    {p.label}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={timeFilter}
+                onChange={(e) => setTimeFilter(e.target.value)}
+                className="h-10 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none focus:border-accent"
+              >
+                <option value="ALL" className="bg-[#181E2E] text-foreground">⏰ Thời gian</option>
+                <option value="TODAY" className="bg-[#181E2E] text-foreground">Hôm nay</option>
+                <option value="THIS_WEEK" className="bg-[#181E2E] text-foreground">Tuần này</option>
+                <option value="OVERDUE" className="bg-[#181E2E] text-foreground">⚠️ Quá hạn</option>
+                <option value="NO_DUE_DATE" className="bg-[#181E2E] text-foreground">Không hạn</option>
+              </select>
+
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                className="h-10 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none focus:border-accent"
+              >
+                <option value="ALL" className="bg-[#181E2E] text-foreground">🏷️ Loại task</option>
+                {TASK_TYPES.map((t) => (
+                  <option key={t.id} value={t.id} className="bg-[#181E2E] text-foreground">
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <span className="text-[11px] font-semibold text-muted">Sắp xếp theo</span>
+              <div className="flex items-center gap-2">
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="h-10 flex-1 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none focus:border-accent"
+                >
+                  <option value="MANUAL" className="bg-[#181E2E] text-foreground">Kéo thả</option>
+                  <option value="PRIORITY" className="bg-[#181E2E] text-foreground">Ưu tiên</option>
+                  <option value="DUE_DATE" className="bg-[#181E2E] text-foreground">Hạn chót</option>
+                  <option value="CREATED_AT" className="bg-[#181E2E] text-foreground">Mới nhất</option>
+                  <option value="STORY_POINTS" className="bg-[#181E2E] text-foreground">Points</option>
+                  <option value="TITLE" className="bg-[#181E2E] text-foreground">Tên A-Z</option>
+                </select>
+
+                {sortBy !== "MANUAL" && (
+                  <button
+                    onClick={() => setSortOrder((o) => (o === "asc" ? "desc" : "asc"))}
+                    className="h-10 w-10 shrink-0 rounded-lg border border-line bg-surface hover:bg-surface-2 text-muted hover:text-foreground cursor-pointer flex items-center justify-center"
+                    title={sortOrder === "asc" ? "Tăng dần" : "Giảm dần"}
+                  >
+                    <ArrowUpDown className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 pt-1">
+              {activeFilterCount > 0 && (
+                <Button
+                  variant="outline"
+                  onClick={resetFilters}
+                  className="flex-1 h-10 text-xs font-semibold text-amber-600 border-amber-500/30 hover:bg-amber-500/15 flex items-center justify-center gap-1.5"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  Xóa lọc ({activeFilterCount})
+                </Button>
+              )}
+              <Button
+                onClick={() => setMobileFilterOpen(false)}
+                className="flex-1 h-10 text-xs font-bold bg-accent hover:bg-accent/90 text-white"
+              >
+                Áp dụng
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Column Quick Switcher Tab Bar (< lg) */}
+      <div className="lg:hidden flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 border-b border-line bg-surface/70 backdrop-blur-md overflow-x-auto no-scrollbar shrink-0">
+        {STATUSES.map((status) => {
+          const count = (tasksByStatus[status.id] ?? []).length;
+          const isSelected = activeMobileColumn === status.id;
+          return (
+            <button
+              key={status.id}
+              type="button"
+              onClick={() => scrollToMobileColumn(status.id)}
+              className={cn(
+                "flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] sm:text-xs font-bold whitespace-nowrap transition-all border shrink-0 cursor-pointer",
+                isSelected
+                  ? "bg-surface-3 border-accent text-accent shadow-sm ring-1 ring-accent/40"
+                  : "bg-surface-2/60 border-line text-muted hover:text-foreground"
+              )}
+            >
+              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: status.color }} />
+              <span>{status.label}</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono bg-surface text-muted border border-line/60">
+                {count}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Kanban Board Viewport */}
@@ -690,7 +1052,11 @@ export default function BoardPage() {
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex flex-1 gap-4 overflow-x-auto p-5">
+        <div
+          ref={boardContainerRef}
+          onScroll={handleBoardScroll}
+          className="flex flex-1 min-h-0 gap-3 sm:gap-4 overflow-x-auto p-2 sm:p-4 snap-x snap-mandatory touch-pan-x no-scrollbar overflow-y-hidden select-none pb-3"
+        >
           {STATUSES.map((status) => (
             <BoardColumn
               key={status.id}
@@ -702,6 +1068,8 @@ export default function BoardPage() {
                 setNewTaskOpen(true);
               }}
               onTaskClick={(id) => setOpenTaskId(id)}
+              members={data.members}
+              onAssign={isUserViewer ? undefined : quickAssign}
             />
           ))}
         </div>
@@ -715,12 +1083,21 @@ export default function BoardPage() {
       {openTaskId && (
         <TaskDialog
           projectId={projectId}
+          projectName={data.project.name}
           taskId={openTaskId}
           tasks={data.tasks}
           members={data.members}
           labels={data.labels}
           sprints={data.sprints}
-          onClose={() => setOpenTaskId(null)}
+          onClose={() => {
+            setOpenTaskId(null);
+            // Dọn ?taskId= khỏi URL khi đóng để link không còn trỏ vào task cũ
+            if (urlTaskId) {
+              const url = new URL(window.location.href);
+              url.searchParams.delete("taskId");
+              window.history.replaceState({}, "", url.toString());
+            }
+          }}
           onChanged={loadBoard}
         />
       )}

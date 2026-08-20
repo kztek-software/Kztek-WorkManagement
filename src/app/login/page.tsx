@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Shield, ArrowRight } from "lucide-react";
+import { Shield, ArrowRight, AlertCircle, X, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,21 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Tự động nhận diện lỗi từ URL (khi gửi form HTML truyền thống thất bại)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const errParam = params.get("error");
+      if (errParam === "invalid_credentials") {
+        setError("Tài khoản hoặc mật khẩu không chính xác. Vui lòng kiểm tra lại.");
+      } else if (errParam === "missing_fields") {
+        setError("Vui lòng nhập đầy đủ tài khoản và mật khẩu.");
+      } else if (errParam) {
+        setError("Đăng nhập không thành công. Vui lòng thử lại.");
+      }
+    }
+  }, []);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
@@ -22,18 +37,22 @@ export default function LoginPage() {
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
+        credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error ?? "Đăng nhập thất bại");
+        setError(data.error ?? "Tài khoản hoặc mật khẩu không chính xác.");
         return;
       }
-      router.push("/");
-      router.refresh();
+      if (data.token) {
+        document.cookie = `flowboard_session=${data.token}; path=/; max-age=604800; SameSite=Lax`;
+        try { localStorage.setItem("flowboard_session", data.token); } catch {}
+      }
+      window.location.href = "/";
     } catch {
-      setError("Lỗi kết nối. Vui lòng thử lại.");
+      setError("Lỗi kết nối máy chủ. Vui lòng kiểm tra lại mạng.");
     } finally {
       setLoading(false);
     }
@@ -47,15 +66,19 @@ export default function LoginPage() {
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
+        credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: account, password: pass }),
       });
+      const d = await res.json().catch(() => ({}));
       if (res.ok) {
-        router.push("/");
-        router.refresh();
+        if (d.token) {
+          document.cookie = `flowboard_session=${d.token}; path=/; max-age=604800; SameSite=Lax`;
+          try { localStorage.setItem("flowboard_session", d.token); } catch {}
+        }
+        window.location.href = "/";
       } else {
-        const d = await res.json().catch(() => ({}));
-        setError(d.error ?? "Không đăng nhập được tài khoản");
+        setError(d.error ?? "Không thể đăng nhập vào tài khoản này.");
       }
     } catch {
       setError("Lỗi kết nối máy chủ");
@@ -73,18 +96,50 @@ export default function LoginPage() {
             KZ
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-white">KZTEK Work Management</h1>
+            <h1 className="text-xl font-bold tracking-tight text-foreground">KZTEK Work Management</h1>
             <p className="text-xs text-muted mt-0.5">Hệ thống điều hành & quản lý công việc nội bộ</p>
           </div>
         </div>
 
         {/* Login Card */}
         <div className="rounded-2xl border border-line bg-surface p-6 shadow-xl space-y-4">
-          <form onSubmit={handleSubmit} className="space-y-3.5">
+          {/* Thông báo lỗi đăng nhập nổi bật */}
+          {error && (
+            <div
+              className="relative flex items-start gap-2.5 rounded-xl border border-accent/30 bg-accent-subtle p-3.5 text-xs text-foreground shadow-md animate-in fade-in slide-in-from-top-2 duration-200"
+              role="alert"
+            >
+              <AlertCircle className="h-4 w-4 shrink-0 text-accent mt-0.5" />
+              <div className="flex-1 space-y-1">
+                <div className="font-bold text-accent">Đăng nhập không thành công</div>
+                <div className="text-[11px] text-foreground/90 leading-relaxed">{error}</div>
+                <div className="text-[10px] text-accent/70 pt-0.5">
+                  💡 Gợi ý: Kiểm tra lại email/mật khẩu, hoặc bấm nút đăng nhập 1-Click bên dưới.
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setError("")}
+                className="text-accent hover:text-foreground transition-colors p-0.5 rounded cursor-pointer"
+                title="Đóng thông báo"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+
+          <form
+            action="/api/auth/login"
+            method="POST"
+            onSubmit={handleSubmit}
+            suppressHydrationWarning
+            className="space-y-3.5"
+          >
             <div className="space-y-1.5">
               <Label htmlFor="email" className="text-xs font-semibold">Tài khoản hoặc Email</Label>
               <Input
                 id="email"
+                name="email"
                 type="text"
                 placeholder="admin hoặc email@kztek.net"
                 value={email}
@@ -97,10 +152,10 @@ export default function LoginPage() {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password" className="text-xs font-semibold">Mật khẩu</Label>
-                <span className="text-[11px] text-muted">Admin: Kztek@2026</span>
               </div>
               <Input
                 id="password"
+                name="password"
                 type="password"
                 placeholder="••••••••"
                 value={password}
@@ -109,12 +164,6 @@ export default function LoginPage() {
                 required
               />
             </div>
-
-            {error && (
-              <p className="rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-400 border border-red-500/20">
-                {error}
-              </p>
-            )}
 
             <Button type="submit" className="w-full h-9 text-xs font-bold" disabled={loading}>
               {loading ? "Đang xử lý..." : "Đăng nhập hệ thống"}
@@ -130,11 +179,11 @@ export default function LoginPage() {
               type="button"
               onClick={() => quickLogin("admin", "Kztek@2026")}
               disabled={loading}
-              className="w-full flex items-center justify-between p-2.5 rounded-xl border border-orange-500/30 bg-orange-950/20 hover:bg-orange-950/40 text-orange-300 text-xs font-semibold transition-all cursor-pointer"
+              className="w-full flex items-center justify-between p-2.5 rounded-xl border border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 text-xs font-semibold transition-all cursor-pointer"
             >
               <div className="flex items-center gap-2">
-                <Shield className="h-4 w-4 text-orange-400" />
-                <span>Admin Mặc Định (admin / Kztek@2026)</span>
+                <Shield className="h-4 w-4 text-orange-600" />
+                <span>Admin Mặc Định</span>
               </div>
               <ArrowRight className="h-3.5 w-3.5" />
             </button>

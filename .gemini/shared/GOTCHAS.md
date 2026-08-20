@@ -35,10 +35,22 @@
 | G005 | `md_to_docx_kztek.py` báo `✗ PDF thất bại` (RPC failed) nhưng PDF **vẫn được tạo hợp lệ** | `[SCRIPT]` | 2026-07-27 |
 | G006 | Tool "graphify" tên package PyPI thật là `graphifyy` (2 chữ y) — `pip install graphify` báo lỗi | `[CONFIG]` | 2026-07-29 |
 | G007 | Edit tool báo "updated successfully" nhưng **không ghi vào disk** trên Windows trong 1 số branch context | `[AGENT-LOOP]` | 2026-08-04 |
+| G008 | Next.js 16 App Router — 2 thư mục dynamic param cùng cấp (`[code]` và `[ticketId]`) gây lỗi Ambiguous Routes → Internal Server Error | `[CONFIG]` | 2026-08-18 |
 
-**Category hiện có:** `[SCRIPT]` (lỗi Python script/tool) · `[ENCODING]` (lỗi mã hóa ký tự) · `[UI-BINDING]` (lỗi Avalonia/WinForms binding) · `[CONFIG]` (cài đặt sai, tên package sai) · `[GIT]` (git workflow) · `[AGENT-LOOP]` (agent bị stuck/loop)
+**Category hiện có:** `[SCRIPT]` (lỗi Python script/tool) · `[ENCODING]` (lỗi mã hóa ký tự) · `[UI-BINDING]` (lỗi Avalonia/WinForms binding) · `[CONFIG]` (cài đặt sai, tên package sai, cấu hình routing) · `[GIT]` (git workflow) · `[AGENT-LOOP]` (agent bị stuck/loop)
 
 ---
+
+## G008 — Next.js 16 App Router: Trùng dynamic route cùng cấp (`[code]` vs `[ticketId]`) gây Ambiguous Routes & Internal Server Error
+**Category:** `[CONFIG]`
+
+**Ngày phát hiện:** 2026-08-18
+**Môi trường:** Next.js 16.3.1 (Turbopack), App Router
+**Vấn đề:** Khi điều hướng trang bất kỳ (như `/projects/.../settings`), trình duyệt trả về `Internal Server Error` toàn trang (HTTP 500).
+**Nguyên nhân:** Có 2 thư mục dynamic segment cùng cấp trong `src/app/api/tickets/`: `[code]` và `[ticketId]`. Next.js 16 không thể phân biệt route pattern `/api/tickets/[*]` nên báo `Error: Ambiguous app routes detected` và ngắt runtime.
+**Cách xử lý:** Hợp nhất thành 1 route dynamic duy nhất (`/api/tickets/[ticketId]`), bên trong code hỗ trợ tìm kiếm linh hoạt theo cả ID hoặc TrackingCode (`getTicketById()` fallback sang `getTicketByTrackingCode()`). Xóa bỏ thư mục trùng `[code]` (dùng `Remove-Item -LiteralPath ...` trên PowerShell).
+**Lần đầu gặp:** Khi triển khai Phân quyền và Fix Bug Permission UI (2026-08-18).
+**Không cần làm lại:** Không bao giờ tạo 2 folder dynamic cùng cấp trong Next.js App Router (VD: `[id]` và `[slug]`).
 
 ## G004 — `KzPasswordTextBox`: binding `Text` phải `Mode=TwoWay` tường minh, Watermark có default, CornerRadius/FontSize không forward
 **Category:** `[UI-BINDING]`

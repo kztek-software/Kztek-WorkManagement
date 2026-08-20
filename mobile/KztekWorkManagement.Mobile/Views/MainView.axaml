@@ -1,0 +1,118 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:KztekWorkManagement.Mobile.ViewModels"
+             xmlns:views="using:KztekWorkManagement.Mobile.Views"
+             x:Class="KztekWorkManagement.Mobile.Views.MainView"
+             x:DataType="vm:MainViewModel">
+
+  <Grid RowDefinitions="Auto,*,Auto" Background="{DynamicResource KzBackground}">
+
+    <!-- Mobile Top Header Bar -->
+    <Border Grid.Row="0" Background="{DynamicResource KzPrimary}" Padding="16,12" IsVisible="{Binding IsLoggedIn}">
+      <Grid ColumnDefinitions="Auto,*,Auto">
+        
+        <!-- Brand Logo Icon -->
+        <Border Grid.Column="0" Background="{DynamicResource KzAccent}" Width="32" Height="32" CornerRadius="8" Margin="0,0,10,0">
+          <TextBlock Text="K" Foreground="#FFFFFF" FontWeight="Bold" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Border>
+
+        <!-- Dynamic Header Title -->
+        <TextBlock Grid.Column="1" Text="{Binding HeaderTitle}" Foreground="#FFFFFF" FontSize="16" FontWeight="Bold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+
+        <!-- Notification Bell Quick Action -->
+        <Button Grid.Column="2" Classes="kz-nav-tab" Command="{Binding NavigateTabCommand}" CommandParameter="NOTIFICATIONS" Padding="6">
+          <Grid>
+            <TextBlock Text="🔔" FontSize="16" VerticalAlignment="Center" />
+            <Border Background="{DynamicResource KzAccent}" Width="14" Height="14" CornerRadius="7" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-4,-4,0"
+                    IsVisible="{Binding NotificationsVM.UnreadCount}">
+              <TextBlock Text="{Binding NotificationsVM.UnreadCount}" Foreground="#FFFFFF" FontSize="9" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+          </Grid>
+        </Button>
+
+      </Grid>
+    </Border>
+
+    <!-- Main Content Host Area -->
+    <ContentControl Grid.Row="1" Content="{Binding CurrentView}">
+      <ContentControl.DataTemplates>
+        <DataTemplate DataType="{x:Type vm:LoginViewModel}">
+          <views:LoginView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:DashboardViewModel}">
+          <views:DashboardView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ProjectsViewModel}">
+          <views:ProjectsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:KanbanBoardViewModel}">
+          <views:KanbanBoardView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:TaskDetailViewModel}">
+          <views:TaskDetailView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:CreateTaskViewModel}">
+          <views:CreateTaskView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:TicketsViewModel}">
+          <views:TicketsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:NotificationsViewModel}">
+          <views:NotificationsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
+          <views:SettingsView />
+        </DataTemplate>
+      </ContentControl.DataTemplates>
+    </ContentControl>
+
+    <!-- Mobile Bottom Navigation Bar (Thumb Zone) -->
+    <Border Grid.Row="2" Background="#FFFFFF" BorderBrush="{DynamicResource KzBorder}" BorderThickness="0,1,0,0" Padding="8,6"
+            IsVisible="{Binding IsLoggedIn}">
+      <Grid ColumnDefinitions="*,*,*,*,*">
+        
+        <!-- Tab 1: Dashboard -->
+        <Button Grid.Column="0" Classes="kz-nav-tab" Command="{Binding NavigateTabCommand}" CommandParameter="DASHBOARD">
+          <StackPanel Spacing="2" HorizontalAlignment="Center">
+            <TextBlock Text="📊" FontSize="18" HorizontalAlignment="Center" />
+            <TextBlock Text="Tổng quan" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource KzTextPrimary}" HorizontalAlignment="Center" />
+          </StackPanel>
+        </Button>
+
+        <!-- Tab 2: Board -->
+        <Button Grid.Column="1" Classes="kz-nav-tab" Command="{Binding NavigateTabCommand}" CommandParameter="BOARD">
+          <StackPanel Spacing="2" HorizontalAlignment="Center">
+            <TextBlock Text="📋" FontSize="18" HorizontalAlignment="Center" />
+            <TextBlock Text="Bảng việc" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource KzTextPrimary}" HorizontalAlignment="Center" />
+          </StackPanel>
+        </Button>
+
+        <!-- Tab 3: Tickets -->
+        <Button Grid.Column="2" Classes="kz-nav-tab" Command="{Binding NavigateTabCommand}" CommandParameter="TICKETS">
+          <StackPanel Spacing="2" HorizontalAlignment="Center">
+            <TextBlock Text="🎫" FontSize="18" HorizontalAlignment="Center" />
+            <TextBlock Text="Báo lỗi" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource KzTextPrimary}" HorizontalAlignment="Center" />
+          </StackPanel>
+        </Button>
+
+        <!-- Tab 4: Notifications -->
+        <Button Grid.Column="3" Classes="kz-nav-tab" Command="{Binding NavigateTabCommand}" CommandParameter="NOTIFICATIONS">
+          <StackPanel Spacing="2" HorizontalAlignment="Center">
+            <TextBlock Text="🔔" FontSize="18" HorizontalAlignment="Center" />
+            <TextBlock Text="Thông báo" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource KzTextPrimary}" HorizontalAlignment="Center" />
+          </StackPanel>
+        </Button>
+
+        <!-- Tab 5: Settings -->
+        <Button Grid.Column="4" Classes="kz-nav-tab" Command="{Binding NavigateTabCommand}" CommandParameter="SETTINGS">
+          <StackPanel Spacing="2" HorizontalAlignment="Center">
+            <TextBlock Text="⚙️" FontSize="18" HorizontalAlignment="Center" />
+            <TextBlock Text="Tài khoản" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource KzTextPrimary}" HorizontalAlignment="Center" />
+          </StackPanel>
+        </Button>
+
+      </Grid>
+    </Border>
+
+  </Grid>
+</UserControl>

@@ -45,6 +45,7 @@ const updateConfigSchema = z.object({
       hotline: z.string().optional(),
       supportEmail: z.string().optional(),
       website: z.string().optional(),
+      appUrl: z.string().optional(),
     })
     .optional(),
   notifications: z

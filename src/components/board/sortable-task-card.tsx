@@ -1,16 +1,19 @@
-"use client";
-
+import { memo } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { TaskDto } from "@/lib/types";
+import type { TaskDto, MemberDto } from "@/lib/types";
 import { TaskCard } from "./task-card";
 
-export function SortableTaskCard({
+function SortableTaskCardComponent({
   task,
   onClick,
+  members,
+  onAssign,
 }: {
   task: TaskDto;
   onClick: () => void;
+  members?: MemberDto[];
+  onAssign?: (taskId: string, userId: string | null) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
@@ -19,7 +22,7 @@ export function SortableTaskCard({
   const style: React.CSSProperties = {
     transform: CSS.Translate.toString(transform),
     transition: transition || "transform 220ms cubic-bezier(0.2, 0, 0, 1), opacity 150ms ease",
-    touchAction: "none",
+    touchAction: "manipulation",
     willChange: transform ? "transform, opacity" : undefined,
   };
 
@@ -38,7 +41,16 @@ export function SortableTaskCard({
           : "hover:-translate-y-0.5 hover:shadow-md"
       }`}
     >
-      <TaskCard task={task} />
+      <TaskCard task={task} members={members} onAssign={onAssign} />
     </div>
   );
 }
+
+export const SortableTaskCard = memo(SortableTaskCardComponent, (prev, next) => {
+  return (
+    prev.task === next.task &&
+    prev.onClick === next.onClick &&
+    prev.members === next.members &&
+    prev.onAssign === next.onAssign
+  );
+});

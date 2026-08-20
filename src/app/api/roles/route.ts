@@ -6,7 +6,7 @@ import {
   PERMISSION_CATEGORIES,
   ALL_PERMISSION_KEYS,
 } from "@/lib/permissions";
-import { ensureDefaultRoles } from "@/lib/permissions-server";
+import { checkUserPermission, ensureDefaultRoles, invalidateRolePermissionsCache } from "@/lib/permissions-server";
 
 const createRoleSchema = z.object({
   key: z
@@ -30,13 +30,15 @@ export async function GET() {
   // Khởi tạo các vai trò mẫu nếu DB rỗng
   await ensureDefaultRoles();
 
-  const roleDefs = await prisma.roleDefinition.findMany({
-    orderBy: [{ isSystem: "desc" }, { createdAt: "asc" }],
-  });
-
-  // Đếm số lượng thành viên đang giữ từng vai trò
-  const users = await prisma.user.findMany({ select: { role: true } });
-  const members = await prisma.projectMember.findMany({ select: { role: true } });
+  // 3 query độc lập — chạy song song thay vì tuần tự
+  const [roleDefs, users, members] = await Promise.all([
+    prisma.roleDefinition.findMany({
+      orderBy: [{ isSystem: "desc" }, { createdAt: "asc" }],
+    }),
+    // Đếm số lượng thành viên đang giữ từng vai trò
+    prisma.user.findMany({ select: { role: true } }),
+    prisma.projectMember.findMany({ select: { role: true } }),
+  ]);
 
   const roleCounts: Record<string, number> = {};
   users.forEach((u) => {
@@ -81,8 +83,9 @@ export async function POST(req: NextRequest) {
   if (!user) {
     return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
   }
-  if (user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Chỉ Quản trị viên (Admin) mới có quyền tạo vai trò mới" }, { status: 403 });
+  const permCheck = await checkUserPermission(user.id, "roles.manage", undefined, user.role);
+  if (!permCheck.allowed) {
+    return NextResponse.json({ error: "Chỉ Quản trị viên mới có quyền tạo vai trò mới" }, { status: 403 });
   }
 
   const body = await req.json().catch(() => null);
@@ -99,6 +102,9 @@ export async function POST(req: NextRequest) {
   if (existing) {
     return NextResponse.json({ error: `Mã vai trò "${key}" đã tồn tại trong hệ thống` }, { status: 409 });
   }
+
+  // Xóa cache khi tạo role mới để không ảnh hưởng tới lookup cũ
+  invalidateRolePermissionsCache();
 
   const newRole = await prisma.roleDefinition.create({
     data: {

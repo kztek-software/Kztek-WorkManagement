@@ -56,6 +56,13 @@ type TeamItem = {
   members: { id: string; name: string; email: string; avatarColor: string; title: string | null }[];
 };
 
+type RoleOption = {
+  id: string;
+  key: string;
+  name: string;
+  color?: string;
+};
+
 export function MemberDialog({
   projectId,
   open,
@@ -70,6 +77,7 @@ export function MemberDialog({
   const [members, setMembers] = useState<MemberInfo[]>([]);
   const [nonMembers, setNonMembers] = useState<NonMember[]>([]);
   const [teams, setTeams] = useState<TeamItem[]>([]);
+  const [availableRoles, setAvailableRoles] = useState<RoleOption[]>([]);
   const [currentRole, setCurrentRole] = useState<string>("MEMBER");
   const [loading, setLoading] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -91,6 +99,7 @@ export function MemberDialog({
         setMembers(data.members || []);
         setNonMembers(data.nonMembers || []);
         setTeams(data.teams || []);
+        setAvailableRoles(data.roles || []);
         setCurrentRole(data.currentRole || "MEMBER");
 
         if (data.nonMembers?.length > 0) {
@@ -135,6 +144,9 @@ export function MemberDialog({
       setSuccess("Đã thêm thành viên mới vào dự án!");
       loadData();
       onMembersChanged?.();
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("permissions-updated"));
+      }
     } catch {
       setError("Lỗi kết nối máy chủ");
     } finally {
@@ -162,6 +174,9 @@ export function MemberDialog({
       setSuccess(data.message || "Đã thêm các thành viên phòng ban vào dự án!");
       loadData();
       onMembersChanged?.();
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("permissions-updated"));
+      }
     } catch {
       setError("Lỗi kết nối máy chủ");
     } finally {
@@ -186,6 +201,9 @@ export function MemberDialog({
       setSuccess("Đã cập nhật phân quyền thành công!");
       loadData();
       onMembersChanged?.();
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("permissions-updated"));
+      }
     } catch {
       setError("Lỗi kết nối máy chủ");
     }
@@ -207,10 +225,24 @@ export function MemberDialog({
       setSuccess(`Đã xóa "${name}" khỏi dự án`);
       loadData();
       onMembersChanged?.();
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("permissions-updated"));
+      }
     } catch {
       setError("Lỗi kết nối máy chủ");
     }
   }
+
+  const roleOptions = availableRoles.length > 0
+    ? availableRoles
+    : [
+        { key: "ADMIN", name: "Quản trị viên (Admin)" },
+        { key: "TECH_LEAD", name: "Trưởng nhóm kỹ thuật (Tech Lead)" },
+        { key: "DEVELOPER", name: "Lập trình viên (Developer)" },
+        { key: "TESTER", name: "Kiểm thử viên (QA / QC)" },
+        { key: "MEMBER", name: "Thành viên (Member)" },
+        { key: "VIEWER", name: "Người xem (Viewer)" },
+      ];
 
   const selectedTeamData = teams.find((t) => t.id === selectedTeamId);
   const selectedTeamAvailableCount = selectedTeamData
@@ -228,14 +260,14 @@ export function MemberDialog({
         </DialogHeader>
 
         {error && (
-          <div className="flex items-center gap-2 rounded-xl bg-red-950/50 p-2.5 text-xs text-red-300 border border-red-800/40">
+          <div className="flex items-center gap-2 rounded-xl bg-accent/10 p-2.5 text-xs text-accent border border-accent/30">
             <AlertCircle className="h-4 w-4 shrink-0" />
             {error}
           </div>
         )}
 
         {success && (
-          <div className="flex items-center gap-2 rounded-xl bg-emerald-950/50 p-2.5 text-xs text-emerald-300 border border-emerald-800/40">
+          <div className="flex items-center gap-2 rounded-xl bg-emerald-500/15 p-2.5 text-xs text-emerald-600 border border-emerald-500/30">
             <Check className="h-4 w-4 shrink-0" />
             {success}
           </div>
@@ -295,9 +327,11 @@ export function MemberDialog({
                       onChange={(e) => setSelectedRole(e.target.value as ProjectRole)}
                       className="h-8.5 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none cursor-pointer"
                     >
-                      <option value="MEMBER">Thành viên (Member)</option>
-                      <option value="ADMIN">Quản trị viên (Admin)</option>
-                      <option value="VIEWER">Người xem (Viewer)</option>
+                      {roleOptions.map((r) => (
+                        <option key={r.key} value={r.key}>
+                          {r.name}
+                        </option>
+                      ))}
                     </select>
 
                     <Button
@@ -314,9 +348,9 @@ export function MemberDialog({
                   {selectedTeamData && (
                     <div className="text-[11px] text-muted flex items-center gap-2 px-1">
                       <span>• Tổng: {selectedTeamData.members.length} thành viên</span>
-                      <span>• Chưa tham gia: <strong className="text-emerald-400">{selectedTeamAvailableCount}</strong> người</span>
+                      <span>• Chưa tham gia: <strong className="text-emerald-600">{selectedTeamAvailableCount}</strong> người</span>
                       {selectedTeamAvailableCount === 0 && (
-                        <span className="text-amber-400 font-semibold">(Tất cả đã có mặt trong dự án)</span>
+                        <span className="text-amber-600 font-semibold">(Tất cả đã có mặt trong dự án)</span>
                       )}
                     </div>
                   )}
@@ -345,9 +379,11 @@ export function MemberDialog({
                         onChange={(e) => setSelectedRole(e.target.value as ProjectRole)}
                         className="h-8.5 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none cursor-pointer"
                       >
-                        <option value="MEMBER">Thành viên (Member)</option>
-                        <option value="ADMIN">Quản trị viên (Admin)</option>
-                        <option value="VIEWER">Người xem (Viewer)</option>
+                        {roleOptions.map((r) => (
+                          <option key={r.key} value={r.key}>
+                            {r.name}
+                          </option>
+                        ))}
                       </select>
 
                       <Button
@@ -384,6 +420,9 @@ export function MemberDialog({
             <div className="divide-y divide-line rounded-xl border border-line bg-surface max-h-72 overflow-y-auto">
               {members.map((m) => {
                 const isOwner = m.role === "OWNER";
+                const roleObj = roleOptions.find((ro) => ro.key === m.role);
+                const roleDisplayName = roleObj ? roleObj.name : m.role;
+
                 return (
                   <div key={m.id} className="flex items-center justify-between p-3 gap-3">
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -396,7 +435,7 @@ export function MemberDialog({
                         <div className="text-xs font-bold text-foreground truncate flex items-center gap-1.5">
                           <span>{m.user.name}</span>
                           {isOwner && (
-                            <span className="rounded bg-red-500/15 border border-red-500/30 px-1.5 py-0.1 text-[9px] font-black text-red-400">
+                            <span className="rounded bg-accent/15 border border-accent/30 px-1.5 py-0.1 text-[9px] font-black text-accent">
                               Chủ dự án
                             </span>
                           )}
@@ -426,21 +465,23 @@ export function MemberDialog({
                           onChange={(e) => handleUpdateRole(m.userId, e.target.value as ProjectRole)}
                           className="h-7.5 rounded-lg border border-line bg-surface-2 px-2 text-xs font-medium text-foreground focus:outline-none cursor-pointer"
                         >
-                          <option value="ADMIN">Quản trị viên (Admin)</option>
-                          <option value="MEMBER">Thành viên (Member)</option>
-                          <option value="VIEWER">Người xem (Viewer)</option>
+                          {roleOptions.map((r) => (
+                            <option key={r.key} value={r.key}>
+                              {r.name}
+                            </option>
+                          ))}
                         </select>
                       ) : (
                         <span className="rounded-full bg-surface-2 px-2.5 py-1 text-xs font-medium text-muted flex items-center gap-1 border border-line">
                           <Shield className="h-3 w-3" />
-                          {m.role}
+                          {roleDisplayName}
                         </span>
                       )}
 
                       {hasManageRight && !isOwner && (
                         <button
                           onClick={() => handleRemoveMember(m.userId, m.user.name)}
-                          className="rounded p-1.5 text-muted hover:bg-red-950/40 hover:text-red-400 cursor-pointer transition-colors"
+                          className="rounded p-1.5 text-muted hover:bg-accent/10 hover:text-accent cursor-pointer transition-colors"
                           title="Xóa khỏi dự án"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -456,9 +497,9 @@ export function MemberDialog({
           {/* Role explanation table */}
           <div className="rounded-lg bg-surface-2/40 p-3 text-[11px] text-muted space-y-1 border border-line/50">
             <div className="font-semibold text-foreground">💡 Giải thích phân quyền:</div>
-            <div>• <strong className="text-red-400">OWNER / ADMIN</strong>: Toàn quyền quản lý thành viên, tạo sprint, xóa task và cấu hình.</div>
+            <div>• <strong className="text-accent">OWNER / ADMIN</strong>: Toàn quyền quản lý thành viên, tạo sprint, xóa task và cấu hình.</div>
             <div>• <strong className="text-accent">MEMBER</strong>: Tạo task, kéo thả cập nhật trạng thái, bình luận và checklist.</div>
-            <div>• <strong className="text-slate-400">VIEWER</strong>: Chỉ xem dữ liệu, không được tạo mới, sửa đổi hoặc kéo thả task.</div>
+            <div>• <strong className="text-slate-600">VIEWER</strong>: Chỉ xem dữ liệu, không được tạo mới, sửa đổi hoặc kéo thả task.</div>
           </div>
         </div>
       </DialogContent>

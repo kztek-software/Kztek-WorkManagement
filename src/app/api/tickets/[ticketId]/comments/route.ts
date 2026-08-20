@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getTicketByTrackingCode, addTicketComment } from "@/lib/tickets";
+import { getTicketById, getTicketByTrackingCode, addTicketComment } from "@/lib/tickets";
 
 const commentSchema = z.object({
   authorName: z.string().min(1, "Vui lòng nhập tên người gửi").max(100),
@@ -12,11 +12,15 @@ const commentSchema = z.object({
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ code: string }> }
+  { params }: { params: Promise<{ ticketId: string }> }
 ) {
   try {
-    const { code } = await params;
-    const ticket = await getTicketByTrackingCode(code);
+    const { ticketId } = await params;
+    let ticket = await getTicketById(ticketId);
+    if (!ticket) {
+      ticket = await getTicketByTrackingCode(ticketId);
+    }
+
     if (!ticket) {
       return NextResponse.json({ error: "Không tìm thấy ticket" }, { status: 404 });
     }

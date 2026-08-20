@@ -1,0 +1,66 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:KztekWorkManagement.Mobile.ViewModels"
+             x:Class="KztekWorkManagement.Mobile.Views.LoginView"
+             x:DataType="vm:LoginViewModel">
+
+  <ScrollViewer Background="{DynamicResource KzBackground}">
+    <Grid RowDefinitions="Auto,*" Margin="24,40,24,24" MaxWidth="440" HorizontalAlignment="Center">
+      
+      <!-- Brand Header -->
+      <StackPanel Grid.Row="0" Spacing="8" HorizontalAlignment="Center" Margin="0,0,0,32">
+        <Border Background="{DynamicResource KzPrimary}" Width="64" Height="64" CornerRadius="16" HorizontalAlignment="Center">
+          <TextBlock Text="K" Foreground="#FFFFFF" FontSize="32" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Border>
+        <TextBlock Text="KZTEK WORK" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource KzPrimary}" HorizontalAlignment="Center" LetterSpacing="1" />
+        <TextBlock Text="Hệ Thống Quản Trị Công Việc &amp; Dự Án" FontSize="13" Foreground="{DynamicResource KzTextSecondary}" HorizontalAlignment="Center" />
+      </StackPanel>
+
+      <!-- Login Card Form -->
+      <Border Grid.Row="1" Classes="kz-card" Padding="24" Background="#FFFFFF">
+        <StackPanel Spacing="18">
+          
+          <TextBlock Text="Đăng nhập tài khoản" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,4" />
+
+          <!-- Email / Username Input -->
+          <StackPanel Spacing="6">
+            <TextBlock Text="Tài khoản / Email" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource KzTextSecondary}" />
+            <TextBox Classes="kz-input" Text="{Binding Email, Mode=TwoWay}" Watermark="admin@kztek.net hoặc tên tài khoản" />
+          </StackPanel>
+
+          <!-- Password Input -->
+          <StackPanel Spacing="6">
+            <TextBlock Text="Mật khẩu" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource KzTextSecondary}" />
+            <TextBox Classes="kz-input" PasswordChar="●" Text="{Binding Password, Mode=TwoWay}" Watermark="Nhập mật khẩu" />
+          </StackPanel>
+
+          <!-- Server URL Config Input -->
+          <StackPanel Spacing="6">
+            <TextBlock Text="Địa chỉ Máy chủ API (Server URL)" FontSize="12" FontWeight="Medium" Foreground="{DynamicResource KzTextSecondary}" />
+            <TextBox Classes="kz-input" FontSize="12" Text="{Binding ServerUrl, Mode=TwoWay}" Watermark="http://localhost:3000 hoặc IP máy chủ" />
+          </StackPanel>
+
+          <!-- Error Alert -->
+          <Border Background="#FEE2E2" BorderBrush="#F87171" BorderThickness="1" CornerRadius="8" Padding="12"
+                  IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+            <TextBlock Text="{Binding ErrorMessage}" Foreground="#B91C1C" FontSize="13" TextWrapping="Wrap" />
+          </Border>
+
+          <!-- Login Button -->
+          <Button Classes="kz-btn-primary" Command="{Binding LoginCommand}" IsEnabled="{Binding !IsBusy}" Margin="0,8,0,0">
+            <Grid>
+              <TextBlock Text="ĐĂNG NHẬP" IsVisible="{Binding !IsBusy}" />
+              <TextBlock Text="Đang xác thực..." IsVisible="{Binding IsBusy}" />
+            </Grid>
+          </Button>
+
+          <!-- Footer Demo Note -->
+          <TextBlock Text="Hỗ trợ tài khoản: admin@kztek.net (Mật khẩu: Kztek@2026)" 
+                     FontSize="11" Foreground="{DynamicResource KzTextMuted}" TextAlignment="Center" Margin="0,8,0,0" TextWrapping="Wrap" />
+
+        </StackPanel>
+      </Border>
+
+    </Grid>
+  </ScrollViewer>
+</UserControl>

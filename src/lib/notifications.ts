@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { publish } from "@/lib/bus";
+import { getAppBaseUrl } from "@/lib/system-config";
 import {
   sendTaskAssignedEmail,
   sendStatusChangedEmail,
@@ -8,7 +9,7 @@ import {
   sendMail,
 } from "@/lib/mail";
 
-export type NotificationType = "ASSIGNED" | "STATUS_CHANGED" | "COMMENTED" | "MENTIONED" | "DUE_SOON";
+export type NotificationType = "ASSIGNED" | "STATUS_CHANGED" | "COMMENTED" | "MENTIONED" | "DUE_SOON" | "TICKET_CREATED" | "TICKET_UPDATED";
 
 export type CreateNotificationParams = {
   userId: string;
@@ -80,6 +81,7 @@ export async function notifyTaskAssigned(params: {
       prisma.task.findUnique({
         where: { id: params.taskId },
         select: {
+          id: true,
           number: true,
           title: true,
           description: true,
@@ -107,6 +109,7 @@ export async function notifyTaskAssigned(params: {
     }
 
     const taskCode = `${project.key}-${task.number}`;
+    const directTaskUrl = `${getAppBaseUrl()}/projects/${project.id}/board?taskId=${task.id}`;
 
     // 1. Tạo In-App Notification trong Database
     await prisma.notification.create({
@@ -116,7 +119,7 @@ export async function notifyTaskAssigned(params: {
         type: "ASSIGNED",
         title: "Giao việc mới",
         message: `${actor.name} đã giao việc ${taskCode}: "${task.title}" cho bạn`,
-        link: `/projects/${project.id}/board`,
+        link: `/projects/${project.id}/board?taskId=${task.id}`,
       },
     });
 
@@ -138,10 +141,11 @@ export async function notifyTaskAssigned(params: {
       projectName: project.name,
       projectKey: project.key,
       projectId: project.id,
+      taskId: task.id,
       assignorName: actor.name,
       assigneeName: assignee.name,
       assigneeEmail: assignee.email,
-      taskUrl: `http://localhost:3000/projects/${project.id}/board`,
+      taskUrl: directTaskUrl,
     }).catch((err) => {
       console.error("Lỗi khi gửi email giao việc:", err);
     });
@@ -165,6 +169,7 @@ export async function notifyTaskStatusChanged(params: {
       prisma.task.findUnique({
         where: { id: params.taskId },
         select: {
+          id: true,
           number: true,
           title: true,
           assigneeId: true,
@@ -185,6 +190,8 @@ export async function notifyTaskStatusChanged(params: {
 
     if (!task || !actor || !project) return;
 
+    const directTaskUrl = `${getAppBaseUrl()}/projects/${project.id}/board?taskId=${task.id}`;
+
     // Danh sách người cần nhận thông báo: Assignee và Creator (loại trừ chính người vừa đổi trạng thái)
     const recipientsToNotify = new Map<string, { id: string; name: string; email: string }>();
 
@@ -204,7 +211,7 @@ export async function notifyTaskStatusChanged(params: {
           type: "STATUS_CHANGED",
           title: "Trạng thái công việc thay đổi",
           message: `${actor.name} đã chuyển ${project.key}-${task.number} sang ${params.newStatus}`,
-          link: `/projects/${project.id}/board`,
+          link: `/projects/${project.id}/board?taskId=${task.id}`,
         },
       });
 
@@ -214,11 +221,13 @@ export async function notifyTaskStatusChanged(params: {
         taskTitle: task.title,
         projectName: project.name,
         projectId: project.id,
+        taskId: task.id,
         oldStatus: params.oldStatus,
         newStatus: params.newStatus,
         actorName: actor.name,
         recipientName: recipient.name,
         recipientEmail: recipient.email,
+        taskUrl: directTaskUrl,
       }).catch((err) => {
         console.error("Lỗi khi gửi email đổi trạng thái:", err);
       });
@@ -282,6 +291,8 @@ export async function notifyTaskMention(params: {
     const taskCode = `${project.key}-${task.number}`;
     const notifiedUserIds: string[] = [];
 
+    const directTaskUrl = `${getAppBaseUrl()}/projects/${project.id}/board?taskId=${task.id}`;
+
     for (const recipient of users) {
       notifiedUserIds.push(recipient.id);
 
@@ -309,7 +320,7 @@ export async function notifyTaskMention(params: {
         commentBody: params.commentBody,
         recipientName: recipient.name,
         recipientEmail: recipient.email,
-        taskUrl: `http://localhost:3000/projects/${project.id}/board?taskId=${task.id}`,
+        taskUrl: directTaskUrl,
       }).catch((err) => {
         console.error("Lỗi khi gửi email tag mention:", err);
       });
@@ -363,6 +374,7 @@ export async function notifyTaskComment(params: {
 
     if (!task || !author || !project) return;
 
+    const directTaskUrl = `${getAppBaseUrl()}/projects/${project.id}/board?taskId=${task.id}`;
     const excludeSet = new Set(params.excludeUserIds || []);
     const recipients = new Map<string, { id: string; name: string; email: string }>();
 
@@ -392,10 +404,12 @@ export async function notifyTaskComment(params: {
         taskTitle: task.title,
         projectName: project.name,
         projectId: project.id,
+        taskId: task.id,
         authorName: author.name,
         commentBody: params.commentBody,
         recipientName: recipient.name,
         recipientEmail: recipient.email,
+        taskUrl: directTaskUrl,
       }).catch((err) => {
         console.error("Lỗi khi gửi email bình luận:", err);
       });

@@ -1,0 +1,130 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:KztekWorkManagement.Mobile.ViewModels"
+             xmlns:conv="using:KztekWorkManagement.Mobile.Common"
+             x:Class="KztekWorkManagement.Mobile.Views.TaskDetailView"
+             x:DataType="vm:TaskDetailViewModel">
+
+  <ScrollViewer Background="{DynamicResource KzBackground}">
+    <StackPanel Margin="16,16,16,80" Spacing="16">
+
+      <!-- Back Bar -->
+      <Button Classes="kz-btn-outline" Command="{Binding BackCommand}" Padding="12,8" MinHeight="36" HorizontalAlignment="Left">
+        <TextBlock Text="← Quay lại Bảng việc" FontSize="12" FontWeight="SemiBold" />
+      </Button>
+
+      <!-- Task Main Card -->
+      <Border Classes="kz-card" Padding="18">
+        <StackPanel Spacing="12">
+          
+          <!-- Code, Priority & Status -->
+          <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+            <TextBlock Grid.Column="0" Text="{Binding Task.TaskCode}" FontWeight="Bold" FontSize="14" Foreground="{DynamicResource KzAccent}" Margin="0,0,8,0" />
+            
+            <Border Grid.Column="1" Background="{Binding Task.Priority, Converter={x:Static conv:PriorityToColorConverter.Instance}}" CornerRadius="4" Padding="8,3">
+              <TextBlock Text="{Binding Task.Priority}" FontSize="11" FontWeight="Bold" Foreground="#FFFFFF" />
+            </Border>
+
+            <Border Grid.Column="3" Background="{Binding Task.Status, Converter={x:Static conv:StatusToBrushConverter.Instance}}" CornerRadius="4" Padding="8,3">
+              <TextBlock Text="{Binding Task.Status}" FontSize="11" FontWeight="Bold" Foreground="#FFFFFF" />
+            </Border>
+          </Grid>
+
+          <!-- Title -->
+          <TextBlock Text="{Binding Task.Title}" FontSize="18" FontWeight="Bold" TextWrapping="Wrap" />
+
+          <!-- Description -->
+          <TextBlock Text="{Binding Task.Description, FallbackValue='Không có mô tả chi tiết'}" FontSize="13" Foreground="{DynamicResource KzTextSecondary}" TextWrapping="Wrap" />
+
+          <!-- Metadata -->
+          <Grid ColumnDefinitions="*,*" Margin="0,8,0,0">
+            <StackPanel Grid.Column="0" Spacing="2">
+              <TextBlock Text="Người thực hiện" FontSize="11" Foreground="{DynamicResource KzTextMuted}" />
+              <TextBlock Text="{Binding Task.AssigneeName}" FontSize="13" FontWeight="SemiBold" />
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Spacing="2">
+              <TextBlock Text="Hạn hoàn thành" FontSize="11" Foreground="{DynamicResource KzTextMuted}" />
+              <TextBlock Text="{Binding Task.DueDateFormatted}" FontSize="13" FontWeight="SemiBold" />
+            </StackPanel>
+          </Grid>
+
+          <!-- Status Transition Buttons -->
+          <StackPanel Spacing="6" Margin="0,12,0,0">
+            <TextBlock Text="Đổi trạng thái nhanh:" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource KzTextSecondary}" />
+            <Grid ColumnDefinitions="*,*,*,*" Margin="0,4,0,0">
+              <Button Grid.Column="0" Classes="kz-btn-outline" Command="{Binding UpdateStatusCommand}" CommandParameter="TODO" Margin="0,0,4,0" Padding="4,6">
+                <TextBlock Text="TODO" FontSize="11" />
+              </Button>
+              <Button Grid.Column="1" Classes="kz-btn-outline" Command="{Binding UpdateStatusCommand}" CommandParameter="IN_PROGRESS" Margin="2,0,2,0" Padding="4,6">
+                <TextBlock Text="ĐANG LÀM" FontSize="10" />
+              </Button>
+              <Button Grid.Column="2" Classes="kz-btn-outline" Command="{Binding UpdateStatusCommand}" CommandParameter="IN_REVIEW" Margin="2,0,2,0" Padding="4,6">
+                <TextBlock Text="DUYỆT" FontSize="11" />
+              </Button>
+              <Button Grid.Column="3" Classes="kz-btn-outline" Command="{Binding UpdateStatusCommand}" CommandParameter="DONE" Margin="4,0,0,0" Padding="4,6">
+                <TextBlock Text="XONG" FontSize="11" />
+              </Button>
+            </Grid>
+          </StackPanel>
+
+        </StackPanel>
+      </Border>
+
+      <!-- Subtasks Checklist -->
+      <Border Classes="kz-card" Padding="18">
+        <StackPanel Spacing="10">
+          <TextBlock Text="Danh sách việc nhỏ (Subtasks)" FontSize="15" FontWeight="Bold" />
+
+          <ItemsControl ItemsSource="{Binding Subtasks}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Grid ColumnDefinitions="Auto,*" Margin="0,4">
+                  <CheckBox Grid.Column="0" IsChecked="{Binding Done}" Margin="0,0,8,0" />
+                  <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="13" VerticalAlignment="Center" TextWrapping="Wrap" />
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+          <TextBlock Text="Chưa có subtask nào" FontSize="12" Foreground="{DynamicResource KzTextMuted}"
+                     IsVisible="{Binding !Subtasks.Count}" />
+        </StackPanel>
+      </Border>
+
+      <!-- Comments / Discussion -->
+      <Border Classes="kz-card" Padding="18">
+        <StackPanel Spacing="12">
+          <TextBlock Text="Thảo luận &amp; Bình luận" FontSize="15" FontWeight="Bold" />
+
+          <!-- Add Comment Box -->
+          <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,12">
+            <TextBox Grid.Column="0" Classes="kz-input" Text="{Binding NewCommentText, Mode=TwoWay}" Watermark="Viết bình luận..." Margin="0,0,8,0" />
+            <Button Grid.Column="1" Classes="kz-btn-primary" Command="{Binding AddCommentCommand}" Padding="14,10">
+              <TextBlock Text="Gửi" FontSize="12" FontWeight="Bold" />
+            </Button>
+          </Grid>
+
+          <!-- Comments List -->
+          <ItemsControl ItemsSource="{Binding Comments}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,8">
+                  <StackPanel Spacing="4">
+                    <Grid ColumnDefinitions="*,Auto">
+                      <TextBlock Grid.Column="0" Text="{Binding Author.Name, FallbackValue='Người dùng'}" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource KzPrimary}" />
+                      <TextBlock Grid.Column="1" Text="{Binding CreatedAt, StringFormat='{}{0:dd/MM HH:mm}'}" FontSize="10" Foreground="{DynamicResource KzTextMuted}" />
+                    </Grid>
+                    <TextBlock Text="{Binding Body}" FontSize="13" TextWrapping="Wrap" />
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+        </StackPanel>
+      </Border>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

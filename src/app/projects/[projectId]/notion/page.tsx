@@ -189,7 +189,7 @@ export default function NotionMigrationPage() {
         </div>
 
         {testResult?.success && (
-          <span className="flex items-center gap-1.5 text-xs text-emerald-400 font-medium bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+          <span className="flex items-center gap-1.5 text-xs text-emerald-600 font-medium bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
             <CheckCircle2 className="h-3.5 w-3.5" />
             Đã kết nối: <strong>{testResult.workspaceName}</strong> ({testResult.botName})
           </span>
@@ -274,16 +274,16 @@ export default function NotionMigrationPage() {
 
         {/* Notifications */}
         {errorMsg && (
-          <div className="flex items-center gap-2 rounded-xl bg-red-950/40 p-3.5 text-xs text-red-300 border border-red-800/40 animate-fade-in-up">
-            <AlertCircle className="h-4 w-4 shrink-0 text-red-400" />
+          <div className="flex items-center gap-2 rounded-xl bg-accent-subtle p-3.5 text-xs text-foreground border border-accent/40 animate-fade-in-up">
+            <AlertCircle className="h-4 w-4 shrink-0 text-accent" />
             <span>{errorMsg}</span>
           </div>
         )}
 
         {importSuccessMsg && (
-          <div className="flex items-center justify-between rounded-xl bg-emerald-950/40 p-3.5 text-xs text-emerald-300 border border-emerald-800/40 animate-fade-in-up">
+          <div className="flex items-center justify-between rounded-xl bg-emerald-500/15 p-3.5 text-xs text-emerald-600 border border-emerald-500/30 animate-fade-in-up">
             <div className="flex items-center gap-2">
-              <FileCheck className="h-4 w-4 shrink-0 text-emerald-400" />
+              <FileCheck className="h-4 w-4 shrink-0 text-emerald-600" />
               <span className="font-medium">{importSuccessMsg}</span>
             </div>
             <Button
@@ -336,19 +336,19 @@ export default function NotionMigrationPage() {
                   <div
                     className={`rounded-xl border p-4 text-xs space-y-2 mt-3 ${
                       testResult.success
-                        ? "border-emerald-500/30 bg-emerald-950/20 text-emerald-300"
-                        : "border-red-500/30 bg-red-950/20 text-red-300"
+                        ? "border-emerald-500/30 bg-emerald-500/15 text-emerald-600"
+                        : "border-accent/30 bg-accent-subtle text-foreground"
                     }`}
                   >
                     <div className="flex items-center gap-2 font-semibold text-sm">
                       {testResult.success ? (
                         <>
-                          <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                          <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                           Kết nối Notion API thành công!
                         </>
                       ) : (
                         <>
-                          <AlertCircle className="h-4 w-4 text-red-400" />
+                          <AlertCircle className="h-4 w-4 text-accent" />
                           Kết nối thất bại
                         </>
                       )}
@@ -365,7 +365,7 @@ export default function NotionMigrationPage() {
                         </div>
                       </div>
                     ) : (
-                      <p className="text-xs text-red-400">{testResult.error}</p>
+                      <p className="text-xs text-accent">{testResult.error}</p>
                     )}
                   </div>
                 )}

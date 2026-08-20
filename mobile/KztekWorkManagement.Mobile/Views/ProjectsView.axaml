@@ -1,0 +1,43 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:KztekWorkManagement.Mobile.ViewModels"
+             x:Class="KztekWorkManagement.Mobile.Views.ProjectsView"
+             x:DataType="vm:ProjectsViewModel">
+
+  <ScrollViewer Background="{DynamicResource KzBackground}">
+    <StackPanel Margin="16,16,16,80" Spacing="16">
+
+      <!-- Search Box -->
+      <TextBox Classes="kz-input" Text="{Binding SearchText, Mode=TwoWay}" Watermark="🔍 Tìm kiếm dự án theo tên hoặc mã..." />
+
+      <!-- Projects List -->
+      <ItemsControl ItemsSource="{Binding FilteredProjects}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Border Classes="kz-card" Padding="16">
+              <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Spacing="6">
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Border Background="{DynamicResource KzPrimaryLight}" CornerRadius="6" Padding="6,2">
+                      <TextBlock Text="{Binding Key}" FontSize="11" FontWeight="Bold" Foreground="#FFFFFF" />
+                    </Border>
+                    <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="Bold" />
+                  </StackPanel>
+                  <TextBlock Text="{Binding Description, FallbackValue='Không có mô tả'}" FontSize="12" Foreground="{DynamicResource KzTextSecondary}" TextWrapping="Wrap" />
+                  <TextBlock Text="{Binding Count.Tasks, StringFormat='{0} công việc trong dự án'}" FontSize="11" Foreground="{DynamicResource KzTextMuted}" />
+                </StackPanel>
+
+                <Button Grid.Column="1" Classes="kz-btn-primary" 
+                        Command="{Binding $parent[UserControl].((vm:ProjectsViewModel)DataContext).SelectProjectCommand}"
+                        CommandParameter="{Binding}" Padding="12,8" MinHeight="36" VerticalAlignment="Center">
+                  <TextBlock Text="Chọn" FontSize="12" />
+                </Button>
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

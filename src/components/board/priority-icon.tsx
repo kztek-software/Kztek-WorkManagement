@@ -1,16 +1,23 @@
 import { Flame, ArrowUp, Equal, ArrowDown } from "lucide-react";
 
-export function PriorityIcon({ priority }: { priority: string }) {
-  switch (priority) {
-    case "URGENT":
-      return <Flame className="h-3.5 w-3.5 text-red-400" />;
-    case "HIGH":
-      return <ArrowUp className="h-3.5 w-3.5 text-orange-400" />;
-    case "MEDIUM":
-      return <Equal className="h-3.5 w-3.5 text-yellow-400" />;
-    case "LOW":
-      return <ArrowDown className="h-3.5 w-3.5 text-slate-400" />;
-    default:
-      return null;
-  }
+const PRIORITY_ICONS = {
+  URGENT: Flame,
+  HIGH: ArrowUp,
+  MEDIUM: Equal,
+  LOW: ArrowDown,
+} as const;
+
+const PRIORITY_DEFAULT_COLOR: Record<string, string> = {
+  URGENT: "text-accent",
+  HIGH: "text-orange-400",
+  MEDIUM: "text-yellow-400",
+  LOW: "text-slate-400",
+};
+
+export function PriorityIcon({ priority, className }: { priority: string; className?: string }) {
+  const Icon = PRIORITY_ICONS[priority as keyof typeof PRIORITY_ICONS];
+  if (!Icon) return null;
+  // Pass className to fully control size/color (e.g. inside a colored pill);
+  // otherwise fall back to the original standalone size + semantic color.
+  return <Icon className={className ?? `h-3.5 w-3.5 ${PRIORITY_DEFAULT_COLOR[priority]}`} />;
 }

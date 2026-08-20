@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { createTicket } from "@/lib/tickets";
+import { sendNotification } from "@/lib/notifications";
+import { publish } from "@/lib/bus";
 
 const publicTicketSchema = z.object({
-  projectId: z.string().optional(),
-  projectKey: z.string().optional(),
+  projectId: z.string().optional().nullable(),
+  projectKey: z.string().optional().nullable(),
   title: z.string().min(3, "Tiêu đề phải có ít nhất 3 ký tự").max(200),
   description: z.string().min(5, "Mô tả sự cố phải có ít nhất 5 ký tự").max(5000),
   type: z.enum(["BUG", "SUPPORT", "INQUIRY", "FEATURE_REQ"]).default("BUG"),
@@ -28,30 +30,15 @@ const publicTicketSchema = z.object({
     .optional(),
 });
 
-// GET /api/tickets/public -> Lấy danh sách dự án công khai để khách hàng lựa chọn
+// GET /api/tickets/public
 export async function GET() {
-  try {
-    const projects = await prisma.project.findMany({
-      select: {
-        id: true,
-        name: true,
-        key: true,
-        description: true,
-      },
-      orderBy: { createdAt: "asc" },
-    });
-
-    return NextResponse.json({ projects });
-  } catch (error) {
-    console.error("Lỗi khi tải danh sách dự án công khai:", error);
-    return NextResponse.json(
-      { error: "Không thể tải danh sách dự án" },
-      { status: 500 }
-    );
-  }
+  return NextResponse.json({
+    status: "ok",
+    message: "KZTEK Customer Portal Intake API is active",
+  });
 }
 
-// POST /api/tickets/public -> Gửi ticket báo lỗi từ khách hàng
+// POST /api/tickets/public -> Gửi ticket báo lỗi từ khách hàng (Không cần chọn dự án)
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => null);
@@ -63,7 +50,7 @@ export async function POST(req: NextRequest) {
 
     const d = parsed.data;
 
-    // Tìm Project theo projectId hoặc projectKey
+    // Tìm Project nếu có cung cấp explicit (không bắt buộc)
     let targetProject = null;
     if (d.projectId) {
       targetProject = await prisma.project.findUnique({
@@ -77,23 +64,9 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Nếu không chỉ định, lấy project đầu tiên làm mặc định
-    if (!targetProject) {
-      targetProject = await prisma.project.findFirst({
-        orderBy: { createdAt: "asc" },
-        select: { id: true, name: true, key: true },
-      });
-    }
-
-    if (!targetProject) {
-      return NextResponse.json(
-        { error: "Hệ thống chưa có dự án nào để tiếp nhận ticket" },
-        { status: 400 }
-      );
-    }
-
+    // Tạo ticket mới (projectId có thể null nếu chờ Admin điều phối)
     const ticket = await createTicket({
-      projectId: targetProject.id,
+      projectId: targetProject?.id || null,
       title: d.title,
       description: d.description,
       type: d.type,
@@ -106,6 +79,39 @@ export async function POST(req: NextRequest) {
       attachments: d.attachments,
     });
 
+    // Gửi thông báo đến TẤT CẢ các tài khoản ADMIN để điều phối tới dự án phù hợp
+    try {
+      const admins = await prisma.user.findMany({
+        where: { role: "ADMIN" },
+        select: { id: true, name: true, email: true },
+      });
+
+      // Lấy 1 project bất kỳ nếu có để làm đường dẫn xem ticket
+      const anyProject = targetProject || (await prisma.project.findFirst({ select: { id: true } }));
+      const ticketLink = anyProject
+        ? `/projects/${anyProject.id}/tickets?ticketId=${ticket.id}`
+        : `/portal/tickets/${ticket.trackingCode}`;
+
+      for (const admin of admins) {
+        await sendNotification({
+          userId: admin.id,
+          type: "TICKET_CREATED",
+          title: `🎫 Báo lỗi mới: ${ticket.title}`,
+          message: `Khách hàng ${ticket.customerName} (${ticket.customerEmail}) vừa gửi ticket "${ticket.trackingCode}". Cần Admin điều phối tới dự án phù hợp.`,
+          link: ticketLink,
+        });
+      }
+
+      // Publish global SSE event
+      publish("GLOBAL", {
+        type: "TICKET_CREATED",
+        ticketId: ticket.id,
+        actorId: "customer",
+      });
+    } catch (notifyErr) {
+      console.error("Lỗi khi gửi thông báo cho admin:", notifyErr);
+    }
+
     return NextResponse.json(
       {
         success: true,
@@ -115,7 +121,7 @@ export async function POST(req: NextRequest) {
           title: ticket.title,
           status: ticket.status,
           customerName: ticket.customerName,
-          project: targetProject,
+          project: targetProject || null,
           createdAt: ticket.createdAt,
         },
       },

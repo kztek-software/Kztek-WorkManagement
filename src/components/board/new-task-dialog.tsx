@@ -152,9 +152,9 @@ export function NewTaskDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl border border-line bg-surface p-6 shadow-2xl rounded-2xl">
+      <DialogContent className="w-[95vw] sm:w-full max-w-2xl border border-line bg-surface p-4 sm:p-6 shadow-2xl rounded-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pr-6">
             <div>
               <DialogTitle className="text-base font-bold text-foreground">Tạo công việc mới</DialogTitle>
               <DialogDescription className="text-xs text-muted">
@@ -168,12 +168,12 @@ export function NewTaskDialog({
               size="sm"
               onClick={generateAiTask}
               disabled={aiLoading || !title.trim()}
-              className="text-xs font-semibold border-amber-500/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20"
+              className="text-xs font-semibold border-amber-500/30 bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 self-start sm:self-auto"
             >
               {aiLoading ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
               ) : (
-                <Sparkles className="h-3.5 w-3.5 mr-1 text-amber-400" />
+                <Sparkles className="h-3.5 w-3.5 mr-1 text-amber-600" />
               )}
               AI Gợi ý chi tiết
             </Button>
@@ -181,7 +181,7 @@ export function NewTaskDialog({
         </DialogHeader>
 
         {aiSource && (
-          <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 text-xs text-amber-300 flex items-center gap-1.5">
+          <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 text-xs text-amber-600 flex items-center gap-1.5">
             <Sparkles className="h-3.5 w-3.5 shrink-0" />
             <span>Đã tự động điền mô tả và checklist theo chuẩn AI KZTEK</span>
           </div>
@@ -211,7 +211,7 @@ export function NewTaskDialog({
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="space-y-1">
               <Label className="text-xs font-semibold text-muted">Loại task</Label>
               <Select value={type} onValueChange={setType}>
@@ -261,9 +261,9 @@ export function NewTaskDialog({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="space-y-1">
-              <Label className="text-xs font-semibold text-muted">Story Points</Label>
+              <Label className="text-xs font-semibold text-muted">Điểm ước lượng (Story points)</Label>
               <Input
                 type="number"
                 min={0}
@@ -352,7 +352,7 @@ export function NewTaskDialog({
                     <button
                       type="button"
                       onClick={() => setSubtasks((prev) => prev.filter((_, j) => j !== i))}
-                      className="text-muted hover:text-red-400 cursor-pointer font-bold px-1"
+                      className="text-muted hover:text-accent cursor-pointer font-bold px-1"
                     >
                       ✕
                     </button>
@@ -363,7 +363,7 @@ export function NewTaskDialog({
           )}
 
           {error && (
-            <p className="rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-400 border border-red-500/20">{error}</p>
+            <p className="rounded-lg bg-accent-subtle px-3 py-2 text-xs text-accent font-medium border border-accent/20">{error}</p>
           )}
 
           <div className="flex justify-end gap-2 pt-3 border-t border-line">

@@ -30,11 +30,11 @@ function formatFileSize(bytes?: number | null): string {
 }
 
 function getFileIcon(type: string, fileName: string) {
-  if (type === "image") return <ImageIcon className="h-4 w-4 text-emerald-400" />;
-  if (type === "video") return <Video className="h-4 w-4 text-purple-400" />;
-  if (/\.(zip|rar|7z|tar|gz)$/i.test(fileName)) return <FileArchive className="h-4 w-4 text-amber-400" />;
-  if (/\.(json|js|ts|py|c|cpp|cs|html|css|log)$/i.test(fileName)) return <FileCode className="h-4 w-4 text-blue-400" />;
-  return <FileText className="h-4 w-4 text-cyan-400" />;
+  if (type === "image") return <ImageIcon className="h-4 w-4 text-emerald-600" />;
+  if (type === "video") return <Video className="h-4 w-4 text-purple-600" />;
+  if (/\.(zip|rar|7z|tar|gz)$/i.test(fileName)) return <FileArchive className="h-4 w-4 text-amber-600" />;
+  if (/\.(json|js|ts|py|c|cpp|cs|html|css|log)$/i.test(fileName)) return <FileCode className="h-4 w-4 text-blue-600" />;
+  return <FileText className="h-4 w-4 text-cyan-600" />;
 }
 
 export function TaskAttachmentGallery({
@@ -199,7 +199,7 @@ export function TaskAttachmentGallery({
                         e.stopPropagation();
                         deleteAttachment(img.id);
                       }}
-                      className="p-1 rounded bg-red-500/80 hover:bg-red-600 text-white cursor-pointer"
+                      className="p-1 rounded bg-accent/80 hover:bg-accent-hover text-white cursor-pointer"
                       title="Xóa ảnh"
                     >
                       <Trash2 className="h-2.5 w-2.5" />
@@ -246,7 +246,7 @@ export function TaskAttachmentGallery({
                         e.stopPropagation();
                         deleteAttachment(vid.id);
                       }}
-                      className="p-1 rounded bg-red-500/80 hover:bg-red-600 text-white cursor-pointer"
+                      className="p-1 rounded bg-accent/80 hover:bg-accent-hover text-white cursor-pointer"
                       title="Xóa video"
                     >
                       <Trash2 className="h-2.5 w-2.5" />
@@ -311,7 +311,7 @@ export function TaskAttachmentGallery({
                   <button
                     type="button"
                     onClick={() => deleteAttachment(doc.id)}
-                    className="p-1.5 rounded hover:bg-red-500/20 text-muted hover:text-red-400 cursor-pointer transition-colors"
+                    className="p-1.5 rounded hover:bg-accent/20 text-muted hover:text-accent cursor-pointer transition-colors"
                     title="Xóa tệp"
                   >
                     <Trash2 className="h-3.5 w-3.5" />

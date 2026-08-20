@@ -18,9 +18,7 @@ import {
   Eye,
   EyeOff,
   Server,
-  Lock,
   ArrowLeft,
-  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,6 +40,7 @@ type SystemConfigState = {
     hotline: string;
     supportEmail: string;
     website: string;
+    appUrl: string;
   };
   notifications: {
     notifyOnAssign: boolean;
@@ -90,6 +89,7 @@ export default function AdminSettingsPage() {
       hotline: "024 3782 2288",
       supportEmail: "support@kztek.net",
       website: "https://kztek.net",
+      appUrl: "http://localhost:3000",
     },
     notifications: {
       notifyOnAssign: true,
@@ -234,8 +234,8 @@ export default function AdminSettingsPage() {
   if (accessDenied) {
     return (
       <div className="flex h-full items-center justify-center p-6 bg-background">
-        <div className="max-w-md w-full rounded-2xl border border-red-500/30 bg-surface p-8 text-center shadow-2xl">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-500/10 text-red-500 mb-4 ring-8 ring-red-500/5">
+        <div className="max-w-md w-full rounded-2xl border border-accent/30 bg-surface p-8 text-center shadow-2xl">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent-subtle text-accent mb-4 ring-8 ring-accent/5">
             <ShieldAlert className="h-8 w-8" />
           </div>
 
@@ -258,17 +258,17 @@ export default function AdminSettingsPage() {
   }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
+    <div className="min-w-0 w-full overflow-y-auto p-4 sm:p-6 max-w-5xl mx-auto space-y-6">
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-line pb-5">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-[#d44715] text-white shadow-lg shadow-accent/25 ring-2 ring-white/10">
+      <div className="flex flex-col gap-3 border-b border-line pb-5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-[#d44715] text-white shadow-lg shadow-accent/25 ring-2 ring-white/10">
             <Settings className="h-6 w-6" />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg font-bold text-foreground">Trung Tâm Cấu Hình Hệ Thống</h1>
-              <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-black text-accent border border-accent/30 flex items-center gap-1">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-base sm:text-lg font-bold text-foreground min-w-0">Trung Tâm Cấu Hình Hệ Thống</h1>
+              <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-black text-accent border border-accent/30 flex items-center gap-1 shrink-0">
                 <ShieldCheck className="h-3 w-3" /> CHỈ ADMIN
               </span>
             </div>
@@ -281,10 +281,17 @@ export default function AdminSettingsPage() {
         <Button
           onClick={handleSaveConfig}
           disabled={saving}
-          className="font-bold text-xs gap-1.5 bg-accent hover:bg-accent/90 text-white shadow-md shadow-accent/25 cursor-pointer"
+          className="w-full sm:w-auto shrink-0 font-bold text-xs gap-1.5 bg-accent hover:bg-accent/90 text-white shadow-md shadow-accent/25 cursor-pointer"
         >
           {saving ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-          {saving ? "Đang lưu..." : "Lưu Toàn Bộ Cấu Hình"}
+          {saving ? (
+            <span>Đang lưu...</span>
+          ) : (
+            <>
+              <span className="sm:hidden">Lưu</span>
+              <span className="hidden sm:inline">Lưu Toàn Bộ Cấu Hình</span>
+            </>
+          )}
         </Button>
       </div>
 
@@ -295,59 +302,63 @@ export default function AdminSettingsPage() {
         </div>
       )}
       {errorMessage && (
-        <div className="rounded-xl bg-red-500/10 border border-red-500/30 p-3.5 text-xs text-red-600 font-semibold flex items-center gap-2 animate-fade-in-up">
+        <div className="rounded-xl bg-accent-subtle border border-accent/30 p-3.5 text-xs text-accent font-semibold flex items-center gap-2 animate-fade-in-up">
           <AlertCircle className="h-4 w-4 shrink-0" /> {errorMessage}
         </div>
       )}
 
       {/* Navigation Tabs */}
-      <div className="flex items-center gap-1 border-b border-line pb-px overflow-x-auto">
+      <div className="flex items-center gap-1 border-b border-line pb-px overflow-x-auto scrollbar-none">
         <button
           onClick={() => setActiveTab("smtp")}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+          className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
             activeTab === "smtp"
               ? "border-accent text-accent bg-accent/5 rounded-t-lg"
               : "border-transparent text-muted hover:text-foreground hover:bg-surface-2"
           }`}
         >
-          <Mail className="h-4 w-4" />
-          <span>Máy Chủ Email (SMTP)</span>
+          <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+          <span className="sm:hidden">Email SMTP</span>
+          <span className="hidden sm:inline">Máy Chủ Email (SMTP)</span>
         </button>
 
         <button
           onClick={() => setActiveTab("branding")}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+          className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
             activeTab === "branding"
               ? "border-accent text-accent bg-accent/5 rounded-t-lg"
               : "border-transparent text-muted hover:text-foreground hover:bg-surface-2"
           }`}
         >
-          <Building2 className="h-4 w-4" />
-          <span>Thương Hiệu & Đơn Vị</span>
+          <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+          <span className="sm:hidden">Thương Hiệu</span>
+          <span className="hidden sm:inline">Thương Hiệu & Đơn Vị</span>
         </button>
 
         <button
           onClick={() => setActiveTab("notifications")}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+          className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
             activeTab === "notifications"
               ? "border-accent text-accent bg-accent/5 rounded-t-lg"
               : "border-transparent text-muted hover:text-foreground hover:bg-surface-2"
           }`}
         >
-          <BellRing className="h-4 w-4" />
-          <span>Quy Tắc Thông Báo</span>
+          <BellRing className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+          <span className="sm:hidden">Thông Báo</span>
+          <span className="hidden sm:inline">Quy Tắc Thông Báo</span>
         </button>
 
         <button
           onClick={() => setActiveTab("diagnostics")}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+          className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
             activeTab === "diagnostics"
               ? "border-accent text-accent bg-accent/5 rounded-t-lg"
               : "border-transparent text-muted hover:text-foreground hover:bg-surface-2"
           }`}
         >
-          <Activity className="h-4 w-4" />
-          <span>Chẩn Đoán & Trạng Thái</span>
+          <Activity className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+          <span className="sm:hidden">Chẩn Đoán</span>
+          <span className="hidden sm:inline">Chẩn Đoán & Trạng Thái</span>
         </button>
       </div>
 
@@ -493,6 +504,30 @@ export default function AdminSettingsPage() {
                   />
                 </div>
 
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-semibold text-accent flex items-center gap-1">
+                      <span>Địa chỉ Web/App hệ thống (App Base URL) *</span>
+                    </Label>
+                    <span className="text-[10px] text-muted font-mono">Dùng cho link trong email</span>
+                  </div>
+                  <Input
+                    placeholder="VD: https://work.kztek.net hoặc http://192.168.1.100:3000"
+                    value={config.branding.appUrl}
+                    onChange={(e) =>
+                      setConfig({
+                        ...config,
+                        branding: { ...config.branding, appUrl: e.target.value },
+                      })
+                    }
+                    className="h-8.5 text-xs bg-surface-2 font-mono font-semibold text-accent"
+                    required
+                  />
+                  <p className="text-[10px] text-muted">
+                    Địa chỉ máy chủ thực tế để đính kèm vào nút <i>"Xem công việc"</i>, <i>"Trả lời"</i> trong email (thay vì link localhost).
+                  </p>
+                </div>
+
                 {/* Quick Live Test Card */}
                 <div className="rounded-xl border border-accent/20 bg-accent/5 p-3.5 space-y-2 mt-4">
                   <div className="text-xs font-bold text-accent flex items-center gap-1.5">
@@ -525,7 +560,7 @@ export default function AdminSettingsPage() {
                       className={`text-[11px] p-2 rounded border mt-2 ${
                         testResult.success
                           ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 font-semibold"
-                          : "bg-red-500/10 border-red-500/20 text-red-600"
+                          : "bg-accent-subtle border-accent/20 text-accent"
                       }`}
                     >
                       {testResult.message}
@@ -601,15 +636,43 @@ export default function AdminSettingsPage() {
             </div>
           </div>
 
-          <div className="space-y-1">
-            <Label className="text-xs font-semibold">Trang web công ty (Website URL)</Label>
-            <Input
-              value={config.branding.website}
-              onChange={(e) =>
-                setConfig({ ...config, branding: { ...config.branding, website: e.target.value } })
-              }
-              className="h-8.5 text-xs bg-surface-2"
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs font-semibold">Trang web công ty (Website URL)</Label>
+              <Input
+                placeholder="https://kztek.net"
+                value={config.branding.website}
+                onChange={(e) =>
+                  setConfig({ ...config, branding: { ...config.branding, website: e.target.value } })
+                }
+                className="h-8.5 text-xs bg-surface-2"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-semibold text-accent flex items-center gap-1">
+                  <span>Địa chỉ Web/App hệ thống (Base URL) *</span>
+                </Label>
+                <span className="text-[10px] text-muted font-mono">Dùng cho liên kết trong Email</span>
+              </div>
+              <Input
+                placeholder="VD: https://work.kztek.net hoặc http://192.168.1.100:3000"
+                value={config.branding.appUrl}
+                onChange={(e) =>
+                  setConfig({ ...config, branding: { ...config.branding, appUrl: e.target.value } })
+                }
+                className="h-8.5 text-xs bg-surface-2 font-mono font-semibold text-accent"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-accent/5 border border-accent/20 text-[11px] text-muted space-y-1">
+            <div className="font-bold text-accent">📌 Lưu ý về Địa chỉ Web/App hệ thống:</div>
+            <div>
+              Đây là URL công khai hoặc nội bộ thực tế được đính kèm vào nút <strong>"Xem công việc"</strong>, <strong>"Phản hồi bình luận"</strong> trong tất cả các email thông báo gửi đến người dùng (thay vì link <code className="font-mono text-foreground bg-surface-2 px-1 py-0.2 rounded">localhost:3000</code>).
+            </div>
           </div>
 
           <div className="pt-4 border-t border-line flex justify-end">
@@ -618,7 +681,7 @@ export default function AdminSettingsPage() {
               disabled={saving}
               className="font-bold text-xs gap-1.5 bg-accent hover:bg-accent/90 text-white cursor-pointer"
             >
-              <Save className="h-3.5 w-3.5" /> Lưu Thông Tin Thương Hiệu
+              <Save className="h-3.5 w-3.5" /> Lưu Thông Tin Thương Hiệu & Địa Chỉ App
             </Button>
           </div>
         </form>
@@ -748,6 +811,10 @@ export default function AdminSettingsPage() {
             <div className="flex justify-between py-2 border-b border-line/50">
               <span className="text-muted font-medium">Dịch vụ Email:</span>
               <span className="font-bold font-mono text-emerald-600">SMTP Engine RFC 5321 + Simulated Outbox</span>
+            </div>
+            <div className="flex justify-between py-2 border-b border-line/50">
+              <span className="text-muted font-medium">Địa chỉ Web/App hệ thống:</span>
+              <span className="font-bold font-mono text-accent">{config.branding.appUrl || "http://localhost:3000"}</span>
             </div>
             <div className="flex justify-between py-2 border-b border-line/50">
               <span className="text-muted font-medium">Cập nhật cấu hình lần cuối:</span>

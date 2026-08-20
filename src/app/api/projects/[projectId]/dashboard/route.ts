@@ -35,22 +35,52 @@ export async function GET(
   { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
-    const user = await getSessionUser();
+    const user = await getSessionUser(_req);
     if (!user) {
       return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
     }
 
     const { projectId } = await params;
 
-    const currentMember = await prisma.projectMember.findUnique({
-      where: { projectId_userId: { projectId, userId: user.id } },
-    });
+    // Compute date boundaries before queries (used in WHERE clauses)
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    if (!currentMember && user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Không có quyền truy cập dự án này" }, { status: 403 });
-    }
+    // ── Single parallel batch — all independent queries run concurrently ──────────
+    // Replaces: prisma.task.findMany (ALL tasks) + prisma.customerTicket.findMany (ALL tickets)
+    // With: targeted groupBy / count aggregates + minimal findMany (take:8) for the display list
+    const [
+      currentMember,
+      project,
+      sprints,
+      activities,
+      // [OPTIMIZED] Task counts + story points grouped by status
+      taskGroupByStatus,
+      // [OPTIMIZED] Task counts grouped by priority
+      taskGroupByPriority,
+      // [OPTIMIZED] Task counts grouped by type
+      taskGroupByType,
+      // [OPTIMIZED] Overdue task count (DB-side, no JS loop)
+      overdueCount,
+      // [OPTIMIZED] Urgent non-done task count (DB-side)
+      urgentCount,
+      // [OPTIMIZED] Per-member per-status counts + story points (for workload table)
+      taskGroupByAssigneeStatus,
+      // [OPTIMIZED] Per-member overdue count (DB-side)
+      overdueGroupByAssignee,
+      // [OPTIMIZED] Urgent/overdue task list — minimal select + take:8 (was: slice from full list)
+      urgentAndOverdueList,
+      // [OPTIMIZED] Sprint task stats grouped by sprintId+status (avoids extra query after sprint lookup)
+      sprintTaskGroupByStatus,
+      // [OPTIMIZED] Ticket counts by status (replaces full ticket findMany)
+      ticketGroupByStatus,
+    ] = await Promise.all([
+      // Auth check
+      prisma.projectMember.findUnique({
+        where: { projectId_userId: { projectId, userId: user.id } },
+      }),
 
-    const [project, tasks, sprints, tickets, activities] = await Promise.all([
+      // Project info with members (needed for workload + team breakdown)
       prisma.project.findUnique({
         where: { id: projectId },
         include: {
@@ -73,22 +103,14 @@ export async function GET(
           },
         },
       }),
-      prisma.task.findMany({
-        where: { projectId },
-        include: {
-          assignee: { select: { id: true, name: true, email: true, avatarColor: true, title: true } },
-          customerTicket: { select: { id: true, trackingCode: true, title: true } },
-        },
-        orderBy: { createdAt: "desc" },
-      }),
+
+      // Sprint list (needed for active sprint identification)
       prisma.sprint.findMany({
         where: { projectId },
         orderBy: { createdAt: "desc" },
       }),
-      prisma.customerTicket.findMany({
-        where: { projectId },
-        select: { id: true, status: true, priority: true, type: true, createdAt: true, resolvedAt: true },
-      }),
+
+      // Recent activities — already limited to 12
       prisma.activity.findMany({
         where: { task: { projectId } },
         include: {
@@ -98,100 +120,180 @@ export async function GET(
         orderBy: { createdAt: "desc" },
         take: 12,
       }),
+
+      // Task counts + story points per status
+      prisma.task.groupBy({
+        by: ["status"],
+        where: { projectId },
+        _count: { _all: true },
+        _sum: { storyPoints: true },
+      }),
+
+      // Task counts per priority
+      prisma.task.groupBy({
+        by: ["priority"],
+        where: { projectId },
+        _count: { _all: true },
+      }),
+
+      // Task counts per type
+      prisma.task.groupBy({
+        by: ["type"],
+        where: { projectId },
+        _count: { _all: true },
+      }),
+
+      // Overdue task count — direct DB count, no JS loop needed
+      prisma.task.count({
+        where: { projectId, status: { not: "DONE" }, dueDate: { lt: startOfToday } },
+      }),
+
+      // Urgent non-done task count — direct DB count
+      prisma.task.count({
+        where: { projectId, priority: "URGENT", status: { not: "DONE" } },
+      }),
+
+      // Per-member per-status task counts + story points
+      // assigneeId=null rows (unassigned tasks) are intentionally skipped in post-processing
+      prisma.task.groupBy({
+        by: ["assigneeId", "status"],
+        where: { projectId },
+        _count: { _all: true },
+        _sum: { storyPoints: true },
+      }),
+
+      // Per-member overdue count
+      prisma.task.groupBy({
+        by: ["assigneeId"],
+        where: { projectId, status: { not: "DONE" }, dueDate: { lt: startOfToday } },
+        _count: { _all: true },
+      }),
+
+      // Urgent/overdue task list for display — minimal field select, capped at 8 rows
+      // Avoids loading ALL tasks then slicing (was: urgentAndOverdueList.slice(0, 8))
+      prisma.task.findMany({
+        where: {
+          projectId,
+          status: { not: "DONE" },
+          OR: [{ dueDate: { lt: startOfToday } }, { priority: "URGENT" }],
+        },
+        select: {
+          id: true,
+          number: true,
+          title: true,
+          status: true,
+          priority: true,
+          type: true,
+          dueDate: true,
+          storyPoints: true,
+          assignee: {
+            select: { id: true, name: true, email: true, avatarColor: true, title: true },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 8,
+      }),
+
+      // Sprint task counts + story points grouped by sprint+status
+      // Covers all sprints in one query; filtered to active sprint in post-processing
+      prisma.task.groupBy({
+        by: ["sprintId", "status"],
+        where: { projectId, sprintId: { not: null } },
+        _count: { _all: true },
+        _sum: { storyPoints: true },
+      }),
+
+      // Ticket counts by status — replaces full customerTicket.findMany
+      prisma.customerTicket.groupBy({
+        by: ["status"],
+        where: { projectId },
+        _count: { _all: true },
+      }),
     ]);
+
+    if (!currentMember && user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Không có quyền truy cập dự án này" }, { status: 403 });
+    }
 
     if (!project) {
       return NextResponse.json({ error: "Không tìm thấy dự án" }, { status: 404 });
     }
 
-    const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-    // 1. Task Summary Calculation
-    const totalTasks = tasks.length;
-    let doneTasks = 0;
-    let inProgressTasks = 0;
-    let inReviewTasks = 0;
-    let todoTasks = 0;
-    let backlogTasks = 0;
-    let overdueTasks = 0;
-    let urgentTasks = 0;
-    let totalStoryPoints = 0;
-    let doneStoryPoints = 0;
-
+    // ── 1. Summary — derived from taskGroupByStatus ───────────────────────────────
     const statusCountMap: Record<string, number> = {};
-    const priorityCountMap: Record<string, number> = {};
-    const typeCountMap: Record<string, number> = {};
+    const storyPointsByStatus: Record<string, number> = {};
+    let totalTasks = 0;
 
-    for (const s of STATUSES) statusCountMap[s.id] = 0;
-    for (const p of PRIORITIES) priorityCountMap[p.id] = 0;
-    for (const t of TASK_TYPES) typeCountMap[t.id] = 0;
-
-    const urgentAndOverdueList: ProjectDashboardData["urgentAndOverdueTasks"] = [];
-
-    for (const t of tasks) {
-      const pts = t.storyPoints || 0;
-      totalStoryPoints += pts;
-
-      statusCountMap[t.status] = (statusCountMap[t.status] || 0) + 1;
-      priorityCountMap[t.priority] = (priorityCountMap[t.priority] || 0) + 1;
-      typeCountMap[t.type] = (typeCountMap[t.type] || 0) + 1;
-
-      let isTaskOverdue = false;
-      if (t.dueDate && t.status !== "DONE") {
-        const due = new Date(t.dueDate);
-        if (!isNaN(due.getTime()) && due < startOfToday) {
-          overdueTasks++;
-          isTaskOverdue = true;
-        }
-      }
-
-      if (t.status === "DONE") {
-        doneTasks++;
-        doneStoryPoints += pts;
-      } else if (t.status === "IN_PROGRESS") {
-        inProgressTasks++;
-      } else if (t.status === "IN_REVIEW") {
-        inReviewTasks++;
-      } else if (t.status === "TODO") {
-        todoTasks++;
-      } else if (t.status === "BACKLOG") {
-        backlogTasks++;
-      }
-
-      if (t.priority === "URGENT" && t.status !== "DONE") {
-        urgentTasks++;
-      }
-
-      if ((isTaskOverdue || t.priority === "URGENT") && t.status !== "DONE") {
-        urgentAndOverdueList.push({
-          id: t.id,
-          number: t.number,
-          title: t.title,
-          status: t.status,
-          priority: t.priority,
-          type: t.type,
-          dueDate: safeIsoStringOrNull(t.dueDate),
-          isOverdue: isTaskOverdue,
-          assignee: t.assignee,
-          storyPoints: t.storyPoints,
-        });
-      }
+    for (const row of taskGroupByStatus) {
+      statusCountMap[row.status] = row._count._all;
+      storyPointsByStatus[row.status] = row._sum.storyPoints ?? 0;
+      totalTasks += row._count._all;
     }
 
-    const completionRate = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+    const doneTasks = statusCountMap["DONE"] ?? 0;
+    const inProgressTasks = statusCountMap["IN_PROGRESS"] ?? 0;
+    const inReviewTasks = statusCountMap["IN_REVIEW"] ?? 0;
+    const todoTasks = statusCountMap["TODO"] ?? 0;
+    const backlogTasks = statusCountMap["BACKLOG"] ?? 0;
+
+    const totalStoryPoints = Object.values(storyPointsByStatus).reduce((sum, v) => sum + v, 0);
+    const doneStoryPoints = storyPointsByStatus["DONE"] ?? 0;
     const remainingStoryPoints = Math.max(0, totalStoryPoints - doneStoryPoints);
+    const completionRate = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
     const pointsCompletionRate = totalStoryPoints > 0 ? Math.round((doneStoryPoints / totalStoryPoints) * 100) : 0;
 
-    // 2. Active Sprint Calculation
+    // ── 2. Status Distribution ────────────────────────────────────────────────────
+    const statusDistribution = STATUSES.map((s) => ({
+      status: s.id,
+      label: s.label,
+      count: statusCountMap[s.id] ?? 0,
+      color: s.color,
+    }));
+
+    // ── 3. Priority Distribution ──────────────────────────────────────────────────
+    const priorityCountMap: Record<string, number> = {};
+    for (const row of taskGroupByPriority) {
+      priorityCountMap[row.priority] = row._count._all;
+    }
+    const priorityDistribution = PRIORITIES.map((p) => ({
+      priority: p.id,
+      label: p.label,
+      count: priorityCountMap[p.id] ?? 0,
+      color: p.color,
+    }));
+
+    // ── 4. Type Distribution ──────────────────────────────────────────────────────
+    const typeCountMap: Record<string, number> = {};
+    for (const row of taskGroupByType) {
+      typeCountMap[row.type] = row._count._all;
+    }
+    const typeDistribution = TASK_TYPES.map((t) => ({
+      type: t.id,
+      label: t.label,
+      count: typeCountMap[t.id] ?? 0,
+      color: t.color,
+    }));
+
+    // ── 5. Active Sprint — stats from sprintTaskGroupByStatus ─────────────────────
     const rawActiveSprint = sprints.find((s) => s.status === "ACTIVE") || null;
     let activeSprintDto: ProjectDashboardData["activeSprint"] = null;
 
     if (rawActiveSprint) {
-      const sprintTasks = tasks.filter((t) => t.sprintId === rawActiveSprint.id);
-      const sprintDone = sprintTasks.filter((t) => t.status === "DONE");
-      const sprintTotalPts = sprintTasks.reduce((sum, t) => sum + (t.storyPoints || 0), 0);
-      const sprintDonePts = sprintDone.reduce((sum, t) => sum + (t.storyPoints || 0), 0);
+      let sprintTotalTasks = 0;
+      let sprintDoneTasks = 0;
+      let sprintTotalPts = 0;
+      let sprintDonePts = 0;
+
+      // Look up this sprint's rows in the already-computed groupBy result
+      for (const row of sprintTaskGroupByStatus) {
+        if (row.sprintId !== rawActiveSprint.id) continue;
+        sprintTotalTasks += row._count._all;
+        sprintTotalPts += row._sum.storyPoints ?? 0;
+        if (row.status === "DONE") {
+          sprintDoneTasks += row._count._all;
+          sprintDonePts += row._sum.storyPoints ?? 0;
+        }
+      }
 
       let daysRemaining: number | null = null;
       if (rawActiveSprint.endDate) {
@@ -210,47 +312,53 @@ export async function GET(
         startDate: safeIsoStringOrNull(rawActiveSprint.startDate),
         endDate: safeIsoStringOrNull(rawActiveSprint.endDate),
         daysRemaining,
-        totalTasks: sprintTasks.length,
-        doneTasks: sprintDone.length,
+        totalTasks: sprintTotalTasks,
+        doneTasks: sprintDoneTasks,
         totalPoints: sprintTotalPts,
         donePoints: sprintDonePts,
       };
     }
 
-    // 3. Status, Priority, Type Distributions
-    const statusDistribution = STATUSES.map((s) => ({
-      status: s.id,
-      label: s.label,
-      count: statusCountMap[s.id] || 0,
-      color: s.color,
-    }));
+    // ── 6. Member Workloads — derived from taskGroupByAssigneeStatus ──────────────
+    // Build lookup: assigneeId → { [status]: { count, storyPoints } }
+    type AssigneeStatusEntry = { count: number; storyPoints: number };
+    const assigneeStatusMap = new Map<string, Record<string, AssigneeStatusEntry>>();
 
-    const priorityDistribution = PRIORITIES.map((p) => ({
-      priority: p.id,
-      label: p.label,
-      count: priorityCountMap[p.id] || 0,
-      color: p.color,
-    }));
+    for (const row of taskGroupByAssigneeStatus) {
+      if (!row.assigneeId) continue; // Skip unassigned tasks
+      if (!assigneeStatusMap.has(row.assigneeId)) {
+        assigneeStatusMap.set(row.assigneeId, {});
+      }
+      assigneeStatusMap.get(row.assigneeId)![row.status] = {
+        count: row._count._all,
+        storyPoints: row._sum.storyPoints ?? 0,
+      };
+    }
 
-    const typeDistribution = TASK_TYPES.map((t) => ({
-      type: t.id,
-      label: t.label,
-      count: typeCountMap[t.id] || 0,
-      color: t.color,
-    }));
+    // Build overdue lookup: assigneeId → overdue count
+    const overdueByAssigneeMap = new Map<string, number>();
+    for (const row of overdueGroupByAssignee) {
+      if (!row.assigneeId) continue;
+      overdueByAssigneeMap.set(row.assigneeId, row._count._all);
+    }
 
-    // 4. Member Workloads Calculation
     const memberWorkloads = project.members.map((m) => {
-      const assigned = tasks.filter((t) => t.assigneeId === m.user.id);
-      const done = assigned.filter((t) => t.status === "DONE");
-      const inProg = assigned.filter((t) => t.status === "IN_PROGRESS" || t.status === "IN_REVIEW");
-      const overdue = assigned.filter((t) => {
-        if (!t.dueDate || t.status === "DONE") return false;
-        const d = new Date(t.dueDate);
-        return !isNaN(d.getTime()) && d < startOfToday;
-      });
-      const pts = assigned.reduce((sum, t) => sum + (t.storyPoints || 0), 0);
-      const rate = assigned.length > 0 ? Math.round((done.length / assigned.length) * 100) : 0;
+      const statusEntries = assigneeStatusMap.get(m.user.id) ?? {};
+
+      let totalMemberTasks = 0;
+      let doneMemberTasks = 0;
+      let inProgMemberTasks = 0;
+      let memberStoryPoints = 0;
+
+      for (const [status, entry] of Object.entries(statusEntries)) {
+        totalMemberTasks += entry.count;
+        memberStoryPoints += entry.storyPoints;
+        if (status === "DONE") doneMemberTasks += entry.count;
+        if (status === "IN_PROGRESS" || status === "IN_REVIEW") inProgMemberTasks += entry.count;
+      }
+
+      const overdueMemberTasks = overdueByAssigneeMap.get(m.user.id) ?? 0;
+      const rate = totalMemberTasks > 0 ? Math.round((doneMemberTasks / totalMemberTasks) * 100) : 0;
 
       return {
         userId: m.user.id,
@@ -260,49 +368,72 @@ export async function GET(
         role: m.role,
         teamName: m.user.team?.name || null,
         teamColor: m.user.team?.color || null,
-        totalTasks: assigned.length,
-        doneTasks: done.length,
-        inProgressTasks: inProg.length,
-        overdueTasks: overdue.length,
-        storyPoints: pts,
+        totalTasks: totalMemberTasks,
+        doneTasks: doneMemberTasks,
+        inProgressTasks: inProgMemberTasks,
+        overdueTasks: overdueMemberTasks,
+        storyPoints: memberStoryPoints,
         completionRate: rate,
       };
     });
 
-    // 5. Team Breakdown Calculation
-    const teamMap = new Map<string, { id: string; name: string; code: string; color: string; memberCount: number; totalTasks: number; doneTasks: number }>();
+    // ── 7. Team Breakdown — derived from memberWorkloads (no extra query) ──────────
+    const teamMap = new Map<
+      string,
+      { id: string; name: string; code: string; color: string; memberCount: number; totalTasks: number; doneTasks: number }
+    >();
+
     for (const m of project.members) {
-      if (m.user.team) {
-        const t = m.user.team;
-        if (!teamMap.has(t.id)) {
-          teamMap.set(t.id, {
-            id: t.id,
-            name: t.name,
-            code: t.code,
-            color: t.color,
-            memberCount: 0,
-            totalTasks: 0,
-            doneTasks: 0,
-          });
-        }
-        const entry = teamMap.get(t.id)!;
-        entry.memberCount++;
-        const userTasks = tasks.filter((task) => task.assigneeId === m.user.id);
-        entry.totalTasks += userTasks.length;
-        entry.doneTasks += userTasks.filter((task) => task.status === "DONE").length;
+      if (!m.user.team) continue;
+      const t = m.user.team;
+      if (!teamMap.has(t.id)) {
+        teamMap.set(t.id, { id: t.id, name: t.name, code: t.code, color: t.color, memberCount: 0, totalTasks: 0, doneTasks: 0 });
+      }
+      const entry = teamMap.get(t.id)!;
+      entry.memberCount++;
+
+      const wl = memberWorkloads.find((w) => w.userId === m.user.id);
+      if (wl) {
+        entry.totalTasks += wl.totalTasks;
+        entry.doneTasks += wl.doneTasks;
       }
     }
     const teamBreakdown = Array.from(teamMap.values());
 
-    // 6. Ticket Statistics
-    const totalTickets = tickets.length;
-    const openTickets = tickets.filter((tk) => tk.status === "OPEN").length;
-    const triagedTickets = tickets.filter((tk) => tk.status === "TRIAGED").length;
-    const inProgressTickets = tickets.filter((tk) => tk.status === "IN_PROGRESS").length;
-    const resolvedTickets = tickets.filter((tk) => tk.status === "RESOLVED").length;
-    const closedTickets = tickets.filter((tk) => tk.status === "CLOSED").length;
-    const ticketResolutionRate = totalTickets > 0 ? Math.round(((resolvedTickets + closedTickets) / totalTickets) * 100) : 0;
+    // ── 8. Urgent & Overdue Task List ─────────────────────────────────────────────
+    const urgentAndOverdueTasks: ProjectDashboardData["urgentAndOverdueTasks"] =
+      urgentAndOverdueList.map((t) => {
+        const isOverdue = !!t.dueDate && new Date(t.dueDate) < startOfToday;
+        return {
+          id: t.id,
+          number: t.number,
+          title: t.title,
+          status: t.status,
+          priority: t.priority,
+          type: t.type,
+          dueDate: safeIsoStringOrNull(t.dueDate),
+          isOverdue,
+          assignee: t.assignee,
+          storyPoints: t.storyPoints,
+        };
+      });
 
+    // ── 9. Ticket Stats — derived from ticketGroupByStatus ────────────────────────
+    const ticketStatusCountMap: Record<string, number> = {};
+    let totalTickets = 0;
+    for (const row of ticketGroupByStatus) {
+      ticketStatusCountMap[row.status] = row._count._all;
+      totalTickets += row._count._all;
+    }
+    const openTickets = ticketStatusCountMap["OPEN"] ?? 0;
+    const triagedTickets = ticketStatusCountMap["TRIAGED"] ?? 0;
+    const inProgressTickets = ticketStatusCountMap["IN_PROGRESS"] ?? 0;
+    const resolvedTickets = ticketStatusCountMap["RESOLVED"] ?? 0;
+    const closedTickets = ticketStatusCountMap["CLOSED"] ?? 0;
+    const ticketResolutionRate =
+      totalTickets > 0 ? Math.round(((resolvedTickets + closedTickets) / totalTickets) * 100) : 0;
+
+    // ── 10. Assemble response — shape identical to previous version ───────────────
     const dashboardData: ProjectDashboardData = {
       project: {
         id: project.id,
@@ -328,8 +459,8 @@ export async function GET(
         inReviewTasks,
         todoTasks,
         backlogTasks,
-        overdueTasks,
-        urgentTasks,
+        overdueTasks: overdueCount,
+        urgentTasks: urgentCount,
         completionRate,
         totalStoryPoints,
         doneStoryPoints,
@@ -342,7 +473,7 @@ export async function GET(
       typeDistribution,
       memberWorkloads,
       teamBreakdown,
-      urgentAndOverdueTasks: urgentAndOverdueList.slice(0, 8),
+      urgentAndOverdueTasks,
       recentActivities: activities.map((a) => ({
         id: a.id,
         action: a.action,

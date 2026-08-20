@@ -1,0 +1,73 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:KztekWorkManagement.Mobile.ViewModels"
+             xmlns:conv="using:KztekWorkManagement.Mobile.Common"
+             x:Class="KztekWorkManagement.Mobile.Views.SettingsView"
+             x:DataType="vm:SettingsViewModel">
+
+  <ScrollViewer Background="{DynamicResource KzBackground}">
+    <StackPanel Margin="16,16,16,80" Spacing="16">
+
+      <!-- Profile Header Card -->
+      <Border Classes="kz-card" Padding="20">
+        <Grid ColumnDefinitions="Auto,*" Margin="0,4">
+          <!-- Avatar -->
+          <Border Grid.Column="0" Background="{DynamicResource KzPrimary}" Width="56" Height="56" CornerRadius="28" Margin="0,0,16,0">
+            <TextBlock Text="{Binding CurrentUser.Name, Converter={x:Static conv:StringToInitialsConverter.Instance}}" FontSize="20" FontWeight="Bold" Foreground="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+
+          <!-- User Info -->
+          <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+            <TextBlock Text="{Binding CurrentUser.Name, FallbackValue='Quản trị viên KZTEK'}" FontSize="16" FontWeight="Bold" />
+            <TextBlock Text="{Binding CurrentUser.Email, FallbackValue='admin@kztek.net'}" FontSize="13" Foreground="{DynamicResource KzTextSecondary}" />
+            <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,4,0,0">
+              <Border Background="{DynamicResource KzAccentLight}" CornerRadius="4" Padding="6,2">
+                <TextBlock Text="{Binding CurrentUser.Role, FallbackValue='ADMIN'}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource KzAccent}" />
+              </Border>
+              <TextBlock Text="{Binding CurrentUser.Title, FallbackValue='System Administrator'}" FontSize="11" Foreground="{DynamicResource KzTextMuted}" VerticalAlignment="Center" />
+            </StackPanel>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <!-- Server Configuration Card -->
+      <Border Classes="kz-card" Padding="20">
+        <StackPanel Spacing="14">
+          <TextBlock Text="Cấu hình Kết nối Máy chủ" FontSize="15" FontWeight="Bold" />
+          <TextBlock Text="Địa chỉ API Endpoint của hệ thống KZTEK Work Management" FontSize="12" Foreground="{DynamicResource KzTextSecondary}" />
+
+          <TextBox Classes="kz-input" Text="{Binding ServerUrl, Mode=TwoWay}" Watermark="http://localhost:3000 hoặc IP máy chủ..." />
+
+          <!-- Status Message -->
+          <TextBlock Text="{Binding StatusMessage}" Foreground="#10B981" FontSize="12" FontWeight="SemiBold"
+                     IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+          <Button Classes="kz-btn-primary" Command="{Binding SaveServerUrlCommand}">
+            <TextBlock Text="Lưu địa chỉ máy chủ" />
+          </Button>
+        </StackPanel>
+      </Border>
+
+      <!-- App Info Card -->
+      <Border Classes="kz-card" Padding="20">
+        <StackPanel Spacing="8">
+          <TextBlock Text="Thông tin ứng dụng" FontSize="15" FontWeight="Bold" />
+          <Grid ColumnDefinitions="*,Auto" Margin="0,4">
+            <TextBlock Grid.Column="0" Text="Phiên bản Mobile" FontSize="13" Foreground="{DynamicResource KzTextSecondary}" />
+            <TextBlock Grid.Column="1" Text="3.0.0 (Avalonia Cross-Platform)" FontSize="13" FontWeight="SemiBold" />
+          </Grid>
+          <Grid ColumnDefinitions="*,Auto" Margin="0,4">
+            <TextBlock Grid.Column="0" Text="Nhà phát triển" FontSize="13" Foreground="{DynamicResource KzTextSecondary}" />
+            <TextBlock Grid.Column="1" Text="KZTEK Engineering" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource KzPrimary}" />
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <!-- Logout Button -->
+      <Button Classes="kz-btn-outline" Command="{Binding LogoutCommand}" Margin="0,8,0,0">
+        <TextBlock Text="Đăng xuất tài khoản" Foreground="#EF4444" FontWeight="Bold" />
+      </Button>
+
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
