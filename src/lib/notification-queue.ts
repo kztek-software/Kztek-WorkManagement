@@ -8,6 +8,7 @@ import {
   sendTaskMentionEmail,
 } from "@/lib/mail";
 import { notifyUserViaZalo } from "@/lib/zalo/notify";
+import { notifyUserViaDiscordDM, broadcastDiscordWebhook } from "@/lib/discord/notify";
 import { getUserNotificationPreference, isChannelEnabledForEvent } from "@/lib/notification-preferences";
 
 export type NotificationJob =
@@ -179,7 +180,7 @@ class NotificationQueue {
         }),
         prisma.user.findUnique({
           where: { id: job.assigneeId },
-          select: { id: true, name: true, email: true, phone: true, zaloUserId: true },
+          select: { id: true, name: true, email: true, phone: true, zaloUserId: true, discordUserId: true },
         }),
         prisma.user.findUnique({
           where: { id: job.actorId },
@@ -254,6 +255,31 @@ class NotificationQueue {
           message: notifyMessage,
         });
       }
+
+      // 5. Gửi DM Discord cá nhân — chỉ khi user không tắt kênh Discord cho loại này
+      if (isChannelEnabledForEvent(pref, "discord", "ASSIGNED")) {
+        await notifyUserViaDiscordDM(assignee, {
+          type: "ASSIGNED",
+          title: notifyTitle,
+          message: notifyMessage,
+        });
+      }
+
+      // 6. Đăng vào kênh Discord chung qua Webhook — 1 lần cho cả sự kiện, không phụ thuộc tùy chọn cá nhân
+      await broadcastDiscordWebhook({
+        type: "ASSIGNED",
+        title: notifyTitle,
+        message: task.description ? task.description.slice(0, 300) : `Task **${taskCode}**: ${task.title}`,
+        url: directTaskUrl,
+        fields: [
+          { name: "Dự án", value: `${project.name} (${project.key})`, inline: true },
+          { name: "Công việc", value: `${taskCode} — ${task.title}`, inline: true },
+          { name: "Người giao", value: isSelf ? "Tự nhận" : actor.name, inline: true },
+          { name: "Người thực hiện", value: assignee.name, inline: true },
+          { name: "Độ ưu tiên", value: task.priority, inline: true },
+          ...(task.dueDate ? [{ name: "Hạn chót", value: task.dueDate.toLocaleDateString("vi-VN"), inline: true }] : []),
+        ],
+      });
     } catch (err) {
       console.error("[NotificationQueue] Lỗi trong handleTaskAssigned:", err);
     }
@@ -276,8 +302,8 @@ class NotificationQueue {
             title: true,
             assigneeId: true,
             creatorId: true,
-            assignee: { select: { id: true, name: true, email: true, phone: true, zaloUserId: true } },
-            creator: { select: { id: true, name: true, email: true, phone: true, zaloUserId: true } },
+            assignee: { select: { id: true, name: true, email: true, phone: true, zaloUserId: true, discordUserId: true } },
+            creator: { select: { id: true, name: true, email: true, phone: true, zaloUserId: true, discordUserId: true } },
           },
         }),
         prisma.user.findUnique({
@@ -293,7 +319,7 @@ class NotificationQueue {
       if (!task || !actor || !project) return;
 
       const directTaskUrl = `${getAppBaseUrl()}/projects/${project.id}/board?taskId=${task.id}`;
-      const recipientsToNotify = new Map<string, { id: string; name: string; email: string; phone: string | null; zaloUserId: string | null }>();
+      const recipientsToNotify = new Map<string, { id: string; name: string; email: string; phone: string | null; zaloUserId: string | null; discordUserId: string | null }>();
 
       if (task.assignee && task.assignee.id !== actor.id) {
         recipientsToNotify.set(task.assignee.id, task.assignee);
@@ -347,7 +373,28 @@ class NotificationQueue {
             message: notifyMessage,
           });
         }
+
+        if (isChannelEnabledForEvent(pref, "discord", "STATUS_CHANGED")) {
+          await notifyUserViaDiscordDM(recipient, {
+            type: "STATUS_CHANGED",
+            title: notifyTitle,
+            message: notifyMessage,
+          });
+        }
       }
+
+      await broadcastDiscordWebhook({
+        type: "STATUS_CHANGED",
+        title: "Trạng thái công việc thay đổi",
+        message: `**${task.title}**`,
+        url: directTaskUrl,
+        fields: [
+          { name: "Dự án", value: `${project.name} (${project.key})`, inline: true },
+          { name: "Công việc", value: `${project.key}-${task.number}`, inline: true },
+          { name: "Người thực hiện", value: actor.name, inline: true },
+          { name: "Trạng thái", value: `${job.oldStatus} → ${job.newStatus}`, inline: true },
+        ],
+      });
 
       publish(job.projectId, {
         type: "TASK_CHANGED",
@@ -388,7 +435,7 @@ class NotificationQueue {
         }),
         prisma.user.findMany({
           where: { id: { in: uniqueRecipientIds } },
-          select: { id: true, name: true, email: true, phone: true, zaloUserId: true },
+          select: { id: true, name: true, email: true, phone: true, zaloUserId: true, discordUserId: true },
         }),
       ]);
 
@@ -442,6 +489,15 @@ class NotificationQueue {
             message: notifyMessage,
           });
         }
+
+        // Mention là thông báo riêng cho 1 người -> chỉ gửi DM Discord, KHÔNG đăng vào kênh chung (tránh nhiễu)
+        if (isChannelEnabledForEvent(pref, "discord", "MENTIONED")) {
+          await notifyUserViaDiscordDM(recipient, {
+            type: "MENTIONED",
+            title: notifyTitle,
+            message: notifyMessage,
+          });
+        }
       }
 
       publish(job.projectId, {
@@ -469,8 +525,8 @@ class NotificationQueue {
             id: true,
             number: true,
             title: true,
-            assignee: { select: { id: true, name: true, email: true, phone: true, zaloUserId: true } },
-            creator: { select: { id: true, name: true, email: true, phone: true, zaloUserId: true } },
+            assignee: { select: { id: true, name: true, email: true, phone: true, zaloUserId: true, discordUserId: true } },
+            creator: { select: { id: true, name: true, email: true, phone: true, zaloUserId: true, discordUserId: true } },
           },
         }),
         prisma.user.findUnique({
@@ -487,7 +543,7 @@ class NotificationQueue {
 
       const directTaskUrl = `${getAppBaseUrl()}/projects/${project.id}/board?taskId=${task.id}`;
       const excludeSet = new Set(job.excludeUserIds || []);
-      const recipients = new Map<string, { id: string; name: string; email: string; phone: string | null; zaloUserId: string | null }>();
+      const recipients = new Map<string, { id: string; name: string; email: string; phone: string | null; zaloUserId: string | null; discordUserId: string | null }>();
 
       if (task.assignee && task.assignee.id !== author.id && !excludeSet.has(task.assignee.id)) {
         recipients.set(task.assignee.id, task.assignee);
@@ -540,7 +596,27 @@ class NotificationQueue {
             message: notifyMessage,
           });
         }
+
+        if (isChannelEnabledForEvent(pref, "discord", "COMMENTED")) {
+          await notifyUserViaDiscordDM(recipient, {
+            type: "COMMENTED",
+            title: notifyTitle,
+            message: notifyMessage,
+          });
+        }
       }
+
+      await broadcastDiscordWebhook({
+        type: "COMMENTED",
+        title: "Bình luận mới trong công việc",
+        message: job.commentBody.slice(0, 300),
+        url: directTaskUrl,
+        fields: [
+          { name: "Dự án", value: `${project.name} (${project.key})`, inline: true },
+          { name: "Công việc", value: `${project.key}-${task.number} — ${task.title}`, inline: true },
+          { name: "Người bình luận", value: author.name, inline: true },
+        ],
+      });
     } catch (err) {
       console.error("[NotificationQueue] Lỗi trong handleTaskComment:", err);
     }

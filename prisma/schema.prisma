@@ -22,24 +22,31 @@ model User {
   // ngay khi có >1 user chưa liên kết. Tính duy nhất được đảm bảo ở tầng ứng dụng (xem lib/zalo/link.ts).
   zaloUserId   String?
   zaloLinkedAt DateTime? // Thời điểm liên kết Zalo OA thành công
-  createdAt    DateTime @default(now())
+  // Discord user ID (snowflake) - liên kết qua OAuth2 "Kết nối Discord" (tự phục vụ) HOẶC Admin nhập tay
+  // (giống hai cách liên kết Zalo). Cũng không dùng @unique vì lý do NULL-uniqueness trên SQL Server như trên.
+  discordUserId   String?
+  discordUsername String? // username Discord hiển thị, có được từ OAuth identify — chỉ để hiển thị UI
+  discordLinkedAt DateTime?
+  createdAt       DateTime @default(now())
 
-  team                   Team?            @relation("TeamMembers", fields: [teamId], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  ledTeams               Team[]           @relation("TeamLeader")
-  ownedProjects          Project[]        @relation("ProjectOwner")
+  team                   Team?              @relation("TeamMembers", fields: [teamId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  ledTeams               Team[]             @relation("TeamLeader")
+  ownedProjects          Project[]          @relation("ProjectOwner")
   memberships            ProjectMember[]
-  assignedTasks          Task[]           @relation("TaskAssignee")
-  createdTasks           Task[]           @relation("TaskCreator")
+  assignedTasks          Task[]             @relation("TaskAssignee")
+  createdTasks           Task[]             @relation("TaskCreator")
   comments               Comment[]
   activities             Activity[]
   attachments            Attachment[]
-  receivedNotifications  Notification[]   @relation("UserNotifications")
-  triggeredNotifications Notification[]   @relation("ActorNotifications")
+  receivedNotifications  Notification[]     @relation("UserNotifications")
+  triggeredNotifications Notification[]     @relation("ActorNotifications")
   zaloMessageLogs        ZaloMessageLog[]
   zaloLinkCodes          ZaloLinkCode[]
+  discordMessageLogs     DiscordMessageLog[]
   notificationPreference UserNotificationPreference?
 
   @@index([zaloUserId])
+  @@index([discordUserId])
 }
 
 // Tùy chọn kênh nhận thông báo CỦA RIÊNG TỪNG USER — lớp lọc thứ 2 sau công tắc tổng ở SystemSetting.
@@ -63,6 +70,13 @@ model UserNotificationPreference {
   inAppOnStatusChange Boolean @default(true)
   inAppOnComment      Boolean @default(true)
   inAppOnMention      Boolean @default(true)
+
+  // DM Discord cá nhân (kênh webhook broadcast vào channel chung KHÔNG có tùy chọn theo user — mọi
+  // người trong server Discord đều thấy chung, không phải kênh riêng tư nên không cần lọc theo cá nhân)
+  discordOnAssign       Boolean @default(true)
+  discordOnStatusChange Boolean @default(true)
+  discordOnComment      Boolean @default(true)
+  discordOnMention      Boolean @default(true)
 
   updatedAt DateTime @default(now()) @updatedAt
 
@@ -365,8 +379,43 @@ model SystemSetting {
   notifyZaloOnStatusChange Boolean   @default(false)
   notifyZaloOnComment      Boolean   @default(false)
 
+  // Discord Integration Settings (Bot DM cá nhân + Webhook kênh chung)
+  enableDiscordIntegration    Boolean @default(false)
+  discordClientId             String? @default("") // OAuth2 Application (Client) ID - dùng cho "Kết nối Discord"
+  discordClientSecret         String? @default("")
+  discordBotToken             String? @default("") // Bot Token - dùng để gửi DM cá nhân qua REST API
+  discordWebhookUrl           String? @default("") // Discord Incoming Webhook URL - đăng tin vào 1 kênh chung
+  // Quy tắc gửi DM cá nhân (chỉ user đã tự liên kết Discord mới nhận)
+  notifyDiscordOnAssign       Boolean @default(false)
+  notifyDiscordOnStatusChange Boolean @default(false)
+  notifyDiscordOnComment      Boolean @default(false)
+  // Quy tắc đăng vào kênh chung qua Webhook (độc lập với DM cá nhân, không phụ thuộc từng user)
+  discordWebhookOnAssign       Boolean @default(false)
+  discordWebhookOnStatusChange Boolean @default(false)
+  discordWebhookOnComment      Boolean @default(false)
+
   updatedAt            DateTime @default(now()) @updatedAt
   updatedBy            String?  @default("Hệ thống (Mặc định)")
+}
+
+model DiscordMessageLog {
+  id               String    @id @default(cuid())
+  userId           String? // null nếu là tin đăng Webhook kênh chung (không gắn 1 user cụ thể)
+  discordUserId    String? // người nhận DM
+  channel          String // DM | WEBHOOK
+  notificationType String? // ASSIGNED | STATUS_CHANGED | COMMENTED | MENTIONED | TEST
+  content          String    @db.NVarChar(Max)
+  status           String    @default("PENDING") // PENDING | SENT | FAILED
+  providerMsgId    String?
+  errorMessage     String?   @db.NVarChar(Max)
+  createdAt        DateTime  @default(now())
+  sentAt           DateTime?
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([status])
 }
 
 model ZaloMessageLog {

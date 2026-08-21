@@ -108,6 +108,11 @@ export type Attachment = Prisma.AttachmentModel
  */
 export type SystemSetting = Prisma.SystemSettingModel
 /**
+ * Model DiscordMessageLog
+ * 
+ */
+export type DiscordMessageLog = Prisma.DiscordMessageLogModel
+/**
  * Model ZaloMessageLog
  * 
  */

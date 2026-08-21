@@ -69,6 +69,7 @@ export const ModelName = {
   TicketComment: 'TicketComment',
   Attachment: 'Attachment',
   SystemSetting: 'SystemSetting',
+  DiscordMessageLog: 'DiscordMessageLog',
   ZaloMessageLog: 'ZaloMessageLog',
   ZaloLinkCode: 'ZaloLinkCode'
 } as const
@@ -102,6 +103,9 @@ export const UserScalarFieldEnum = {
   phone: 'phone',
   zaloUserId: 'zaloUserId',
   zaloLinkedAt: 'zaloLinkedAt',
+  discordUserId: 'discordUserId',
+  discordUsername: 'discordUsername',
+  discordLinkedAt: 'discordLinkedAt',
   createdAt: 'createdAt'
 } as const
 
@@ -123,6 +127,10 @@ export const UserNotificationPreferenceScalarFieldEnum = {
   inAppOnStatusChange: 'inAppOnStatusChange',
   inAppOnComment: 'inAppOnComment',
   inAppOnMention: 'inAppOnMention',
+  discordOnAssign: 'discordOnAssign',
+  discordOnStatusChange: 'discordOnStatusChange',
+  discordOnComment: 'discordOnComment',
+  discordOnMention: 'discordOnMention',
   updatedAt: 'updatedAt'
 } as const
 
@@ -372,11 +380,39 @@ export const SystemSettingScalarFieldEnum = {
   notifyZaloOnAssign: 'notifyZaloOnAssign',
   notifyZaloOnStatusChange: 'notifyZaloOnStatusChange',
   notifyZaloOnComment: 'notifyZaloOnComment',
+  enableDiscordIntegration: 'enableDiscordIntegration',
+  discordClientId: 'discordClientId',
+  discordClientSecret: 'discordClientSecret',
+  discordBotToken: 'discordBotToken',
+  discordWebhookUrl: 'discordWebhookUrl',
+  notifyDiscordOnAssign: 'notifyDiscordOnAssign',
+  notifyDiscordOnStatusChange: 'notifyDiscordOnStatusChange',
+  notifyDiscordOnComment: 'notifyDiscordOnComment',
+  discordWebhookOnAssign: 'discordWebhookOnAssign',
+  discordWebhookOnStatusChange: 'discordWebhookOnStatusChange',
+  discordWebhookOnComment: 'discordWebhookOnComment',
   updatedAt: 'updatedAt',
   updatedBy: 'updatedBy'
 } as const
 
 export type SystemSettingScalarFieldEnum = (typeof SystemSettingScalarFieldEnum)[keyof typeof SystemSettingScalarFieldEnum]
+
+
+export const DiscordMessageLogScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  discordUserId: 'discordUserId',
+  channel: 'channel',
+  notificationType: 'notificationType',
+  content: 'content',
+  status: 'status',
+  providerMsgId: 'providerMsgId',
+  errorMessage: 'errorMessage',
+  createdAt: 'createdAt',
+  sentAt: 'sentAt'
+} as const
+
+export type DiscordMessageLogScalarFieldEnum = (typeof DiscordMessageLogScalarFieldEnum)[keyof typeof DiscordMessageLogScalarFieldEnum]
 
 
 export const ZaloMessageLogScalarFieldEnum = {

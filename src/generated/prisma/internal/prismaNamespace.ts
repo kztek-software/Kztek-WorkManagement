@@ -415,6 +415,7 @@ export const ModelName = {
   TicketComment: 'TicketComment',
   Attachment: 'Attachment',
   SystemSetting: 'SystemSetting',
+  DiscordMessageLog: 'DiscordMessageLog',
   ZaloMessageLog: 'ZaloMessageLog',
   ZaloLinkCode: 'ZaloLinkCode'
 } as const
@@ -432,7 +433,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "userNotificationPreference" | "team" | "roleDefinition" | "notification" | "project" | "projectMember" | "sprint" | "task" | "label" | "taskLabel" | "subtask" | "comment" | "activity" | "customerTicket" | "ticketComment" | "attachment" | "systemSetting" | "zaloMessageLog" | "zaloLinkCode"
+    modelProps: "user" | "userNotificationPreference" | "team" | "roleDefinition" | "notification" | "project" | "projectMember" | "sprint" | "task" | "label" | "taskLabel" | "subtask" | "comment" | "activity" | "customerTicket" | "ticketComment" | "attachment" | "systemSetting" | "discordMessageLog" | "zaloMessageLog" | "zaloLinkCode"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1624,6 +1625,72 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    DiscordMessageLog: {
+      payload: Prisma.$DiscordMessageLogPayload<ExtArgs>
+      fields: Prisma.DiscordMessageLogFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.DiscordMessageLogFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DiscordMessageLogPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.DiscordMessageLogFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DiscordMessageLogPayload>
+        }
+        findFirst: {
+          args: Prisma.DiscordMessageLogFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DiscordMessageLogPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.DiscordMessageLogFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DiscordMessageLogPayload>
+        }
+        findMany: {
+          args: Prisma.DiscordMessageLogFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DiscordMessageLogPayload>[]
+        }
+        create: {
+          args: Prisma.DiscordMessageLogCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DiscordMessageLogPayload>
+        }
+        createMany: {
+          args: Prisma.DiscordMessageLogCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.DiscordMessageLogDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DiscordMessageLogPayload>
+        }
+        update: {
+          args: Prisma.DiscordMessageLogUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DiscordMessageLogPayload>
+        }
+        deleteMany: {
+          args: Prisma.DiscordMessageLogDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.DiscordMessageLogUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.DiscordMessageLogUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DiscordMessageLogPayload>
+        }
+        aggregate: {
+          args: Prisma.DiscordMessageLogAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateDiscordMessageLog>
+        }
+        groupBy: {
+          args: Prisma.DiscordMessageLogGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DiscordMessageLogGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.DiscordMessageLogCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DiscordMessageLogCountAggregateOutputType> | number
+        }
+      }
+    }
     ZaloMessageLog: {
       payload: Prisma.$ZaloMessageLogPayload<ExtArgs>
       fields: Prisma.ZaloMessageLogFieldRefs
@@ -1808,6 +1875,9 @@ export const UserScalarFieldEnum = {
   phone: 'phone',
   zaloUserId: 'zaloUserId',
   zaloLinkedAt: 'zaloLinkedAt',
+  discordUserId: 'discordUserId',
+  discordUsername: 'discordUsername',
+  discordLinkedAt: 'discordLinkedAt',
   createdAt: 'createdAt'
 } as const
 
@@ -1829,6 +1899,10 @@ export const UserNotificationPreferenceScalarFieldEnum = {
   inAppOnStatusChange: 'inAppOnStatusChange',
   inAppOnComment: 'inAppOnComment',
   inAppOnMention: 'inAppOnMention',
+  discordOnAssign: 'discordOnAssign',
+  discordOnStatusChange: 'discordOnStatusChange',
+  discordOnComment: 'discordOnComment',
+  discordOnMention: 'discordOnMention',
   updatedAt: 'updatedAt'
 } as const
 
@@ -2078,11 +2152,39 @@ export const SystemSettingScalarFieldEnum = {
   notifyZaloOnAssign: 'notifyZaloOnAssign',
   notifyZaloOnStatusChange: 'notifyZaloOnStatusChange',
   notifyZaloOnComment: 'notifyZaloOnComment',
+  enableDiscordIntegration: 'enableDiscordIntegration',
+  discordClientId: 'discordClientId',
+  discordClientSecret: 'discordClientSecret',
+  discordBotToken: 'discordBotToken',
+  discordWebhookUrl: 'discordWebhookUrl',
+  notifyDiscordOnAssign: 'notifyDiscordOnAssign',
+  notifyDiscordOnStatusChange: 'notifyDiscordOnStatusChange',
+  notifyDiscordOnComment: 'notifyDiscordOnComment',
+  discordWebhookOnAssign: 'discordWebhookOnAssign',
+  discordWebhookOnStatusChange: 'discordWebhookOnStatusChange',
+  discordWebhookOnComment: 'discordWebhookOnComment',
   updatedAt: 'updatedAt',
   updatedBy: 'updatedBy'
 } as const
 
 export type SystemSettingScalarFieldEnum = (typeof SystemSettingScalarFieldEnum)[keyof typeof SystemSettingScalarFieldEnum]
+
+
+export const DiscordMessageLogScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  discordUserId: 'discordUserId',
+  channel: 'channel',
+  notificationType: 'notificationType',
+  content: 'content',
+  status: 'status',
+  providerMsgId: 'providerMsgId',
+  errorMessage: 'errorMessage',
+  createdAt: 'createdAt',
+  sentAt: 'sentAt'
+} as const
+
+export type DiscordMessageLogScalarFieldEnum = (typeof DiscordMessageLogScalarFieldEnum)[keyof typeof DiscordMessageLogScalarFieldEnum]
 
 
 export const ZaloMessageLogScalarFieldEnum = {
@@ -2341,6 +2443,7 @@ export type GlobalOmitConfig = {
   ticketComment?: Prisma.TicketCommentOmit
   attachment?: Prisma.AttachmentOmit
   systemSetting?: Prisma.SystemSettingOmit
+  discordMessageLog?: Prisma.DiscordMessageLogOmit
   zaloMessageLog?: Prisma.ZaloMessageLogOmit
   zaloLinkCode?: Prisma.ZaloLinkCodeOmit
 }

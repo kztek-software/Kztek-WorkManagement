@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
 export type NotificationEventType = "ASSIGNED" | "STATUS_CHANGED" | "COMMENTED" | "MENTIONED";
-export type NotificationChannel = "email" | "zalo" | "inApp";
+export type NotificationChannel = "email" | "zalo" | "inApp" | "discord";
 
 export type UserNotificationPreferenceData = {
   emailOnAssign: boolean;
@@ -16,6 +16,10 @@ export type UserNotificationPreferenceData = {
   inAppOnStatusChange: boolean;
   inAppOnComment: boolean;
   inAppOnMention: boolean;
+  discordOnAssign: boolean;
+  discordOnStatusChange: boolean;
+  discordOnComment: boolean;
+  discordOnMention: boolean;
 };
 
 // Mặc định: chưa tùy chỉnh gì -> nhận tất cả thông báo trên mọi kênh (giữ nguyên hành vi cũ của hệ thống)
@@ -32,6 +36,10 @@ export const DEFAULT_NOTIFICATION_PREFERENCE: UserNotificationPreferenceData = {
   inAppOnStatusChange: true,
   inAppOnComment: true,
   inAppOnMention: true,
+  discordOnAssign: true,
+  discordOnStatusChange: true,
+  discordOnComment: true,
+  discordOnMention: true,
 };
 
 const EVENT_FIELD_SUFFIX: Record<NotificationEventType, string> = {
@@ -61,11 +69,15 @@ export async function getUserNotificationPreference(userId: string): Promise<Use
     inAppOnStatusChange: row.inAppOnStatusChange,
     inAppOnComment: row.inAppOnComment,
     inAppOnMention: row.inAppOnMention,
+    discordOnAssign: row.discordOnAssign,
+    discordOnStatusChange: row.discordOnStatusChange,
+    discordOnComment: row.discordOnComment,
+    discordOnMention: row.discordOnMention,
   };
 }
 
 /**
- * Kiểm tra 1 kênh (email/zalo/inApp) có được PHÉP gửi cho 1 loại sự kiện theo tùy chọn cá nhân của user không.
+ * Kiểm tra 1 kênh (email/zalo/inApp/discord) có được PHÉP gửi cho 1 loại sự kiện theo tùy chọn cá nhân của user không.
  * Đây chỉ là lớp lọc thứ 2 — vẫn cần kết hợp AND với công tắc tổng ở SystemSetting trước khi thực sự gửi.
  */
 export function isChannelEnabledForEvent(
@@ -106,5 +118,9 @@ export async function updateUserNotificationPreference(
     inAppOnStatusChange: saved.inAppOnStatusChange,
     inAppOnComment: saved.inAppOnComment,
     inAppOnMention: saved.inAppOnMention,
+    discordOnAssign: saved.discordOnAssign,
+    discordOnStatusChange: saved.discordOnStatusChange,
+    discordOnComment: saved.discordOnComment,
+    discordOnMention: saved.discordOnMention,
   };
 }

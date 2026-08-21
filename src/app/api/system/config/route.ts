@@ -69,6 +69,21 @@ const updateConfigSchema = z.object({
       notifyOnComment: z.boolean().optional(),
     })
     .optional(),
+  discord: z
+    .object({
+      enabled: z.boolean().optional(),
+      clientId: z.string().optional(),
+      clientSecret: z.string().optional(),
+      botToken: z.string().optional(),
+      webhookUrl: z.string().optional(),
+      notifyOnAssign: z.boolean().optional(),
+      notifyOnStatusChange: z.boolean().optional(),
+      notifyOnComment: z.boolean().optional(),
+      webhookOnAssign: z.boolean().optional(),
+      webhookOnStatusChange: z.boolean().optional(),
+      webhookOnComment: z.boolean().optional(),
+    })
+    .optional(),
 });
 
 export async function POST(req: NextRequest) {

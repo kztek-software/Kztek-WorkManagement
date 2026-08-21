@@ -12,6 +12,7 @@ const updateUserSchema = z.object({
   role: z.string().optional(),
   teamId: z.string().nullable().optional(),
   phone: z.string().max(20).nullable().optional(),
+  discordUserId: z.string().max(32).nullable().optional(),
 });
 
 export async function PATCH(
@@ -35,7 +36,7 @@ export async function PATCH(
     return NextResponse.json({ error: "Dữ liệu cập nhật không hợp lệ" }, { status: 400 });
   }
 
-  const { name, email, password, title, avatarColor, role, teamId, phone } = parsed.data;
+  const { name, email, password, title, avatarColor, role, teamId, phone, discordUserId } = parsed.data;
 
   if (email && email !== target.email) {
     const existing = await prisma.user.findUnique({ where: { email } });
@@ -53,6 +54,9 @@ export async function PATCH(
     role?: string;
     teamId?: string | null;
     phone?: string | null;
+    discordUserId?: string | null;
+    discordUsername?: string | null;
+    discordLinkedAt?: Date | null;
   } = {};
 
   if (name) updateData.name = name;
@@ -63,6 +67,20 @@ export async function PATCH(
   if (role) updateData.role = role;
   if (teamId !== undefined) updateData.teamId = teamId;
   if (phone !== undefined) updateData.phone = phone;
+
+  if (discordUserId !== undefined) {
+    // Admin nhập tay Discord User ID -> gỡ liên kết cũ (nếu ID này trước đó gắn với user khác) tránh trùng,
+    // và đánh dấu là gắn thủ công (không có discordUsername/linkedAt xác thực qua OAuth)
+    if (discordUserId) {
+      await prisma.user.updateMany({
+        where: { discordUserId, id: { not: userId } },
+        data: { discordUserId: null, discordUsername: null, discordLinkedAt: null },
+      });
+    }
+    updateData.discordUserId = discordUserId;
+    updateData.discordUsername = discordUserId ? target.discordUsername : null;
+    updateData.discordLinkedAt = discordUserId ? new Date() : null;
+  }
 
   const updated = await prisma.user.update({
     where: { id: userId },
@@ -78,6 +96,9 @@ export async function PATCH(
       phone: true,
       zaloUserId: true,
       zaloLinkedAt: true,
+      discordUserId: true,
+      discordUsername: true,
+      discordLinkedAt: true,
       team: {
         select: {
           id: true,

@@ -7,17 +7,21 @@ import type { MemberDto } from "@/lib/types";
 import { Avatar, AvatarFallback, initials } from "@/components/ui/avatar";
 
 export function AssigneeQuickSelect({
-  taskId,
+  taskId = "",
   currentAssigneeId,
   currentAssignee,
   members,
   onAssign,
+  variant = "avatar",
+  className = "",
 }: {
-  taskId: string;
+  taskId?: string;
   currentAssigneeId: string | null;
-  currentAssignee: { id: string; name: string; avatarColor: string } | null;
+  currentAssignee?: { id: string; name: string; avatarColor?: string; team?: { name: string; color?: string } } | null;
   members: MemberDto[];
   onAssign: (taskId: string, userId: string | null) => void;
+  variant?: "avatar" | "field";
+  className?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [keyword, setKeyword] = useState("");
@@ -27,6 +31,13 @@ export function AssigneeQuickSelect({
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
+
+  const effectiveAssignee = useMemo(() => {
+    if (currentAssignee) return currentAssignee;
+    if (!currentAssigneeId) return null;
+    const found = members.find((m) => m.user.id === currentAssigneeId);
+    return found?.user || null;
+  }, [currentAssignee, currentAssigneeId, members]);
 
   // Danh sách các nhóm (teams) duy nhất từ danh sách thành viên
   const teams = useMemo(() => {
@@ -90,21 +101,20 @@ export function AssigneeQuickSelect({
     const spaceBelow = window.innerHeight - rect.bottom;
     const spaceAbove = rect.top;
 
-    let top = rect.bottom + 8;
+    let top = rect.bottom + 6;
     // Nếu phía dưới không đủ không gian và phía trên rộng hơn -> lật lên trên
     if (spaceBelow < estimatedHeight && spaceAbove > spaceBelow) {
-      top = Math.max(12, rect.top - estimatedHeight - 8);
+      top = Math.max(12, rect.top - estimatedHeight - 6);
     }
 
-    // Căn lề phải theo nút bấm, không để tràn mép màn hình
-    let left = rect.right - menuWidth;
-    if (left < 12) left = 12;
+    let left = variant === "field" ? rect.left : rect.right - menuWidth;
     if (left + menuWidth > window.innerWidth - 12) {
       left = window.innerWidth - menuWidth - 12;
     }
+    if (left < 12) left = 12;
 
     setCoords({ top, left });
-  }, [members.length]);
+  }, [members.length, variant]);
 
   const toggle = (e: React.MouseEvent<HTMLButtonElement> | React.PointerEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -146,28 +156,69 @@ export function AssigneeQuickSelect({
 
   return (
     <>
-      <button
-        ref={triggerRef}
-        type="button"
-        onClick={toggle}
-        onPointerDown={(e) => {
-          e.stopPropagation();
-        }}
-        className="rounded-full shrink-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent transition-transform hover:scale-105"
-        aria-label="Gán người phụ trách"
-      >
-        {currentAssignee ? (
-          <Avatar className="h-[22px] w-[22px] border border-white/10 shadow-sm shrink-0">
-            <AvatarFallback color={currentAssignee.avatarColor} className="text-[9px] font-bold">
-              {initials(currentAssignee.name)}
-            </AvatarFallback>
-          </Avatar>
-        ) : (
-          <div className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full border border-dashed border-line-strong text-muted/70 hover:border-accent hover:text-accent hover:bg-accent/10 transition-colors">
-            <Plus className="h-3 w-3" />
-          </div>
-        )}
-      </button>
+      {variant === "field" ? (
+        <button
+          ref={triggerRef}
+          type="button"
+          onClick={toggle}
+          className={`h-8 w-full text-xs bg-surface-2 border border-line rounded-lg flex items-center justify-between px-2.5 text-foreground hover:border-line-strong transition-colors cursor-pointer text-left ${className}`}
+          aria-label="Chọn người phụ trách"
+        >
+          {effectiveAssignee ? (
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <Avatar className="h-5 w-5 border border-white/10 shadow-xs shrink-0">
+                <AvatarFallback color={effectiveAssignee.avatarColor} className="text-[8px] font-bold">
+                  {initials(effectiveAssignee.name)}
+                </AvatarFallback>
+              </Avatar>
+              <span className="truncate font-semibold text-foreground text-xs">{effectiveAssignee.name}</span>
+              {effectiveAssignee.team && (
+                <span
+                  className="font-bold px-1 rounded text-[8.5px] shrink-0 border ml-0.5"
+                  style={{
+                    backgroundColor: `${effectiveAssignee.team.color || "#F05922"}18`,
+                    color: effectiveAssignee.team.color || "#F05922",
+                    borderColor: `${effectiveAssignee.team.color || "#F05922"}35`,
+                  }}
+                >
+                  {effectiveAssignee.team.name}
+                </span>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 min-w-0 text-muted">
+              <div className="h-5 w-5 rounded-full border border-dashed border-line-strong flex items-center justify-center shrink-0 bg-surface-3">
+                <UserX className="h-2.5 w-2.5 text-muted" />
+              </div>
+              <span className="text-xs font-normal">Chưa giao việc</span>
+            </div>
+          )}
+          <ChevronDown className="h-3.5 w-3.5 text-muted shrink-0 ml-1" />
+        </button>
+      ) : (
+        <button
+          ref={triggerRef}
+          type="button"
+          onClick={toggle}
+          onPointerDown={(e) => {
+            e.stopPropagation();
+          }}
+          className="rounded-full shrink-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent transition-transform hover:scale-105"
+          aria-label="Gán người phụ trách"
+        >
+          {effectiveAssignee ? (
+            <Avatar className="h-[22px] w-[22px] border border-white/10 shadow-sm shrink-0">
+              <AvatarFallback color={effectiveAssignee.avatarColor} className="text-[9px] font-bold">
+                {initials(effectiveAssignee.name)}
+              </AvatarFallback>
+            </Avatar>
+          ) : (
+            <div className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full border border-dashed border-line-strong text-muted/70 hover:border-accent hover:text-accent hover:bg-accent/10 transition-colors">
+              <Plus className="h-3 w-3" />
+            </div>
+          )}
+        </button>
+      )}
 
       {open &&
         coords &&

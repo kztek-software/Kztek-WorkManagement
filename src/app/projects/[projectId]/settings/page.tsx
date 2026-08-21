@@ -30,6 +30,8 @@ import {
   Link2,
   Unlink,
   Smartphone,
+  Bot,
+  Webhook,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -73,6 +75,19 @@ type SystemConfigState = {
     notifyOnStatusChange: boolean;
     notifyOnComment: boolean;
   };
+  discord: {
+    enabled: boolean;
+    clientId: string;
+    clientSecret: string;
+    botToken: string;
+    webhookUrl: string;
+    notifyOnAssign: boolean;
+    notifyOnStatusChange: boolean;
+    notifyOnComment: boolean;
+    webhookOnAssign: boolean;
+    webhookOnStatusChange: boolean;
+    webhookOnComment: boolean;
+  };
   updatedAt?: string;
   updatedBy?: string;
 };
@@ -82,7 +97,7 @@ export default function AdminSettingsPage() {
   const router = useRouter();
   const projectId = params?.projectId as string;
 
-  const [activeTab, setActiveTab] = useState<"smtp" | "branding" | "notifications" | "zalo" | "diagnostics">("smtp");
+  const [activeTab, setActiveTab] = useState<"smtp" | "branding" | "notifications" | "zalo" | "discord" | "diagnostics">("smtp");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [accessDenied, setAccessDenied] = useState(false);
@@ -103,6 +118,12 @@ export default function AdminSettingsPage() {
   const [testZaloPhone, setTestZaloPhone] = useState("");
   const [sendingZaloTest, setSendingZaloTest] = useState<"OA" | "ZNS" | null>(null);
   const [zaloTestResult, setZaloTestResult] = useState<{ success: boolean; message: string } | null>(null);
+
+  // Test Discord state
+  const [testDiscordUserId, setTestDiscordUserId] = useState("");
+  const [sendingDiscordTest, setSendingDiscordTest] = useState<"DM" | "WEBHOOK" | null>(null);
+  const [discordTestResult, setDiscordTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [showDiscordSecret, setShowDiscordSecret] = useState(false);
 
   // Config State
   const [config, setConfig] = useState<SystemConfigState>({
@@ -142,6 +163,19 @@ export default function AdminSettingsPage() {
       notifyOnAssign: false,
       notifyOnStatusChange: false,
       notifyOnComment: false,
+    },
+    discord: {
+      enabled: false,
+      clientId: "",
+      clientSecret: "",
+      botToken: "",
+      webhookUrl: "",
+      notifyOnAssign: false,
+      notifyOnStatusChange: false,
+      notifyOnComment: false,
+      webhookOnAssign: false,
+      webhookOnStatusChange: false,
+      webhookOnComment: false,
     },
   });
 
@@ -305,6 +339,36 @@ export default function AdminSettingsPage() {
     return `https://oauth.zaloapp.com/v4/oa/permission?${params.toString()}`;
   }
 
+  async function handleSendDiscordTest(channel: "DM" | "WEBHOOK") {
+    if (channel === "DM" && !testDiscordUserId) {
+      alert("Vui lòng nhập Discord User ID để gửi thử qua DM");
+      return;
+    }
+
+    setSendingDiscordTest(channel);
+    setDiscordTestResult(null);
+
+    try {
+      const res = await fetch("/api/integrations/discord/test-send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          channel,
+          discordUserId: channel === "DM" ? testDiscordUserId : undefined,
+        }),
+      });
+      const data = await res.json();
+      setDiscordTestResult({
+        success: res.ok,
+        message: res.ok ? data.message || "Gửi thử thành công!" : data.error || "Gửi thử thất bại",
+      });
+    } catch {
+      setDiscordTestResult({ success: false, message: "Lỗi kết nối khi gửi thử Discord" });
+    } finally {
+      setSendingDiscordTest(null);
+    }
+  }
+
   function applyPreset(type: "gmail" | "office365" | "custom") {
     if (type === "gmail") {
       setConfig((prev) => ({
@@ -368,7 +432,7 @@ export default function AdminSettingsPage() {
   }
 
   return (
-    <div className="min-w-0 w-full overflow-y-auto p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto space-y-6">
+    <div className="min-w-0 w-full overflow-y-auto p-4 sm:p-6 lg:p-8 max-w-[96rem] mx-auto space-y-6">
       {/* Header Banner */}
       <div className="flex flex-col gap-4 border-b border-line pb-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3.5 min-w-0 flex-1">
@@ -419,7 +483,7 @@ export default function AdminSettingsPage() {
       )}
 
       {/* Navigation Tabs */}
-      <div className="flex items-center gap-1.5 border-b border-line pb-px overflow-x-auto scrollbar-none">
+      <div className="flex flex-wrap items-center gap-1.5 border-b border-line pb-px">
         <button
           onClick={() => setActiveTab("smtp")}
           className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all duration-200 cursor-pointer whitespace-nowrap rounded-t-xl ${
@@ -467,6 +531,23 @@ export default function AdminSettingsPage() {
           <MessageCircle className="h-4 w-4 shrink-0" />
           <span>Zalo (ZNS/OA)</span>
           {!config.zalo.enabled && (
+            <span className="px-1.5 py-0.1 rounded text-[8px] font-black bg-surface-3 text-muted border border-line font-mono">
+              CHƯA BẬT
+            </span>
+          )}
+        </button>
+
+        <button
+          onClick={() => setActiveTab("discord")}
+          className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all duration-200 cursor-pointer whitespace-nowrap rounded-t-xl ${
+            activeTab === "discord"
+              ? "border-accent text-accent bg-accent/5 font-extrabold"
+              : "border-transparent text-muted hover:text-foreground hover:bg-surface-2"
+          }`}
+        >
+          <Bot className="h-4 w-4 shrink-0" />
+          <span>Discord</span>
+          {!config.discord.enabled && (
             <span className="px-1.5 py-0.1 rounded text-[8px] font-black bg-surface-3 text-muted border border-line font-mono">
               CHƯA BẬT
             </span>
@@ -1236,6 +1317,225 @@ export default function AdminSettingsPage() {
               <ul className="list-disc pl-4 space-y-0.5">
                 <li><strong>Tự liên kết (miễn phí, dùng kênh OA):</strong> user vào menu tài khoản → &quot;Kết nối Zalo&quot; → gửi mã 6 số tới OA.</li>
                 <li><strong>Admin nhập tay (dùng kênh ZNS, tính phí):</strong> nhập số điện thoại cho user tại trang Quản trị Cơ cấu & Phân quyền.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab: Tích hợp Discord (Bot DM + Webhook kênh chung) */}
+      {activeTab === "discord" && (
+        <div key="discord" className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Card 1: Thông số Application/Bot Discord */}
+          <div className="rounded-2xl border border-line bg-surface p-5 sm:p-6 space-y-4 shadow-sm flex flex-col justify-between">
+            <div className="space-y-4">
+              <div className="font-bold text-xs text-foreground flex items-center gap-2 border-b border-line/60 pb-3 justify-between">
+                <span className="flex items-center gap-2">
+                  <Bot className="h-4 w-4 text-accent" /> Thông Số Discord Application & Bot
+                </span>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={config.discord.enabled}
+                    onChange={(e) => setConfig({ ...config, discord: { ...config.discord, enabled: e.target.checked } })}
+                    className="rounded border-line text-accent h-4 w-4"
+                  />
+                  <span className="text-[11px] font-semibold">Bật tích hợp</span>
+                </label>
+              </div>
+
+              <div className="rounded-xl border border-dashed border-line bg-surface-2/60 p-3 text-[11px] text-muted leading-relaxed">
+                Tạo Application + Bot tại <a href="https://discord.com/developers/applications" target="_blank" rel="noreferrer" className="text-accent font-semibold underline">discord.com/developers/applications</a>. Mời Bot vào server của KZTEK (OAuth2 URL Generator, scope <code className="font-mono text-foreground">bot</code>). Khai báo <strong>OAuth2 Redirect URL</strong> = <code className="font-mono text-foreground">{(config.branding.appUrl || "").replace(/\/+$/, "")}/api/integrations/discord/oauth/callback</code> trong tab OAuth2 của Application. Lưu ý: Bot chỉ DM được user nào cùng ở server với Bot.
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Application (Client) ID</Label>
+                <Input
+                  placeholder="VD: 1234567890123456789"
+                  value={config.discord.clientId}
+                  onChange={(e) => setConfig({ ...config, discord: { ...config.discord, clientId: e.target.value } })}
+                  className="h-9 text-xs bg-surface-2 font-mono"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Client Secret (OAuth2)</Label>
+                <div className="relative">
+                  <Input
+                    type={showDiscordSecret ? "text" : "password"}
+                    placeholder="Client Secret từ tab OAuth2"
+                    value={config.discord.clientSecret}
+                    onChange={(e) => setConfig({ ...config, discord: { ...config.discord, clientSecret: e.target.value } })}
+                    className="h-9 text-xs bg-surface-2 pr-9 font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowDiscordSecret(!showDiscordSecret)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-foreground cursor-pointer p-1"
+                  >
+                    {showDiscordSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4 text-accent" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Bot Token</Label>
+                <Input
+                  type="password"
+                  placeholder="Bot Token từ tab Bot"
+                  value={config.discord.botToken}
+                  onChange={(e) => setConfig({ ...config, discord: { ...config.discord, botToken: e.target.value } })}
+                  className="h-9 text-xs bg-surface-2 font-mono"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold flex items-center gap-1">
+                  <Webhook className="h-3 w-3 text-muted" /> Webhook URL (kênh chung)
+                </Label>
+                <Input
+                  placeholder="https://discord.com/api/webhooks/..."
+                  value={config.discord.webhookUrl}
+                  onChange={(e) => setConfig({ ...config, discord: { ...config.discord, webhookUrl: e.target.value } })}
+                  className="h-9 text-xs bg-surface-2 font-mono"
+                />
+                <p className="text-[11px] text-muted">Tạo tại: Cài đặt kênh Discord → Tích hợp → Webhook → Tạo Webhook mới.</p>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-line flex justify-end">
+              <Button
+                type="button"
+                onClick={handleSaveConfig}
+                disabled={saving}
+                className="font-bold text-xs gap-1.5 bg-accent hover:bg-accent/90 text-white cursor-pointer h-9"
+              >
+                <Save className="h-3.5 w-3.5" /> {saving ? "Đang lưu..." : "Lưu Cấu Hình Discord"}
+              </Button>
+            </div>
+          </div>
+
+          {/* Card 2: Quy tắc thông báo & Gửi thử */}
+          <div className="rounded-2xl border border-line bg-surface p-5 sm:p-6 space-y-4 shadow-sm flex flex-col justify-between">
+            <div className="space-y-4">
+              <div className="font-bold text-xs text-foreground flex items-center gap-2 border-b border-line/60 pb-3">
+                <MessageCircle className="h-4 w-4 text-accent" /> DM Cá Nhân (chỉ user đã tự liên kết)
+              </div>
+
+              <label className="flex items-center gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={config.discord.notifyOnAssign}
+                  onChange={(e) => setConfig({ ...config, discord: { ...config.discord, notifyOnAssign: e.target.checked } })}
+                  className="rounded border-line text-accent h-4 w-4"
+                />
+                <span className="text-[11px] font-medium">Giao việc mới</span>
+              </label>
+              <label className="flex items-center gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={config.discord.notifyOnStatusChange}
+                  onChange={(e) => setConfig({ ...config, discord: { ...config.discord, notifyOnStatusChange: e.target.checked } })}
+                  className="rounded border-line text-accent h-4 w-4"
+                />
+                <span className="text-[11px] font-medium">Đổi trạng thái công việc</span>
+              </label>
+              <label className="flex items-center gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={config.discord.notifyOnComment}
+                  onChange={(e) => setConfig({ ...config, discord: { ...config.discord, notifyOnComment: e.target.checked } })}
+                  className="rounded border-line text-accent h-4 w-4"
+                />
+                <span className="text-[11px] font-medium">Bình luận & nhắc đến (@mention)</span>
+              </label>
+
+              <div className="border-t border-line/60 pt-3 space-y-3">
+                <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                  <Webhook className="h-3.5 w-3.5 text-accent" /> Đăng Vào Kênh Chung (Webhook)
+                </div>
+                <label className="flex items-center gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={config.discord.webhookOnAssign}
+                    onChange={(e) => setConfig({ ...config, discord: { ...config.discord, webhookOnAssign: e.target.checked } })}
+                    className="rounded border-line text-accent h-4 w-4"
+                  />
+                  <span className="text-[11px] font-medium">Giao việc mới</span>
+                </label>
+                <label className="flex items-center gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={config.discord.webhookOnStatusChange}
+                    onChange={(e) => setConfig({ ...config, discord: { ...config.discord, webhookOnStatusChange: e.target.checked } })}
+                    className="rounded border-line text-accent h-4 w-4"
+                  />
+                  <span className="text-[11px] font-medium">Đổi trạng thái công việc</span>
+                </label>
+                <label className="flex items-center gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={config.discord.webhookOnComment}
+                    onChange={(e) => setConfig({ ...config, discord: { ...config.discord, webhookOnComment: e.target.checked } })}
+                    className="rounded border-line text-accent h-4 w-4"
+                  />
+                  <span className="text-[11px] font-medium">Bình luận mới</span>
+                </label>
+              </div>
+
+              <div className="rounded-xl border border-dashed border-line bg-surface-2/60 p-4 space-y-3 mt-2">
+                <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                  <Send className="h-3.5 w-3.5 text-accent" /> Gửi Thử Nghiệm
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Discord User ID (cùng server với Bot)"
+                    value={testDiscordUserId}
+                    onChange={(e) => setTestDiscordUserId(e.target.value)}
+                    className="h-9 text-xs bg-surface font-mono"
+                  />
+                  <Button
+                    type="button"
+                    onClick={() => handleSendDiscordTest("DM")}
+                    disabled={sendingDiscordTest !== null}
+                    className="shrink-0 text-xs font-bold gap-1 bg-accent hover:bg-accent/90 text-white cursor-pointer h-9 px-3"
+                  >
+                    {sendingDiscordTest === "DM" ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <MessageCircle className="h-3.5 w-3.5" />}
+                    <span>DM</span>
+                  </Button>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => handleSendDiscordTest("WEBHOOK")}
+                  disabled={sendingDiscordTest !== null}
+                  className="w-full text-xs font-bold gap-1.5 bg-surface-2 hover:bg-line cursor-pointer h-9"
+                >
+                  {sendingDiscordTest === "WEBHOOK" ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Webhook className="h-3.5 w-3.5" />}
+                  Gửi Thử Webhook Kênh Chung
+                </Button>
+
+                {discordTestResult && (
+                  <div
+                    className={`p-2.5 rounded-lg text-xs font-medium ${
+                      discordTestResult.success
+                        ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-600"
+                        : "bg-accent-subtle border border-accent/20 text-accent"
+                    }`}
+                  >
+                    {discordTestResult.message}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="p-3 rounded-xl bg-accent/5 border border-accent/20 text-[11px] text-muted space-y-1">
+              <div className="font-bold text-accent flex items-center gap-1">
+                <Unlink className="h-3.5 w-3.5" /> Cách người dùng liên kết tài khoản Discord:
+              </div>
+              <ul className="list-disc pl-4 space-y-0.5">
+                <li><strong>Tự liên kết (qua OAuth):</strong> user vào menu tài khoản → &quot;Kết nối Discord&quot; → đăng nhập Discord xác thực.</li>
+                <li><strong>Admin nhập tay:</strong> nhập Discord User ID (bật Chế độ Nhà phát triển trong Discord để copy ID) tại trang Quản trị Cơ cấu & Phân quyền.</li>
               </ul>
             </div>
           </div>

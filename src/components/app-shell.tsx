@@ -36,11 +36,13 @@ import {
   Pin,
   MessageCircle,
   Bell,
+  Bot,
 } from "lucide-react";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { CommandPalette } from "@/components/desktop/command-palette";
 import { ZaloLinkModal } from "@/components/account/zalo-link-modal";
+import { DiscordLinkModal } from "@/components/account/discord-link-modal";
 import { NotificationPreferencesModal } from "@/components/account/notification-preferences-modal";
 import { ShortcutsModal } from "@/components/desktop/shortcuts-modal";
 import { SmartWorkCalculator } from "@/components/desktop/smart-work-calculator";
@@ -148,6 +150,7 @@ export function AppShell({
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [isZaloLinkOpen, setIsZaloLinkOpen] = useState(false);
+  const [isDiscordLinkOpen, setIsDiscordLinkOpen] = useState(false);
   const [isNotificationPrefsOpen, setIsNotificationPrefsOpen] = useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   const [isScratchpadOpen, setIsScratchpadOpen] = useState(false);
@@ -221,6 +224,19 @@ export function AppShell({
   useEffect(() => {
     setMobileDrawerOpen(false);
   }, [pathname]);
+
+  // Xử lý kết quả redirect về từ Discord OAuth callback (?discord_oauth=connected|error)
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const discordOauthStatus = searchParams.get("discord_oauth");
+    if (!discordOauthStatus) return;
+
+    if (discordOauthStatus === "error") {
+      alert(searchParams.get("discord_oauth_message") || "Kết nối Discord thất bại");
+    }
+    setIsDiscordLinkOpen(true);
+    window.history.replaceState({}, "", window.location.pathname);
+  }, []);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -1031,6 +1047,18 @@ export function AppShell({
                       type="button"
                       onClick={() => {
                         setUserMenuOpen(false);
+                        setIsDiscordLinkOpen(true);
+                      }}
+                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-foreground hover:bg-surface-2 transition-colors cursor-pointer"
+                    >
+                      <Bot className="h-4 w-4 text-[#5865F2]" />
+                      <span>Kết nối Discord (nhận thông báo)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUserMenuOpen(false);
                         setIsNotificationPrefsOpen(true);
                       }}
                       className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-foreground hover:bg-surface-2 transition-colors cursor-pointer"
@@ -1414,6 +1442,12 @@ export function AppShell({
       <ZaloLinkModal
         isOpen={isZaloLinkOpen}
         onClose={() => setIsZaloLinkOpen(false)}
+      />
+
+      {/* Modal tự liên kết tài khoản Discord cá nhân để nhận thông báo */}
+      <DiscordLinkModal
+        isOpen={isDiscordLinkOpen}
+        onClose={() => setIsDiscordLinkOpen(false)}
       />
 
       {/* Modal tùy chọn kênh nhận thông báo cá nhân (Email/Zalo/In-app) theo từng loại sự kiện */}

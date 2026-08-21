@@ -125,6 +125,7 @@ export interface WysiwygEditorProps {
   minHeight?: string;
   className?: string;
   disabled?: boolean;
+  borderless?: boolean;
   onKeyDown?: (e: React.KeyboardEvent<HTMLDivElement>) => void;
   onSave?: () => void;
   onCancel?: () => void;
@@ -138,6 +139,7 @@ export const WysiwygEditor = React.memo(function WysiwygEditor({
   minHeight = "140px",
   className = "",
   disabled = false,
+  borderless = false,
   onKeyDown,
   onSave,
   onCancel,
@@ -300,12 +302,20 @@ export const WysiwygEditor = React.memo(function WysiwygEditor({
 
   return (
     <div
-      className={`rounded-xl border transition-colors shadow-sm bg-surface-2/80 relative ${
-        isFocused ? "border-accent ring-1 ring-accent/30" : "border-line"
+      className={`rounded-lg transition-colors relative ${
+        borderless
+          ? "border-none shadow-none bg-surface/60"
+          : isFocused
+          ? "border border-accent ring-1 ring-accent/30 shadow-sm bg-surface-2/80 rounded-xl"
+          : "border border-line shadow-sm bg-surface-2/80 rounded-xl"
       } ${className}`}
     >
       {/* WYSIWYG Toolbar */}
-      <div className="flex flex-wrap items-center gap-0.5 sm:gap-1 p-1.5 bg-surface-2 border-b border-line/70 text-xs rounded-t-xl relative z-20">
+      <div
+        className={`flex flex-wrap items-center gap-0.5 sm:gap-1 p-1 sm:p-1.5 bg-surface-2/80 border-b border-line/60 text-xs relative z-20 ${
+          borderless ? "rounded-t-lg" : "rounded-t-xl"
+        }`}
+      >
         {/* 1. Bold */}
         <button
           type="button"

@@ -265,7 +265,7 @@ export default function DesktopWorkstationPage() {
             className="w-full flex items-center justify-between px-3 py-1.5 bg-zinc-900/70 hover:bg-zinc-800/80 border border-zinc-700/60 rounded-xl text-xs text-zinc-400 hover:text-zinc-200 transition-all shadow-inner"
           >
             <div className="flex items-center gap-2">
-              <Search className="w-3.5 h-3.5 text-primary" />
+              <Search className="w-3.5 h-3.5 text-accent" />
               <span>Tìm kiếm tác vụ, dự án, tickets hoặc gõ lệnh...</span>
             </div>
             <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-zinc-800 border border-zinc-700 rounded text-zinc-300">

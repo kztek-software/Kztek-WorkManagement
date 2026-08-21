@@ -39,6 +39,10 @@ export type UserNotificationPreferenceMinAggregateOutputType = {
   inAppOnStatusChange: boolean | null
   inAppOnComment: boolean | null
   inAppOnMention: boolean | null
+  discordOnAssign: boolean | null
+  discordOnStatusChange: boolean | null
+  discordOnComment: boolean | null
+  discordOnMention: boolean | null
   updatedAt: Date | null
 }
 
@@ -57,6 +61,10 @@ export type UserNotificationPreferenceMaxAggregateOutputType = {
   inAppOnStatusChange: boolean | null
   inAppOnComment: boolean | null
   inAppOnMention: boolean | null
+  discordOnAssign: boolean | null
+  discordOnStatusChange: boolean | null
+  discordOnComment: boolean | null
+  discordOnMention: boolean | null
   updatedAt: Date | null
 }
 
@@ -75,6 +83,10 @@ export type UserNotificationPreferenceCountAggregateOutputType = {
   inAppOnStatusChange: number
   inAppOnComment: number
   inAppOnMention: number
+  discordOnAssign: number
+  discordOnStatusChange: number
+  discordOnComment: number
+  discordOnMention: number
   updatedAt: number
   _all: number
 }
@@ -95,6 +107,10 @@ export type UserNotificationPreferenceMinAggregateInputType = {
   inAppOnStatusChange?: true
   inAppOnComment?: true
   inAppOnMention?: true
+  discordOnAssign?: true
+  discordOnStatusChange?: true
+  discordOnComment?: true
+  discordOnMention?: true
   updatedAt?: true
 }
 
@@ -113,6 +129,10 @@ export type UserNotificationPreferenceMaxAggregateInputType = {
   inAppOnStatusChange?: true
   inAppOnComment?: true
   inAppOnMention?: true
+  discordOnAssign?: true
+  discordOnStatusChange?: true
+  discordOnComment?: true
+  discordOnMention?: true
   updatedAt?: true
 }
 
@@ -131,6 +151,10 @@ export type UserNotificationPreferenceCountAggregateInputType = {
   inAppOnStatusChange?: true
   inAppOnComment?: true
   inAppOnMention?: true
+  discordOnAssign?: true
+  discordOnStatusChange?: true
+  discordOnComment?: true
+  discordOnMention?: true
   updatedAt?: true
   _all?: true
 }
@@ -222,6 +246,10 @@ export type UserNotificationPreferenceGroupByOutputType = {
   inAppOnStatusChange: boolean
   inAppOnComment: boolean
   inAppOnMention: boolean
+  discordOnAssign: boolean
+  discordOnStatusChange: boolean
+  discordOnComment: boolean
+  discordOnMention: boolean
   updatedAt: Date
   _count: UserNotificationPreferenceCountAggregateOutputType | null
   _min: UserNotificationPreferenceMinAggregateOutputType | null
@@ -261,6 +289,10 @@ export type UserNotificationPreferenceWhereInput = {
   inAppOnStatusChange?: Prisma.BoolFilter<"UserNotificationPreference"> | boolean
   inAppOnComment?: Prisma.BoolFilter<"UserNotificationPreference"> | boolean
   inAppOnMention?: Prisma.BoolFilter<"UserNotificationPreference"> | boolean
+  discordOnAssign?: Prisma.BoolFilter<"UserNotificationPreference"> | boolean
+  discordOnStatusChange?: Prisma.BoolFilter<"UserNotificationPreference"> | boolean
+  discordOnComment?: Prisma.BoolFilter<"UserNotificationPreference"> | boolean
+  discordOnMention?: Prisma.BoolFilter<"UserNotificationPreference"> | boolean
   updatedAt?: Prisma.DateTimeFilter<"UserNotificationPreference"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }
@@ -280,6 +312,10 @@ export type UserNotificationPreferenceOrderByWithRelationInput = {
   inAppOnStatusChange?: Prisma.SortOrder
   inAppOnComment?: Prisma.SortOrder
   inAppOnMention?: Prisma.SortOrder
+  discordOnAssign?: Prisma.SortOrder
+  discordOnStatusChange?: Prisma.SortOrder
+  discordOnComment?: Prisma.SortOrder
+  discordOnMention?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
 }
@@ -302,6 +338,10 @@ export type UserNotificationPreferenceWhereUniqueInput = Prisma.AtLeast<{
   inAppOnStatusChange?: Prisma.BoolFilter<"UserNotificationPreference"> | boolean
   inAppOnComment?: Prisma.BoolFilter<"UserNotificationPreference"> | boolean
   inAppOnMention?: Prisma.BoolFilter<"UserNotificationPreference"> | boolean
+  discordOnAssign?: Prisma.BoolFilter<"UserNotificationPreference"> | boolean
+  discordOnStatusChange?: Prisma.BoolFilter<"UserNotificationPreference"> | boolean
+  discordOnComment?: Prisma.BoolFilter<"UserNotificationPreference"> | boolean
+  discordOnMention?: Prisma.BoolFilter<"UserNotificationPreference"> | boolean
   updatedAt?: Prisma.DateTimeFilter<"UserNotificationPreference"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }, "id" | "userId">
@@ -321,6 +361,10 @@ export type UserNotificationPreferenceOrderByWithAggregationInput = {
   inAppOnStatusChange?: Prisma.SortOrder
   inAppOnComment?: Prisma.SortOrder
   inAppOnMention?: Prisma.SortOrder
+  discordOnAssign?: Prisma.SortOrder
+  discordOnStatusChange?: Prisma.SortOrder
+  discordOnComment?: Prisma.SortOrder
+  discordOnMention?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserNotificationPreferenceCountOrderByAggregateInput
   _max?: Prisma.UserNotificationPreferenceMaxOrderByAggregateInput
@@ -345,6 +389,10 @@ export type UserNotificationPreferenceScalarWhereWithAggregatesInput = {
   inAppOnStatusChange?: Prisma.BoolWithAggregatesFilter<"UserNotificationPreference"> | boolean
   inAppOnComment?: Prisma.BoolWithAggregatesFilter<"UserNotificationPreference"> | boolean
   inAppOnMention?: Prisma.BoolWithAggregatesFilter<"UserNotificationPreference"> | boolean
+  discordOnAssign?: Prisma.BoolWithAggregatesFilter<"UserNotificationPreference"> | boolean
+  discordOnStatusChange?: Prisma.BoolWithAggregatesFilter<"UserNotificationPreference"> | boolean
+  discordOnComment?: Prisma.BoolWithAggregatesFilter<"UserNotificationPreference"> | boolean
+  discordOnMention?: Prisma.BoolWithAggregatesFilter<"UserNotificationPreference"> | boolean
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"UserNotificationPreference"> | Date | string
 }
 
@@ -362,6 +410,10 @@ export type UserNotificationPreferenceCreateInput = {
   inAppOnStatusChange?: boolean
   inAppOnComment?: boolean
   inAppOnMention?: boolean
+  discordOnAssign?: boolean
+  discordOnStatusChange?: boolean
+  discordOnComment?: boolean
+  discordOnMention?: boolean
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutNotificationPreferenceInput
 }
@@ -381,6 +433,10 @@ export type UserNotificationPreferenceUncheckedCreateInput = {
   inAppOnStatusChange?: boolean
   inAppOnComment?: boolean
   inAppOnMention?: boolean
+  discordOnAssign?: boolean
+  discordOnStatusChange?: boolean
+  discordOnComment?: boolean
+  discordOnMention?: boolean
   updatedAt?: Date | string
 }
 
@@ -398,6 +454,10 @@ export type UserNotificationPreferenceUpdateInput = {
   inAppOnStatusChange?: Prisma.BoolFieldUpdateOperationsInput | boolean
   inAppOnComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   inAppOnMention?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordOnAssign?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordOnStatusChange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordOnComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordOnMention?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutNotificationPreferenceNestedInput
 }
@@ -417,6 +477,10 @@ export type UserNotificationPreferenceUncheckedUpdateInput = {
   inAppOnStatusChange?: Prisma.BoolFieldUpdateOperationsInput | boolean
   inAppOnComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   inAppOnMention?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordOnAssign?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordOnStatusChange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordOnComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordOnMention?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -435,6 +499,10 @@ export type UserNotificationPreferenceCreateManyInput = {
   inAppOnStatusChange?: boolean
   inAppOnComment?: boolean
   inAppOnMention?: boolean
+  discordOnAssign?: boolean
+  discordOnStatusChange?: boolean
+  discordOnComment?: boolean
+  discordOnMention?: boolean
   updatedAt?: Date | string
 }
 
@@ -452,6 +520,10 @@ export type UserNotificationPreferenceUpdateManyMutationInput = {
   inAppOnStatusChange?: Prisma.BoolFieldUpdateOperationsInput | boolean
   inAppOnComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   inAppOnMention?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordOnAssign?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordOnStatusChange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordOnComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordOnMention?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -470,6 +542,10 @@ export type UserNotificationPreferenceUncheckedUpdateManyInput = {
   inAppOnStatusChange?: Prisma.BoolFieldUpdateOperationsInput | boolean
   inAppOnComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   inAppOnMention?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordOnAssign?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordOnStatusChange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordOnComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordOnMention?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -493,6 +569,10 @@ export type UserNotificationPreferenceCountOrderByAggregateInput = {
   inAppOnStatusChange?: Prisma.SortOrder
   inAppOnComment?: Prisma.SortOrder
   inAppOnMention?: Prisma.SortOrder
+  discordOnAssign?: Prisma.SortOrder
+  discordOnStatusChange?: Prisma.SortOrder
+  discordOnComment?: Prisma.SortOrder
+  discordOnMention?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -511,6 +591,10 @@ export type UserNotificationPreferenceMaxOrderByAggregateInput = {
   inAppOnStatusChange?: Prisma.SortOrder
   inAppOnComment?: Prisma.SortOrder
   inAppOnMention?: Prisma.SortOrder
+  discordOnAssign?: Prisma.SortOrder
+  discordOnStatusChange?: Prisma.SortOrder
+  discordOnComment?: Prisma.SortOrder
+  discordOnMention?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -529,6 +613,10 @@ export type UserNotificationPreferenceMinOrderByAggregateInput = {
   inAppOnStatusChange?: Prisma.SortOrder
   inAppOnComment?: Prisma.SortOrder
   inAppOnMention?: Prisma.SortOrder
+  discordOnAssign?: Prisma.SortOrder
+  discordOnStatusChange?: Prisma.SortOrder
+  discordOnComment?: Prisma.SortOrder
+  discordOnMention?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
 
@@ -582,6 +670,10 @@ export type UserNotificationPreferenceCreateWithoutUserInput = {
   inAppOnStatusChange?: boolean
   inAppOnComment?: boolean
   inAppOnMention?: boolean
+  discordOnAssign?: boolean
+  discordOnStatusChange?: boolean
+  discordOnComment?: boolean
+  discordOnMention?: boolean
   updatedAt?: Date | string
 }
 
@@ -599,6 +691,10 @@ export type UserNotificationPreferenceUncheckedCreateWithoutUserInput = {
   inAppOnStatusChange?: boolean
   inAppOnComment?: boolean
   inAppOnMention?: boolean
+  discordOnAssign?: boolean
+  discordOnStatusChange?: boolean
+  discordOnComment?: boolean
+  discordOnMention?: boolean
   updatedAt?: Date | string
 }
 
@@ -632,6 +728,10 @@ export type UserNotificationPreferenceUpdateWithoutUserInput = {
   inAppOnStatusChange?: Prisma.BoolFieldUpdateOperationsInput | boolean
   inAppOnComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   inAppOnMention?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordOnAssign?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordOnStatusChange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordOnComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordOnMention?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -649,6 +749,10 @@ export type UserNotificationPreferenceUncheckedUpdateWithoutUserInput = {
   inAppOnStatusChange?: Prisma.BoolFieldUpdateOperationsInput | boolean
   inAppOnComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   inAppOnMention?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordOnAssign?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordOnStatusChange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordOnComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordOnMention?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -669,6 +773,10 @@ export type UserNotificationPreferenceSelect<ExtArgs extends runtime.Types.Exten
   inAppOnStatusChange?: boolean
   inAppOnComment?: boolean
   inAppOnMention?: boolean
+  discordOnAssign?: boolean
+  discordOnStatusChange?: boolean
+  discordOnComment?: boolean
+  discordOnMention?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["userNotificationPreference"]>
@@ -690,10 +798,14 @@ export type UserNotificationPreferenceSelectScalar = {
   inAppOnStatusChange?: boolean
   inAppOnComment?: boolean
   inAppOnMention?: boolean
+  discordOnAssign?: boolean
+  discordOnStatusChange?: boolean
+  discordOnComment?: boolean
+  discordOnMention?: boolean
   updatedAt?: boolean
 }
 
-export type UserNotificationPreferenceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "emailOnAssign" | "emailOnStatusChange" | "emailOnComment" | "emailOnMention" | "zaloOnAssign" | "zaloOnStatusChange" | "zaloOnComment" | "zaloOnMention" | "inAppOnAssign" | "inAppOnStatusChange" | "inAppOnComment" | "inAppOnMention" | "updatedAt", ExtArgs["result"]["userNotificationPreference"]>
+export type UserNotificationPreferenceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "emailOnAssign" | "emailOnStatusChange" | "emailOnComment" | "emailOnMention" | "zaloOnAssign" | "zaloOnStatusChange" | "zaloOnComment" | "zaloOnMention" | "inAppOnAssign" | "inAppOnStatusChange" | "inAppOnComment" | "inAppOnMention" | "discordOnAssign" | "discordOnStatusChange" | "discordOnComment" | "discordOnMention" | "updatedAt", ExtArgs["result"]["userNotificationPreference"]>
 export type UserNotificationPreferenceInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
@@ -718,6 +830,10 @@ export type $UserNotificationPreferencePayload<ExtArgs extends runtime.Types.Ext
     inAppOnStatusChange: boolean
     inAppOnComment: boolean
     inAppOnMention: boolean
+    discordOnAssign: boolean
+    discordOnStatusChange: boolean
+    discordOnComment: boolean
+    discordOnMention: boolean
     updatedAt: Date
   }, ExtArgs["result"]["userNotificationPreference"]>
   composites: {}
@@ -1103,6 +1219,10 @@ export interface UserNotificationPreferenceFieldRefs {
   readonly inAppOnStatusChange: Prisma.FieldRef<"UserNotificationPreference", 'Boolean'>
   readonly inAppOnComment: Prisma.FieldRef<"UserNotificationPreference", 'Boolean'>
   readonly inAppOnMention: Prisma.FieldRef<"UserNotificationPreference", 'Boolean'>
+  readonly discordOnAssign: Prisma.FieldRef<"UserNotificationPreference", 'Boolean'>
+  readonly discordOnStatusChange: Prisma.FieldRef<"UserNotificationPreference", 'Boolean'>
+  readonly discordOnComment: Prisma.FieldRef<"UserNotificationPreference", 'Boolean'>
+  readonly discordOnMention: Prisma.FieldRef<"UserNotificationPreference", 'Boolean'>
   readonly updatedAt: Prisma.FieldRef<"UserNotificationPreference", 'DateTime'>
 }
     

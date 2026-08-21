@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Dialog } from "primereact/dialog";
 import { Button } from "primereact/button";
-import { Mail, MessageCircle, Bell, RefreshCw, Save, CheckCircle2, Info } from "lucide-react";
+import { Mail, MessageCircle, Bell, RefreshCw, Save, CheckCircle2, Info, Bot } from "lucide-react";
 
 interface NotificationPreferencesModalProps {
   isOpen: boolean;
@@ -23,6 +23,10 @@ type PreferenceData = {
   inAppOnStatusChange: boolean;
   inAppOnComment: boolean;
   inAppOnMention: boolean;
+  discordOnAssign: boolean;
+  discordOnStatusChange: boolean;
+  discordOnComment: boolean;
+  discordOnMention: boolean;
 };
 
 type SystemDefaults = {
@@ -33,6 +37,12 @@ type SystemDefaults = {
   };
   zaloEnabled: boolean;
   zalo: {
+    notifyOnAssign: boolean;
+    notifyOnStatusChange: boolean;
+    notifyOnComment: boolean;
+  };
+  discordEnabled: boolean;
+  discord: {
     notifyOnAssign: boolean;
     notifyOnStatusChange: boolean;
     notifyOnComment: boolean;
@@ -109,10 +119,11 @@ export function NotificationPreferencesModal({ isOpen, onClose }: NotificationPr
     }
   }
 
-  function isSystemDisabled(channel: "email" | "zalo", systemKey: "notifyOnAssign" | "notifyOnStatusChange" | "notifyOnComment" | null): boolean {
+  function isSystemDisabled(channel: "email" | "zalo" | "discord", systemKey: "notifyOnAssign" | "notifyOnStatusChange" | "notifyOnComment" | null): boolean {
     if (!systemDefaults || !systemKey) return false;
     if (channel === "email") return !systemDefaults.email[systemKey];
     if (channel === "zalo") return !systemDefaults.zaloEnabled || !systemDefaults.zalo[systemKey];
+    if (channel === "discord") return !systemDefaults.discordEnabled || !systemDefaults.discord[systemKey];
     return false;
   }
 
@@ -149,6 +160,9 @@ export function NotificationPreferencesModal({ isOpen, onClose }: NotificationPr
                     <th className="px-3 py-2.5 font-bold text-foreground text-center w-24">
                       <span className="flex items-center justify-center gap-1"><MessageCircle className="h-3.5 w-3.5 text-accent" /> Zalo</span>
                     </th>
+                    <th className="px-3 py-2.5 font-bold text-foreground text-center w-24">
+                      <span className="flex items-center justify-center gap-1"><Bot className="h-3.5 w-3.5 text-accent" /> Discord</span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -156,8 +170,10 @@ export function NotificationPreferencesModal({ isOpen, onClose }: NotificationPr
                     const inAppField = `inAppOn${row.key}` as keyof PreferenceData;
                     const emailField = `emailOn${row.key}` as keyof PreferenceData;
                     const zaloField = `zaloOn${row.key}` as keyof PreferenceData;
+                    const discordField = `discordOn${row.key}` as keyof PreferenceData;
                     const emailDisabled = isSystemDisabled("email", row.systemKey);
                     const zaloDisabled = isSystemDisabled("zalo", row.systemKey);
+                    const discordDisabled = isSystemDisabled("discord", row.systemKey);
 
                     return (
                       <tr key={row.key} className={idx % 2 === 0 ? "bg-surface" : "bg-surface-2/30"}>
@@ -190,6 +206,16 @@ export function NotificationPreferencesModal({ isOpen, onClose }: NotificationPr
                             className="rounded border-line text-accent h-4 w-4 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                           />
                         </td>
+                        <td className="px-3 py-2.5 text-center">
+                          <input
+                            type="checkbox"
+                            checked={pref[discordField] && !discordDisabled}
+                            disabled={discordDisabled}
+                            onChange={() => toggle(discordField)}
+                            title={discordDisabled ? "Quản trị viên đã tắt/chưa cấu hình kênh Discord cho loại thông báo này" : undefined}
+                            className="rounded border-line text-accent h-4 w-4 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                          />
+                        </td>
                       </tr>
                     );
                   })}
@@ -200,6 +226,11 @@ export function NotificationPreferencesModal({ isOpen, onClose }: NotificationPr
             {!systemDefaults.zaloEnabled && (
               <div className="rounded-lg bg-surface-2/60 border border-line p-2.5 text-[11px] text-muted flex items-center gap-1.5">
                 <Info className="h-3.5 w-3.5 shrink-0" /> Hệ thống chưa bật tích hợp Zalo — cột Zalo sẽ khả dụng sau khi Quản trị viên cấu hình.
+              </div>
+            )}
+            {!systemDefaults.discordEnabled && (
+              <div className="rounded-lg bg-surface-2/60 border border-line p-2.5 text-[11px] text-muted flex items-center gap-1.5">
+                <Info className="h-3.5 w-3.5 shrink-0" /> Hệ thống chưa bật tích hợp Discord — cột Discord sẽ khả dụng sau khi Quản trị viên cấu hình.
               </div>
             )}
 

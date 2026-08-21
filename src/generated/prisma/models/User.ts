@@ -36,6 +36,9 @@ export type UserMinAggregateOutputType = {
   phone: string | null
   zaloUserId: string | null
   zaloLinkedAt: Date | null
+  discordUserId: string | null
+  discordUsername: string | null
+  discordLinkedAt: Date | null
   createdAt: Date | null
 }
 
@@ -51,6 +54,9 @@ export type UserMaxAggregateOutputType = {
   phone: string | null
   zaloUserId: string | null
   zaloLinkedAt: Date | null
+  discordUserId: string | null
+  discordUsername: string | null
+  discordLinkedAt: Date | null
   createdAt: Date | null
 }
 
@@ -66,6 +72,9 @@ export type UserCountAggregateOutputType = {
   phone: number
   zaloUserId: number
   zaloLinkedAt: number
+  discordUserId: number
+  discordUsername: number
+  discordLinkedAt: number
   createdAt: number
   _all: number
 }
@@ -83,6 +92,9 @@ export type UserMinAggregateInputType = {
   phone?: true
   zaloUserId?: true
   zaloLinkedAt?: true
+  discordUserId?: true
+  discordUsername?: true
+  discordLinkedAt?: true
   createdAt?: true
 }
 
@@ -98,6 +110,9 @@ export type UserMaxAggregateInputType = {
   phone?: true
   zaloUserId?: true
   zaloLinkedAt?: true
+  discordUserId?: true
+  discordUsername?: true
+  discordLinkedAt?: true
   createdAt?: true
 }
 
@@ -113,6 +128,9 @@ export type UserCountAggregateInputType = {
   phone?: true
   zaloUserId?: true
   zaloLinkedAt?: true
+  discordUserId?: true
+  discordUsername?: true
+  discordLinkedAt?: true
   createdAt?: true
   _all?: true
 }
@@ -201,6 +219,9 @@ export type UserGroupByOutputType = {
   phone: string | null
   zaloUserId: string | null
   zaloLinkedAt: Date | null
+  discordUserId: string | null
+  discordUsername: string | null
+  discordLinkedAt: Date | null
   createdAt: Date
   _count: UserCountAggregateOutputType | null
   _min: UserMinAggregateOutputType | null
@@ -237,6 +258,9 @@ export type UserWhereInput = {
   phone?: Prisma.StringNullableFilter<"User"> | string | null
   zaloUserId?: Prisma.StringNullableFilter<"User"> | string | null
   zaloLinkedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  discordUserId?: Prisma.StringNullableFilter<"User"> | string | null
+  discordUsername?: Prisma.StringNullableFilter<"User"> | string | null
+  discordLinkedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   team?: Prisma.XOR<Prisma.TeamNullableScalarRelationFilter, Prisma.TeamWhereInput> | null
   ledTeams?: Prisma.TeamListRelationFilter
@@ -251,6 +275,7 @@ export type UserWhereInput = {
   triggeredNotifications?: Prisma.NotificationListRelationFilter
   zaloMessageLogs?: Prisma.ZaloMessageLogListRelationFilter
   zaloLinkCodes?: Prisma.ZaloLinkCodeListRelationFilter
+  discordMessageLogs?: Prisma.DiscordMessageLogListRelationFilter
   notificationPreference?: Prisma.XOR<Prisma.UserNotificationPreferenceNullableScalarRelationFilter, Prisma.UserNotificationPreferenceWhereInput> | null
 }
 
@@ -266,6 +291,9 @@ export type UserOrderByWithRelationInput = {
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
   zaloUserId?: Prisma.SortOrderInput | Prisma.SortOrder
   zaloLinkedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  discordUserId?: Prisma.SortOrderInput | Prisma.SortOrder
+  discordUsername?: Prisma.SortOrderInput | Prisma.SortOrder
+  discordLinkedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   team?: Prisma.TeamOrderByWithRelationInput
   ledTeams?: Prisma.TeamOrderByRelationAggregateInput
@@ -280,6 +308,7 @@ export type UserOrderByWithRelationInput = {
   triggeredNotifications?: Prisma.NotificationOrderByRelationAggregateInput
   zaloMessageLogs?: Prisma.ZaloMessageLogOrderByRelationAggregateInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeOrderByRelationAggregateInput
+  discordMessageLogs?: Prisma.DiscordMessageLogOrderByRelationAggregateInput
   notificationPreference?: Prisma.UserNotificationPreferenceOrderByWithRelationInput
 }
 
@@ -298,6 +327,9 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   phone?: Prisma.StringNullableFilter<"User"> | string | null
   zaloUserId?: Prisma.StringNullableFilter<"User"> | string | null
   zaloLinkedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  discordUserId?: Prisma.StringNullableFilter<"User"> | string | null
+  discordUsername?: Prisma.StringNullableFilter<"User"> | string | null
+  discordLinkedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   team?: Prisma.XOR<Prisma.TeamNullableScalarRelationFilter, Prisma.TeamWhereInput> | null
   ledTeams?: Prisma.TeamListRelationFilter
@@ -312,6 +344,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   triggeredNotifications?: Prisma.NotificationListRelationFilter
   zaloMessageLogs?: Prisma.ZaloMessageLogListRelationFilter
   zaloLinkCodes?: Prisma.ZaloLinkCodeListRelationFilter
+  discordMessageLogs?: Prisma.DiscordMessageLogListRelationFilter
   notificationPreference?: Prisma.XOR<Prisma.UserNotificationPreferenceNullableScalarRelationFilter, Prisma.UserNotificationPreferenceWhereInput> | null
 }, "id" | "email">
 
@@ -327,6 +360,9 @@ export type UserOrderByWithAggregationInput = {
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
   zaloUserId?: Prisma.SortOrderInput | Prisma.SortOrder
   zaloLinkedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  discordUserId?: Prisma.SortOrderInput | Prisma.SortOrder
+  discordUsername?: Prisma.SortOrderInput | Prisma.SortOrder
+  discordLinkedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
   _max?: Prisma.UserMaxOrderByAggregateInput
@@ -348,6 +384,9 @@ export type UserScalarWhereWithAggregatesInput = {
   phone?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   zaloUserId?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   zaloLinkedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  discordUserId?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  discordUsername?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  discordLinkedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
 }
 
@@ -362,6 +401,9 @@ export type UserCreateInput = {
   phone?: string | null
   zaloUserId?: string | null
   zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
   createdAt?: Date | string
   team?: Prisma.TeamCreateNestedOneWithoutMembersInput
   ledTeams?: Prisma.TeamCreateNestedManyWithoutLeaderInput
@@ -376,6 +418,7 @@ export type UserCreateInput = {
   triggeredNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
   zaloMessageLogs?: Prisma.ZaloMessageLogCreateNestedManyWithoutUserInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeCreateNestedManyWithoutUserInput
+  discordMessageLogs?: Prisma.DiscordMessageLogCreateNestedManyWithoutUserInput
   notificationPreference?: Prisma.UserNotificationPreferenceCreateNestedOneWithoutUserInput
 }
 
@@ -391,6 +434,9 @@ export type UserUncheckedCreateInput = {
   phone?: string | null
   zaloUserId?: string | null
   zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
   createdAt?: Date | string
   ledTeams?: Prisma.TeamUncheckedCreateNestedManyWithoutLeaderInput
   ownedProjects?: Prisma.ProjectUncheckedCreateNestedManyWithoutOwnerInput
@@ -404,6 +450,7 @@ export type UserUncheckedCreateInput = {
   triggeredNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUncheckedCreateNestedManyWithoutUserInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUncheckedCreateNestedManyWithoutUserInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUncheckedCreateNestedManyWithoutUserInput
   notificationPreference?: Prisma.UserNotificationPreferenceUncheckedCreateNestedOneWithoutUserInput
 }
 
@@ -418,6 +465,9 @@ export type UserUpdateInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   team?: Prisma.TeamUpdateOneWithoutMembersNestedInput
   ledTeams?: Prisma.TeamUpdateManyWithoutLeaderNestedInput
@@ -432,6 +482,7 @@ export type UserUpdateInput = {
   triggeredNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUpdateManyWithoutUserNestedInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUpdateManyWithoutUserNestedInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUpdateManyWithoutUserNestedInput
   notificationPreference?: Prisma.UserNotificationPreferenceUpdateOneWithoutUserNestedInput
 }
 
@@ -447,6 +498,9 @@ export type UserUncheckedUpdateInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ledTeams?: Prisma.TeamUncheckedUpdateManyWithoutLeaderNestedInput
   ownedProjects?: Prisma.ProjectUncheckedUpdateManyWithoutOwnerNestedInput
@@ -460,6 +514,7 @@ export type UserUncheckedUpdateInput = {
   triggeredNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUncheckedUpdateManyWithoutUserNestedInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUncheckedUpdateManyWithoutUserNestedInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUncheckedUpdateManyWithoutUserNestedInput
   notificationPreference?: Prisma.UserNotificationPreferenceUncheckedUpdateOneWithoutUserNestedInput
 }
 
@@ -475,6 +530,9 @@ export type UserCreateManyInput = {
   phone?: string | null
   zaloUserId?: string | null
   zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
   createdAt?: Date | string
 }
 
@@ -489,6 +547,9 @@ export type UserUpdateManyMutationInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -504,6 +565,9 @@ export type UserUncheckedUpdateManyInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -519,6 +583,9 @@ export type UserCountOrderByAggregateInput = {
   phone?: Prisma.SortOrder
   zaloUserId?: Prisma.SortOrder
   zaloLinkedAt?: Prisma.SortOrder
+  discordUserId?: Prisma.SortOrder
+  discordUsername?: Prisma.SortOrder
+  discordLinkedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -534,6 +601,9 @@ export type UserMaxOrderByAggregateInput = {
   phone?: Prisma.SortOrder
   zaloUserId?: Prisma.SortOrder
   zaloLinkedAt?: Prisma.SortOrder
+  discordUserId?: Prisma.SortOrder
+  discordUsername?: Prisma.SortOrder
+  discordLinkedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -549,6 +619,9 @@ export type UserMinOrderByAggregateInput = {
   phone?: Prisma.SortOrder
   zaloUserId?: Prisma.SortOrder
   zaloLinkedAt?: Prisma.SortOrder
+  discordUserId?: Prisma.SortOrder
+  discordUsername?: Prisma.SortOrder
+  discordLinkedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -792,6 +865,22 @@ export type UserUpdateOneWithoutAttachmentsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAttachmentsInput, Prisma.UserUpdateWithoutAttachmentsInput>, Prisma.UserUncheckedUpdateWithoutAttachmentsInput>
 }
 
+export type UserCreateNestedOneWithoutDiscordMessageLogsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDiscordMessageLogsInput, Prisma.UserUncheckedCreateWithoutDiscordMessageLogsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDiscordMessageLogsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneWithoutDiscordMessageLogsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutDiscordMessageLogsInput, Prisma.UserUncheckedCreateWithoutDiscordMessageLogsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDiscordMessageLogsInput
+  upsert?: Prisma.UserUpsertWithoutDiscordMessageLogsInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutDiscordMessageLogsInput, Prisma.UserUpdateWithoutDiscordMessageLogsInput>, Prisma.UserUncheckedUpdateWithoutDiscordMessageLogsInput>
+}
+
 export type UserCreateNestedOneWithoutZaloMessageLogsInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutZaloMessageLogsInput, Prisma.UserUncheckedCreateWithoutZaloMessageLogsInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutZaloMessageLogsInput
@@ -833,6 +922,9 @@ export type UserCreateWithoutNotificationPreferenceInput = {
   phone?: string | null
   zaloUserId?: string | null
   zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
   createdAt?: Date | string
   team?: Prisma.TeamCreateNestedOneWithoutMembersInput
   ledTeams?: Prisma.TeamCreateNestedManyWithoutLeaderInput
@@ -847,6 +939,7 @@ export type UserCreateWithoutNotificationPreferenceInput = {
   triggeredNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
   zaloMessageLogs?: Prisma.ZaloMessageLogCreateNestedManyWithoutUserInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeCreateNestedManyWithoutUserInput
+  discordMessageLogs?: Prisma.DiscordMessageLogCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutNotificationPreferenceInput = {
@@ -861,6 +954,9 @@ export type UserUncheckedCreateWithoutNotificationPreferenceInput = {
   phone?: string | null
   zaloUserId?: string | null
   zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
   createdAt?: Date | string
   ledTeams?: Prisma.TeamUncheckedCreateNestedManyWithoutLeaderInput
   ownedProjects?: Prisma.ProjectUncheckedCreateNestedManyWithoutOwnerInput
@@ -874,6 +970,7 @@ export type UserUncheckedCreateWithoutNotificationPreferenceInput = {
   triggeredNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUncheckedCreateNestedManyWithoutUserInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUncheckedCreateNestedManyWithoutUserInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutNotificationPreferenceInput = {
@@ -903,6 +1000,9 @@ export type UserUpdateWithoutNotificationPreferenceInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   team?: Prisma.TeamUpdateOneWithoutMembersNestedInput
   ledTeams?: Prisma.TeamUpdateManyWithoutLeaderNestedInput
@@ -917,6 +1017,7 @@ export type UserUpdateWithoutNotificationPreferenceInput = {
   triggeredNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUpdateManyWithoutUserNestedInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUpdateManyWithoutUserNestedInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutNotificationPreferenceInput = {
@@ -931,6 +1032,9 @@ export type UserUncheckedUpdateWithoutNotificationPreferenceInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ledTeams?: Prisma.TeamUncheckedUpdateManyWithoutLeaderNestedInput
   ownedProjects?: Prisma.ProjectUncheckedUpdateManyWithoutOwnerNestedInput
@@ -944,6 +1048,7 @@ export type UserUncheckedUpdateWithoutNotificationPreferenceInput = {
   triggeredNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUncheckedUpdateManyWithoutUserNestedInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUncheckedUpdateManyWithoutUserNestedInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutLedTeamsInput = {
@@ -957,6 +1062,9 @@ export type UserCreateWithoutLedTeamsInput = {
   phone?: string | null
   zaloUserId?: string | null
   zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
   createdAt?: Date | string
   team?: Prisma.TeamCreateNestedOneWithoutMembersInput
   ownedProjects?: Prisma.ProjectCreateNestedManyWithoutOwnerInput
@@ -970,6 +1078,7 @@ export type UserCreateWithoutLedTeamsInput = {
   triggeredNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
   zaloMessageLogs?: Prisma.ZaloMessageLogCreateNestedManyWithoutUserInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeCreateNestedManyWithoutUserInput
+  discordMessageLogs?: Prisma.DiscordMessageLogCreateNestedManyWithoutUserInput
   notificationPreference?: Prisma.UserNotificationPreferenceCreateNestedOneWithoutUserInput
 }
 
@@ -985,6 +1094,9 @@ export type UserUncheckedCreateWithoutLedTeamsInput = {
   phone?: string | null
   zaloUserId?: string | null
   zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
   createdAt?: Date | string
   ownedProjects?: Prisma.ProjectUncheckedCreateNestedManyWithoutOwnerInput
   memberships?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutUserInput
@@ -997,6 +1109,7 @@ export type UserUncheckedCreateWithoutLedTeamsInput = {
   triggeredNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUncheckedCreateNestedManyWithoutUserInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUncheckedCreateNestedManyWithoutUserInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUncheckedCreateNestedManyWithoutUserInput
   notificationPreference?: Prisma.UserNotificationPreferenceUncheckedCreateNestedOneWithoutUserInput
 }
 
@@ -1016,6 +1129,9 @@ export type UserCreateWithoutTeamInput = {
   phone?: string | null
   zaloUserId?: string | null
   zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
   createdAt?: Date | string
   ledTeams?: Prisma.TeamCreateNestedManyWithoutLeaderInput
   ownedProjects?: Prisma.ProjectCreateNestedManyWithoutOwnerInput
@@ -1029,6 +1145,7 @@ export type UserCreateWithoutTeamInput = {
   triggeredNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
   zaloMessageLogs?: Prisma.ZaloMessageLogCreateNestedManyWithoutUserInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeCreateNestedManyWithoutUserInput
+  discordMessageLogs?: Prisma.DiscordMessageLogCreateNestedManyWithoutUserInput
   notificationPreference?: Prisma.UserNotificationPreferenceCreateNestedOneWithoutUserInput
 }
 
@@ -1043,6 +1160,9 @@ export type UserUncheckedCreateWithoutTeamInput = {
   phone?: string | null
   zaloUserId?: string | null
   zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
   createdAt?: Date | string
   ledTeams?: Prisma.TeamUncheckedCreateNestedManyWithoutLeaderInput
   ownedProjects?: Prisma.ProjectUncheckedCreateNestedManyWithoutOwnerInput
@@ -1056,6 +1176,7 @@ export type UserUncheckedCreateWithoutTeamInput = {
   triggeredNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUncheckedCreateNestedManyWithoutUserInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUncheckedCreateNestedManyWithoutUserInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUncheckedCreateNestedManyWithoutUserInput
   notificationPreference?: Prisma.UserNotificationPreferenceUncheckedCreateNestedOneWithoutUserInput
 }
 
@@ -1090,6 +1211,9 @@ export type UserUpdateWithoutLedTeamsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   team?: Prisma.TeamUpdateOneWithoutMembersNestedInput
   ownedProjects?: Prisma.ProjectUpdateManyWithoutOwnerNestedInput
@@ -1103,6 +1227,7 @@ export type UserUpdateWithoutLedTeamsInput = {
   triggeredNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUpdateManyWithoutUserNestedInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUpdateManyWithoutUserNestedInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUpdateManyWithoutUserNestedInput
   notificationPreference?: Prisma.UserNotificationPreferenceUpdateOneWithoutUserNestedInput
 }
 
@@ -1118,6 +1243,9 @@ export type UserUncheckedUpdateWithoutLedTeamsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ownedProjects?: Prisma.ProjectUncheckedUpdateManyWithoutOwnerNestedInput
   memberships?: Prisma.ProjectMemberUncheckedUpdateManyWithoutUserNestedInput
@@ -1130,6 +1258,7 @@ export type UserUncheckedUpdateWithoutLedTeamsInput = {
   triggeredNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUncheckedUpdateManyWithoutUserNestedInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUncheckedUpdateManyWithoutUserNestedInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUncheckedUpdateManyWithoutUserNestedInput
   notificationPreference?: Prisma.UserNotificationPreferenceUncheckedUpdateOneWithoutUserNestedInput
 }
 
@@ -1164,6 +1293,9 @@ export type UserScalarWhereInput = {
   phone?: Prisma.StringNullableFilter<"User"> | string | null
   zaloUserId?: Prisma.StringNullableFilter<"User"> | string | null
   zaloLinkedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  discordUserId?: Prisma.StringNullableFilter<"User"> | string | null
+  discordUsername?: Prisma.StringNullableFilter<"User"> | string | null
+  discordLinkedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
 }
 
@@ -1178,6 +1310,9 @@ export type UserCreateWithoutReceivedNotificationsInput = {
   phone?: string | null
   zaloUserId?: string | null
   zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
   createdAt?: Date | string
   team?: Prisma.TeamCreateNestedOneWithoutMembersInput
   ledTeams?: Prisma.TeamCreateNestedManyWithoutLeaderInput
@@ -1191,6 +1326,7 @@ export type UserCreateWithoutReceivedNotificationsInput = {
   triggeredNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
   zaloMessageLogs?: Prisma.ZaloMessageLogCreateNestedManyWithoutUserInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeCreateNestedManyWithoutUserInput
+  discordMessageLogs?: Prisma.DiscordMessageLogCreateNestedManyWithoutUserInput
   notificationPreference?: Prisma.UserNotificationPreferenceCreateNestedOneWithoutUserInput
 }
 
@@ -1206,6 +1342,9 @@ export type UserUncheckedCreateWithoutReceivedNotificationsInput = {
   phone?: string | null
   zaloUserId?: string | null
   zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
   createdAt?: Date | string
   ledTeams?: Prisma.TeamUncheckedCreateNestedManyWithoutLeaderInput
   ownedProjects?: Prisma.ProjectUncheckedCreateNestedManyWithoutOwnerInput
@@ -1218,6 +1357,7 @@ export type UserUncheckedCreateWithoutReceivedNotificationsInput = {
   triggeredNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUncheckedCreateNestedManyWithoutUserInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUncheckedCreateNestedManyWithoutUserInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUncheckedCreateNestedManyWithoutUserInput
   notificationPreference?: Prisma.UserNotificationPreferenceUncheckedCreateNestedOneWithoutUserInput
 }
 
@@ -1237,6 +1377,9 @@ export type UserCreateWithoutTriggeredNotificationsInput = {
   phone?: string | null
   zaloUserId?: string | null
   zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
   createdAt?: Date | string
   team?: Prisma.TeamCreateNestedOneWithoutMembersInput
   ledTeams?: Prisma.TeamCreateNestedManyWithoutLeaderInput
@@ -1250,6 +1393,7 @@ export type UserCreateWithoutTriggeredNotificationsInput = {
   receivedNotifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   zaloMessageLogs?: Prisma.ZaloMessageLogCreateNestedManyWithoutUserInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeCreateNestedManyWithoutUserInput
+  discordMessageLogs?: Prisma.DiscordMessageLogCreateNestedManyWithoutUserInput
   notificationPreference?: Prisma.UserNotificationPreferenceCreateNestedOneWithoutUserInput
 }
 
@@ -1265,6 +1409,9 @@ export type UserUncheckedCreateWithoutTriggeredNotificationsInput = {
   phone?: string | null
   zaloUserId?: string | null
   zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
   createdAt?: Date | string
   ledTeams?: Prisma.TeamUncheckedCreateNestedManyWithoutLeaderInput
   ownedProjects?: Prisma.ProjectUncheckedCreateNestedManyWithoutOwnerInput
@@ -1277,6 +1424,7 @@ export type UserUncheckedCreateWithoutTriggeredNotificationsInput = {
   receivedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUncheckedCreateNestedManyWithoutUserInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUncheckedCreateNestedManyWithoutUserInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUncheckedCreateNestedManyWithoutUserInput
   notificationPreference?: Prisma.UserNotificationPreferenceUncheckedCreateNestedOneWithoutUserInput
 }
 
@@ -1307,6 +1455,9 @@ export type UserUpdateWithoutReceivedNotificationsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   team?: Prisma.TeamUpdateOneWithoutMembersNestedInput
   ledTeams?: Prisma.TeamUpdateManyWithoutLeaderNestedInput
@@ -1320,6 +1471,7 @@ export type UserUpdateWithoutReceivedNotificationsInput = {
   triggeredNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUpdateManyWithoutUserNestedInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUpdateManyWithoutUserNestedInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUpdateManyWithoutUserNestedInput
   notificationPreference?: Prisma.UserNotificationPreferenceUpdateOneWithoutUserNestedInput
 }
 
@@ -1335,6 +1487,9 @@ export type UserUncheckedUpdateWithoutReceivedNotificationsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ledTeams?: Prisma.TeamUncheckedUpdateManyWithoutLeaderNestedInput
   ownedProjects?: Prisma.ProjectUncheckedUpdateManyWithoutOwnerNestedInput
@@ -1347,6 +1502,7 @@ export type UserUncheckedUpdateWithoutReceivedNotificationsInput = {
   triggeredNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUncheckedUpdateManyWithoutUserNestedInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUncheckedUpdateManyWithoutUserNestedInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUncheckedUpdateManyWithoutUserNestedInput
   notificationPreference?: Prisma.UserNotificationPreferenceUncheckedUpdateOneWithoutUserNestedInput
 }
 
@@ -1372,6 +1528,9 @@ export type UserUpdateWithoutTriggeredNotificationsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   team?: Prisma.TeamUpdateOneWithoutMembersNestedInput
   ledTeams?: Prisma.TeamUpdateManyWithoutLeaderNestedInput
@@ -1385,6 +1544,7 @@ export type UserUpdateWithoutTriggeredNotificationsInput = {
   receivedNotifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUpdateManyWithoutUserNestedInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUpdateManyWithoutUserNestedInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUpdateManyWithoutUserNestedInput
   notificationPreference?: Prisma.UserNotificationPreferenceUpdateOneWithoutUserNestedInput
 }
 
@@ -1400,6 +1560,9 @@ export type UserUncheckedUpdateWithoutTriggeredNotificationsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ledTeams?: Prisma.TeamUncheckedUpdateManyWithoutLeaderNestedInput
   ownedProjects?: Prisma.ProjectUncheckedUpdateManyWithoutOwnerNestedInput
@@ -1412,6 +1575,7 @@ export type UserUncheckedUpdateWithoutTriggeredNotificationsInput = {
   receivedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUncheckedUpdateManyWithoutUserNestedInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUncheckedUpdateManyWithoutUserNestedInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUncheckedUpdateManyWithoutUserNestedInput
   notificationPreference?: Prisma.UserNotificationPreferenceUncheckedUpdateOneWithoutUserNestedInput
 }
 
@@ -1426,6 +1590,9 @@ export type UserCreateWithoutOwnedProjectsInput = {
   phone?: string | null
   zaloUserId?: string | null
   zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
   createdAt?: Date | string
   team?: Prisma.TeamCreateNestedOneWithoutMembersInput
   ledTeams?: Prisma.TeamCreateNestedManyWithoutLeaderInput
@@ -1439,6 +1606,7 @@ export type UserCreateWithoutOwnedProjectsInput = {
   triggeredNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
   zaloMessageLogs?: Prisma.ZaloMessageLogCreateNestedManyWithoutUserInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeCreateNestedManyWithoutUserInput
+  discordMessageLogs?: Prisma.DiscordMessageLogCreateNestedManyWithoutUserInput
   notificationPreference?: Prisma.UserNotificationPreferenceCreateNestedOneWithoutUserInput
 }
 
@@ -1454,6 +1622,9 @@ export type UserUncheckedCreateWithoutOwnedProjectsInput = {
   phone?: string | null
   zaloUserId?: string | null
   zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
   createdAt?: Date | string
   ledTeams?: Prisma.TeamUncheckedCreateNestedManyWithoutLeaderInput
   memberships?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutUserInput
@@ -1466,6 +1637,7 @@ export type UserUncheckedCreateWithoutOwnedProjectsInput = {
   triggeredNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUncheckedCreateNestedManyWithoutUserInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUncheckedCreateNestedManyWithoutUserInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUncheckedCreateNestedManyWithoutUserInput
   notificationPreference?: Prisma.UserNotificationPreferenceUncheckedCreateNestedOneWithoutUserInput
 }
 
@@ -1496,6 +1668,9 @@ export type UserUpdateWithoutOwnedProjectsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   team?: Prisma.TeamUpdateOneWithoutMembersNestedInput
   ledTeams?: Prisma.TeamUpdateManyWithoutLeaderNestedInput
@@ -1509,6 +1684,7 @@ export type UserUpdateWithoutOwnedProjectsInput = {
   triggeredNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUpdateManyWithoutUserNestedInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUpdateManyWithoutUserNestedInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUpdateManyWithoutUserNestedInput
   notificationPreference?: Prisma.UserNotificationPreferenceUpdateOneWithoutUserNestedInput
 }
 
@@ -1524,6 +1700,9 @@ export type UserUncheckedUpdateWithoutOwnedProjectsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ledTeams?: Prisma.TeamUncheckedUpdateManyWithoutLeaderNestedInput
   memberships?: Prisma.ProjectMemberUncheckedUpdateManyWithoutUserNestedInput
@@ -1536,6 +1715,7 @@ export type UserUncheckedUpdateWithoutOwnedProjectsInput = {
   triggeredNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUncheckedUpdateManyWithoutUserNestedInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUncheckedUpdateManyWithoutUserNestedInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUncheckedUpdateManyWithoutUserNestedInput
   notificationPreference?: Prisma.UserNotificationPreferenceUncheckedUpdateOneWithoutUserNestedInput
 }
 
@@ -1550,6 +1730,9 @@ export type UserCreateWithoutMembershipsInput = {
   phone?: string | null
   zaloUserId?: string | null
   zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
   createdAt?: Date | string
   team?: Prisma.TeamCreateNestedOneWithoutMembersInput
   ledTeams?: Prisma.TeamCreateNestedManyWithoutLeaderInput
@@ -1563,6 +1746,7 @@ export type UserCreateWithoutMembershipsInput = {
   triggeredNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
   zaloMessageLogs?: Prisma.ZaloMessageLogCreateNestedManyWithoutUserInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeCreateNestedManyWithoutUserInput
+  discordMessageLogs?: Prisma.DiscordMessageLogCreateNestedManyWithoutUserInput
   notificationPreference?: Prisma.UserNotificationPreferenceCreateNestedOneWithoutUserInput
 }
 
@@ -1578,6 +1762,9 @@ export type UserUncheckedCreateWithoutMembershipsInput = {
   phone?: string | null
   zaloUserId?: string | null
   zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
   createdAt?: Date | string
   ledTeams?: Prisma.TeamUncheckedCreateNestedManyWithoutLeaderInput
   ownedProjects?: Prisma.ProjectUncheckedCreateNestedManyWithoutOwnerInput
@@ -1590,6 +1777,7 @@ export type UserUncheckedCreateWithoutMembershipsInput = {
   triggeredNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUncheckedCreateNestedManyWithoutUserInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUncheckedCreateNestedManyWithoutUserInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUncheckedCreateNestedManyWithoutUserInput
   notificationPreference?: Prisma.UserNotificationPreferenceUncheckedCreateNestedOneWithoutUserInput
 }
 
@@ -1620,6 +1808,9 @@ export type UserUpdateWithoutMembershipsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   team?: Prisma.TeamUpdateOneWithoutMembersNestedInput
   ledTeams?: Prisma.TeamUpdateManyWithoutLeaderNestedInput
@@ -1633,6 +1824,7 @@ export type UserUpdateWithoutMembershipsInput = {
   triggeredNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUpdateManyWithoutUserNestedInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUpdateManyWithoutUserNestedInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUpdateManyWithoutUserNestedInput
   notificationPreference?: Prisma.UserNotificationPreferenceUpdateOneWithoutUserNestedInput
 }
 
@@ -1648,6 +1840,9 @@ export type UserUncheckedUpdateWithoutMembershipsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ledTeams?: Prisma.TeamUncheckedUpdateManyWithoutLeaderNestedInput
   ownedProjects?: Prisma.ProjectUncheckedUpdateManyWithoutOwnerNestedInput
@@ -1660,6 +1855,7 @@ export type UserUncheckedUpdateWithoutMembershipsInput = {
   triggeredNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUncheckedUpdateManyWithoutUserNestedInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUncheckedUpdateManyWithoutUserNestedInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUncheckedUpdateManyWithoutUserNestedInput
   notificationPreference?: Prisma.UserNotificationPreferenceUncheckedUpdateOneWithoutUserNestedInput
 }
 
@@ -1674,6 +1870,9 @@ export type UserCreateWithoutAssignedTasksInput = {
   phone?: string | null
   zaloUserId?: string | null
   zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
   createdAt?: Date | string
   team?: Prisma.TeamCreateNestedOneWithoutMembersInput
   ledTeams?: Prisma.TeamCreateNestedManyWithoutLeaderInput
@@ -1687,6 +1886,7 @@ export type UserCreateWithoutAssignedTasksInput = {
   triggeredNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
   zaloMessageLogs?: Prisma.ZaloMessageLogCreateNestedManyWithoutUserInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeCreateNestedManyWithoutUserInput
+  discordMessageLogs?: Prisma.DiscordMessageLogCreateNestedManyWithoutUserInput
   notificationPreference?: Prisma.UserNotificationPreferenceCreateNestedOneWithoutUserInput
 }
 
@@ -1702,6 +1902,9 @@ export type UserUncheckedCreateWithoutAssignedTasksInput = {
   phone?: string | null
   zaloUserId?: string | null
   zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
   createdAt?: Date | string
   ledTeams?: Prisma.TeamUncheckedCreateNestedManyWithoutLeaderInput
   ownedProjects?: Prisma.ProjectUncheckedCreateNestedManyWithoutOwnerInput
@@ -1714,6 +1917,7 @@ export type UserUncheckedCreateWithoutAssignedTasksInput = {
   triggeredNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUncheckedCreateNestedManyWithoutUserInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUncheckedCreateNestedManyWithoutUserInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUncheckedCreateNestedManyWithoutUserInput
   notificationPreference?: Prisma.UserNotificationPreferenceUncheckedCreateNestedOneWithoutUserInput
 }
 
@@ -1733,6 +1937,9 @@ export type UserCreateWithoutCreatedTasksInput = {
   phone?: string | null
   zaloUserId?: string | null
   zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
   createdAt?: Date | string
   team?: Prisma.TeamCreateNestedOneWithoutMembersInput
   ledTeams?: Prisma.TeamCreateNestedManyWithoutLeaderInput
@@ -1746,6 +1953,7 @@ export type UserCreateWithoutCreatedTasksInput = {
   triggeredNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
   zaloMessageLogs?: Prisma.ZaloMessageLogCreateNestedManyWithoutUserInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeCreateNestedManyWithoutUserInput
+  discordMessageLogs?: Prisma.DiscordMessageLogCreateNestedManyWithoutUserInput
   notificationPreference?: Prisma.UserNotificationPreferenceCreateNestedOneWithoutUserInput
 }
 
@@ -1761,6 +1969,9 @@ export type UserUncheckedCreateWithoutCreatedTasksInput = {
   phone?: string | null
   zaloUserId?: string | null
   zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
   createdAt?: Date | string
   ledTeams?: Prisma.TeamUncheckedCreateNestedManyWithoutLeaderInput
   ownedProjects?: Prisma.ProjectUncheckedCreateNestedManyWithoutOwnerInput
@@ -1773,6 +1984,7 @@ export type UserUncheckedCreateWithoutCreatedTasksInput = {
   triggeredNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUncheckedCreateNestedManyWithoutUserInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUncheckedCreateNestedManyWithoutUserInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUncheckedCreateNestedManyWithoutUserInput
   notificationPreference?: Prisma.UserNotificationPreferenceUncheckedCreateNestedOneWithoutUserInput
 }
 
@@ -1803,6 +2015,9 @@ export type UserUpdateWithoutAssignedTasksInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   team?: Prisma.TeamUpdateOneWithoutMembersNestedInput
   ledTeams?: Prisma.TeamUpdateManyWithoutLeaderNestedInput
@@ -1816,6 +2031,7 @@ export type UserUpdateWithoutAssignedTasksInput = {
   triggeredNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUpdateManyWithoutUserNestedInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUpdateManyWithoutUserNestedInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUpdateManyWithoutUserNestedInput
   notificationPreference?: Prisma.UserNotificationPreferenceUpdateOneWithoutUserNestedInput
 }
 
@@ -1831,6 +2047,9 @@ export type UserUncheckedUpdateWithoutAssignedTasksInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ledTeams?: Prisma.TeamUncheckedUpdateManyWithoutLeaderNestedInput
   ownedProjects?: Prisma.ProjectUncheckedUpdateManyWithoutOwnerNestedInput
@@ -1843,6 +2062,7 @@ export type UserUncheckedUpdateWithoutAssignedTasksInput = {
   triggeredNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUncheckedUpdateManyWithoutUserNestedInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUncheckedUpdateManyWithoutUserNestedInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUncheckedUpdateManyWithoutUserNestedInput
   notificationPreference?: Prisma.UserNotificationPreferenceUncheckedUpdateOneWithoutUserNestedInput
 }
 
@@ -1868,6 +2088,9 @@ export type UserUpdateWithoutCreatedTasksInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   team?: Prisma.TeamUpdateOneWithoutMembersNestedInput
   ledTeams?: Prisma.TeamUpdateManyWithoutLeaderNestedInput
@@ -1881,6 +2104,7 @@ export type UserUpdateWithoutCreatedTasksInput = {
   triggeredNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUpdateManyWithoutUserNestedInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUpdateManyWithoutUserNestedInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUpdateManyWithoutUserNestedInput
   notificationPreference?: Prisma.UserNotificationPreferenceUpdateOneWithoutUserNestedInput
 }
 
@@ -1896,6 +2120,9 @@ export type UserUncheckedUpdateWithoutCreatedTasksInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ledTeams?: Prisma.TeamUncheckedUpdateManyWithoutLeaderNestedInput
   ownedProjects?: Prisma.ProjectUncheckedUpdateManyWithoutOwnerNestedInput
@@ -1908,6 +2135,7 @@ export type UserUncheckedUpdateWithoutCreatedTasksInput = {
   triggeredNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUncheckedUpdateManyWithoutUserNestedInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUncheckedUpdateManyWithoutUserNestedInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUncheckedUpdateManyWithoutUserNestedInput
   notificationPreference?: Prisma.UserNotificationPreferenceUncheckedUpdateOneWithoutUserNestedInput
 }
 
@@ -1922,6 +2150,9 @@ export type UserCreateWithoutCommentsInput = {
   phone?: string | null
   zaloUserId?: string | null
   zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
   createdAt?: Date | string
   team?: Prisma.TeamCreateNestedOneWithoutMembersInput
   ledTeams?: Prisma.TeamCreateNestedManyWithoutLeaderInput
@@ -1935,6 +2166,7 @@ export type UserCreateWithoutCommentsInput = {
   triggeredNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
   zaloMessageLogs?: Prisma.ZaloMessageLogCreateNestedManyWithoutUserInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeCreateNestedManyWithoutUserInput
+  discordMessageLogs?: Prisma.DiscordMessageLogCreateNestedManyWithoutUserInput
   notificationPreference?: Prisma.UserNotificationPreferenceCreateNestedOneWithoutUserInput
 }
 
@@ -1950,6 +2182,9 @@ export type UserUncheckedCreateWithoutCommentsInput = {
   phone?: string | null
   zaloUserId?: string | null
   zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
   createdAt?: Date | string
   ledTeams?: Prisma.TeamUncheckedCreateNestedManyWithoutLeaderInput
   ownedProjects?: Prisma.ProjectUncheckedCreateNestedManyWithoutOwnerInput
@@ -1962,6 +2197,7 @@ export type UserUncheckedCreateWithoutCommentsInput = {
   triggeredNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUncheckedCreateNestedManyWithoutUserInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUncheckedCreateNestedManyWithoutUserInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUncheckedCreateNestedManyWithoutUserInput
   notificationPreference?: Prisma.UserNotificationPreferenceUncheckedCreateNestedOneWithoutUserInput
 }
 
@@ -1992,6 +2228,9 @@ export type UserUpdateWithoutCommentsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   team?: Prisma.TeamUpdateOneWithoutMembersNestedInput
   ledTeams?: Prisma.TeamUpdateManyWithoutLeaderNestedInput
@@ -2005,6 +2244,7 @@ export type UserUpdateWithoutCommentsInput = {
   triggeredNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUpdateManyWithoutUserNestedInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUpdateManyWithoutUserNestedInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUpdateManyWithoutUserNestedInput
   notificationPreference?: Prisma.UserNotificationPreferenceUpdateOneWithoutUserNestedInput
 }
 
@@ -2020,6 +2260,9 @@ export type UserUncheckedUpdateWithoutCommentsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ledTeams?: Prisma.TeamUncheckedUpdateManyWithoutLeaderNestedInput
   ownedProjects?: Prisma.ProjectUncheckedUpdateManyWithoutOwnerNestedInput
@@ -2032,6 +2275,7 @@ export type UserUncheckedUpdateWithoutCommentsInput = {
   triggeredNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUncheckedUpdateManyWithoutUserNestedInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUncheckedUpdateManyWithoutUserNestedInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUncheckedUpdateManyWithoutUserNestedInput
   notificationPreference?: Prisma.UserNotificationPreferenceUncheckedUpdateOneWithoutUserNestedInput
 }
 
@@ -2046,6 +2290,9 @@ export type UserCreateWithoutActivitiesInput = {
   phone?: string | null
   zaloUserId?: string | null
   zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
   createdAt?: Date | string
   team?: Prisma.TeamCreateNestedOneWithoutMembersInput
   ledTeams?: Prisma.TeamCreateNestedManyWithoutLeaderInput
@@ -2059,6 +2306,7 @@ export type UserCreateWithoutActivitiesInput = {
   triggeredNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
   zaloMessageLogs?: Prisma.ZaloMessageLogCreateNestedManyWithoutUserInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeCreateNestedManyWithoutUserInput
+  discordMessageLogs?: Prisma.DiscordMessageLogCreateNestedManyWithoutUserInput
   notificationPreference?: Prisma.UserNotificationPreferenceCreateNestedOneWithoutUserInput
 }
 
@@ -2074,6 +2322,9 @@ export type UserUncheckedCreateWithoutActivitiesInput = {
   phone?: string | null
   zaloUserId?: string | null
   zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
   createdAt?: Date | string
   ledTeams?: Prisma.TeamUncheckedCreateNestedManyWithoutLeaderInput
   ownedProjects?: Prisma.ProjectUncheckedCreateNestedManyWithoutOwnerInput
@@ -2086,6 +2337,7 @@ export type UserUncheckedCreateWithoutActivitiesInput = {
   triggeredNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUncheckedCreateNestedManyWithoutUserInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUncheckedCreateNestedManyWithoutUserInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUncheckedCreateNestedManyWithoutUserInput
   notificationPreference?: Prisma.UserNotificationPreferenceUncheckedCreateNestedOneWithoutUserInput
 }
 
@@ -2116,6 +2368,9 @@ export type UserUpdateWithoutActivitiesInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   team?: Prisma.TeamUpdateOneWithoutMembersNestedInput
   ledTeams?: Prisma.TeamUpdateManyWithoutLeaderNestedInput
@@ -2129,6 +2384,7 @@ export type UserUpdateWithoutActivitiesInput = {
   triggeredNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUpdateManyWithoutUserNestedInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUpdateManyWithoutUserNestedInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUpdateManyWithoutUserNestedInput
   notificationPreference?: Prisma.UserNotificationPreferenceUpdateOneWithoutUserNestedInput
 }
 
@@ -2144,6 +2400,9 @@ export type UserUncheckedUpdateWithoutActivitiesInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ledTeams?: Prisma.TeamUncheckedUpdateManyWithoutLeaderNestedInput
   ownedProjects?: Prisma.ProjectUncheckedUpdateManyWithoutOwnerNestedInput
@@ -2156,6 +2415,7 @@ export type UserUncheckedUpdateWithoutActivitiesInput = {
   triggeredNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUncheckedUpdateManyWithoutUserNestedInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUncheckedUpdateManyWithoutUserNestedInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUncheckedUpdateManyWithoutUserNestedInput
   notificationPreference?: Prisma.UserNotificationPreferenceUncheckedUpdateOneWithoutUserNestedInput
 }
 
@@ -2170,6 +2430,9 @@ export type UserCreateWithoutAttachmentsInput = {
   phone?: string | null
   zaloUserId?: string | null
   zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
   createdAt?: Date | string
   team?: Prisma.TeamCreateNestedOneWithoutMembersInput
   ledTeams?: Prisma.TeamCreateNestedManyWithoutLeaderInput
@@ -2183,6 +2446,7 @@ export type UserCreateWithoutAttachmentsInput = {
   triggeredNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
   zaloMessageLogs?: Prisma.ZaloMessageLogCreateNestedManyWithoutUserInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeCreateNestedManyWithoutUserInput
+  discordMessageLogs?: Prisma.DiscordMessageLogCreateNestedManyWithoutUserInput
   notificationPreference?: Prisma.UserNotificationPreferenceCreateNestedOneWithoutUserInput
 }
 
@@ -2198,6 +2462,9 @@ export type UserUncheckedCreateWithoutAttachmentsInput = {
   phone?: string | null
   zaloUserId?: string | null
   zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
   createdAt?: Date | string
   ledTeams?: Prisma.TeamUncheckedCreateNestedManyWithoutLeaderInput
   ownedProjects?: Prisma.ProjectUncheckedCreateNestedManyWithoutOwnerInput
@@ -2210,6 +2477,7 @@ export type UserUncheckedCreateWithoutAttachmentsInput = {
   triggeredNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUncheckedCreateNestedManyWithoutUserInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUncheckedCreateNestedManyWithoutUserInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUncheckedCreateNestedManyWithoutUserInput
   notificationPreference?: Prisma.UserNotificationPreferenceUncheckedCreateNestedOneWithoutUserInput
 }
 
@@ -2240,6 +2508,9 @@ export type UserUpdateWithoutAttachmentsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   team?: Prisma.TeamUpdateOneWithoutMembersNestedInput
   ledTeams?: Prisma.TeamUpdateManyWithoutLeaderNestedInput
@@ -2253,6 +2524,7 @@ export type UserUpdateWithoutAttachmentsInput = {
   triggeredNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUpdateManyWithoutUserNestedInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUpdateManyWithoutUserNestedInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUpdateManyWithoutUserNestedInput
   notificationPreference?: Prisma.UserNotificationPreferenceUpdateOneWithoutUserNestedInput
 }
 
@@ -2268,6 +2540,9 @@ export type UserUncheckedUpdateWithoutAttachmentsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ledTeams?: Prisma.TeamUncheckedUpdateManyWithoutLeaderNestedInput
   ownedProjects?: Prisma.ProjectUncheckedUpdateManyWithoutOwnerNestedInput
@@ -2276,6 +2551,147 @@ export type UserUncheckedUpdateWithoutAttachmentsInput = {
   createdTasks?: Prisma.TaskUncheckedUpdateManyWithoutCreatorNestedInput
   comments?: Prisma.CommentUncheckedUpdateManyWithoutAuthorNestedInput
   activities?: Prisma.ActivityUncheckedUpdateManyWithoutActorNestedInput
+  receivedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  triggeredNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
+  zaloMessageLogs?: Prisma.ZaloMessageLogUncheckedUpdateManyWithoutUserNestedInput
+  zaloLinkCodes?: Prisma.ZaloLinkCodeUncheckedUpdateManyWithoutUserNestedInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUncheckedUpdateManyWithoutUserNestedInput
+  notificationPreference?: Prisma.UserNotificationPreferenceUncheckedUpdateOneWithoutUserNestedInput
+}
+
+export type UserCreateWithoutDiscordMessageLogsInput = {
+  id?: string
+  name: string
+  email: string
+  passwordHash: string
+  avatarColor?: string
+  title?: string | null
+  role?: string
+  phone?: string | null
+  zaloUserId?: string | null
+  zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
+  createdAt?: Date | string
+  team?: Prisma.TeamCreateNestedOneWithoutMembersInput
+  ledTeams?: Prisma.TeamCreateNestedManyWithoutLeaderInput
+  ownedProjects?: Prisma.ProjectCreateNestedManyWithoutOwnerInput
+  memberships?: Prisma.ProjectMemberCreateNestedManyWithoutUserInput
+  assignedTasks?: Prisma.TaskCreateNestedManyWithoutAssigneeInput
+  createdTasks?: Prisma.TaskCreateNestedManyWithoutCreatorInput
+  comments?: Prisma.CommentCreateNestedManyWithoutAuthorInput
+  activities?: Prisma.ActivityCreateNestedManyWithoutActorInput
+  attachments?: Prisma.AttachmentCreateNestedManyWithoutUploaderInput
+  receivedNotifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  triggeredNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
+  zaloMessageLogs?: Prisma.ZaloMessageLogCreateNestedManyWithoutUserInput
+  zaloLinkCodes?: Prisma.ZaloLinkCodeCreateNestedManyWithoutUserInput
+  notificationPreference?: Prisma.UserNotificationPreferenceCreateNestedOneWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutDiscordMessageLogsInput = {
+  id?: string
+  name: string
+  email: string
+  passwordHash: string
+  avatarColor?: string
+  title?: string | null
+  role?: string
+  teamId?: string | null
+  phone?: string | null
+  zaloUserId?: string | null
+  zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
+  createdAt?: Date | string
+  ledTeams?: Prisma.TeamUncheckedCreateNestedManyWithoutLeaderInput
+  ownedProjects?: Prisma.ProjectUncheckedCreateNestedManyWithoutOwnerInput
+  memberships?: Prisma.ProjectMemberUncheckedCreateNestedManyWithoutUserInput
+  assignedTasks?: Prisma.TaskUncheckedCreateNestedManyWithoutAssigneeInput
+  createdTasks?: Prisma.TaskUncheckedCreateNestedManyWithoutCreatorInput
+  comments?: Prisma.CommentUncheckedCreateNestedManyWithoutAuthorInput
+  activities?: Prisma.ActivityUncheckedCreateNestedManyWithoutActorInput
+  attachments?: Prisma.AttachmentUncheckedCreateNestedManyWithoutUploaderInput
+  receivedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  triggeredNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
+  zaloMessageLogs?: Prisma.ZaloMessageLogUncheckedCreateNestedManyWithoutUserInput
+  zaloLinkCodes?: Prisma.ZaloLinkCodeUncheckedCreateNestedManyWithoutUserInput
+  notificationPreference?: Prisma.UserNotificationPreferenceUncheckedCreateNestedOneWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutDiscordMessageLogsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutDiscordMessageLogsInput, Prisma.UserUncheckedCreateWithoutDiscordMessageLogsInput>
+}
+
+export type UserUpsertWithoutDiscordMessageLogsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutDiscordMessageLogsInput, Prisma.UserUncheckedUpdateWithoutDiscordMessageLogsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutDiscordMessageLogsInput, Prisma.UserUncheckedCreateWithoutDiscordMessageLogsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutDiscordMessageLogsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutDiscordMessageLogsInput, Prisma.UserUncheckedUpdateWithoutDiscordMessageLogsInput>
+}
+
+export type UserUpdateWithoutDiscordMessageLogsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  avatarColor?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  team?: Prisma.TeamUpdateOneWithoutMembersNestedInput
+  ledTeams?: Prisma.TeamUpdateManyWithoutLeaderNestedInput
+  ownedProjects?: Prisma.ProjectUpdateManyWithoutOwnerNestedInput
+  memberships?: Prisma.ProjectMemberUpdateManyWithoutUserNestedInput
+  assignedTasks?: Prisma.TaskUpdateManyWithoutAssigneeNestedInput
+  createdTasks?: Prisma.TaskUpdateManyWithoutCreatorNestedInput
+  comments?: Prisma.CommentUpdateManyWithoutAuthorNestedInput
+  activities?: Prisma.ActivityUpdateManyWithoutActorNestedInput
+  attachments?: Prisma.AttachmentUpdateManyWithoutUploaderNestedInput
+  receivedNotifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  triggeredNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
+  zaloMessageLogs?: Prisma.ZaloMessageLogUpdateManyWithoutUserNestedInput
+  zaloLinkCodes?: Prisma.ZaloLinkCodeUpdateManyWithoutUserNestedInput
+  notificationPreference?: Prisma.UserNotificationPreferenceUpdateOneWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutDiscordMessageLogsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  avatarColor?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  role?: Prisma.StringFieldUpdateOperationsInput | string
+  teamId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  ledTeams?: Prisma.TeamUncheckedUpdateManyWithoutLeaderNestedInput
+  ownedProjects?: Prisma.ProjectUncheckedUpdateManyWithoutOwnerNestedInput
+  memberships?: Prisma.ProjectMemberUncheckedUpdateManyWithoutUserNestedInput
+  assignedTasks?: Prisma.TaskUncheckedUpdateManyWithoutAssigneeNestedInput
+  createdTasks?: Prisma.TaskUncheckedUpdateManyWithoutCreatorNestedInput
+  comments?: Prisma.CommentUncheckedUpdateManyWithoutAuthorNestedInput
+  activities?: Prisma.ActivityUncheckedUpdateManyWithoutActorNestedInput
+  attachments?: Prisma.AttachmentUncheckedUpdateManyWithoutUploaderNestedInput
   receivedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   triggeredNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUncheckedUpdateManyWithoutUserNestedInput
@@ -2294,6 +2710,9 @@ export type UserCreateWithoutZaloMessageLogsInput = {
   phone?: string | null
   zaloUserId?: string | null
   zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
   createdAt?: Date | string
   team?: Prisma.TeamCreateNestedOneWithoutMembersInput
   ledTeams?: Prisma.TeamCreateNestedManyWithoutLeaderInput
@@ -2307,6 +2726,7 @@ export type UserCreateWithoutZaloMessageLogsInput = {
   receivedNotifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   triggeredNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeCreateNestedManyWithoutUserInput
+  discordMessageLogs?: Prisma.DiscordMessageLogCreateNestedManyWithoutUserInput
   notificationPreference?: Prisma.UserNotificationPreferenceCreateNestedOneWithoutUserInput
 }
 
@@ -2322,6 +2742,9 @@ export type UserUncheckedCreateWithoutZaloMessageLogsInput = {
   phone?: string | null
   zaloUserId?: string | null
   zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
   createdAt?: Date | string
   ledTeams?: Prisma.TeamUncheckedCreateNestedManyWithoutLeaderInput
   ownedProjects?: Prisma.ProjectUncheckedCreateNestedManyWithoutOwnerInput
@@ -2334,6 +2757,7 @@ export type UserUncheckedCreateWithoutZaloMessageLogsInput = {
   receivedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   triggeredNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUncheckedCreateNestedManyWithoutUserInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUncheckedCreateNestedManyWithoutUserInput
   notificationPreference?: Prisma.UserNotificationPreferenceUncheckedCreateNestedOneWithoutUserInput
 }
 
@@ -2364,6 +2788,9 @@ export type UserUpdateWithoutZaloMessageLogsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   team?: Prisma.TeamUpdateOneWithoutMembersNestedInput
   ledTeams?: Prisma.TeamUpdateManyWithoutLeaderNestedInput
@@ -2377,6 +2804,7 @@ export type UserUpdateWithoutZaloMessageLogsInput = {
   receivedNotifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   triggeredNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUpdateManyWithoutUserNestedInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUpdateManyWithoutUserNestedInput
   notificationPreference?: Prisma.UserNotificationPreferenceUpdateOneWithoutUserNestedInput
 }
 
@@ -2392,6 +2820,9 @@ export type UserUncheckedUpdateWithoutZaloMessageLogsInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ledTeams?: Prisma.TeamUncheckedUpdateManyWithoutLeaderNestedInput
   ownedProjects?: Prisma.ProjectUncheckedUpdateManyWithoutOwnerNestedInput
@@ -2404,6 +2835,7 @@ export type UserUncheckedUpdateWithoutZaloMessageLogsInput = {
   receivedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   triggeredNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUncheckedUpdateManyWithoutUserNestedInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUncheckedUpdateManyWithoutUserNestedInput
   notificationPreference?: Prisma.UserNotificationPreferenceUncheckedUpdateOneWithoutUserNestedInput
 }
 
@@ -2418,6 +2850,9 @@ export type UserCreateWithoutZaloLinkCodesInput = {
   phone?: string | null
   zaloUserId?: string | null
   zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
   createdAt?: Date | string
   team?: Prisma.TeamCreateNestedOneWithoutMembersInput
   ledTeams?: Prisma.TeamCreateNestedManyWithoutLeaderInput
@@ -2431,6 +2866,7 @@ export type UserCreateWithoutZaloLinkCodesInput = {
   receivedNotifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   triggeredNotifications?: Prisma.NotificationCreateNestedManyWithoutActorInput
   zaloMessageLogs?: Prisma.ZaloMessageLogCreateNestedManyWithoutUserInput
+  discordMessageLogs?: Prisma.DiscordMessageLogCreateNestedManyWithoutUserInput
   notificationPreference?: Prisma.UserNotificationPreferenceCreateNestedOneWithoutUserInput
 }
 
@@ -2446,6 +2882,9 @@ export type UserUncheckedCreateWithoutZaloLinkCodesInput = {
   phone?: string | null
   zaloUserId?: string | null
   zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
   createdAt?: Date | string
   ledTeams?: Prisma.TeamUncheckedCreateNestedManyWithoutLeaderInput
   ownedProjects?: Prisma.ProjectUncheckedCreateNestedManyWithoutOwnerInput
@@ -2458,6 +2897,7 @@ export type UserUncheckedCreateWithoutZaloLinkCodesInput = {
   receivedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   triggeredNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutActorInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUncheckedCreateNestedManyWithoutUserInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUncheckedCreateNestedManyWithoutUserInput
   notificationPreference?: Prisma.UserNotificationPreferenceUncheckedCreateNestedOneWithoutUserInput
 }
 
@@ -2488,6 +2928,9 @@ export type UserUpdateWithoutZaloLinkCodesInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   team?: Prisma.TeamUpdateOneWithoutMembersNestedInput
   ledTeams?: Prisma.TeamUpdateManyWithoutLeaderNestedInput
@@ -2501,6 +2944,7 @@ export type UserUpdateWithoutZaloLinkCodesInput = {
   receivedNotifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   triggeredNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUpdateManyWithoutUserNestedInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUpdateManyWithoutUserNestedInput
   notificationPreference?: Prisma.UserNotificationPreferenceUpdateOneWithoutUserNestedInput
 }
 
@@ -2516,6 +2960,9 @@ export type UserUncheckedUpdateWithoutZaloLinkCodesInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ledTeams?: Prisma.TeamUncheckedUpdateManyWithoutLeaderNestedInput
   ownedProjects?: Prisma.ProjectUncheckedUpdateManyWithoutOwnerNestedInput
@@ -2528,6 +2975,7 @@ export type UserUncheckedUpdateWithoutZaloLinkCodesInput = {
   receivedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   triggeredNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUncheckedUpdateManyWithoutUserNestedInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUncheckedUpdateManyWithoutUserNestedInput
   notificationPreference?: Prisma.UserNotificationPreferenceUncheckedUpdateOneWithoutUserNestedInput
 }
 
@@ -2542,6 +2990,9 @@ export type UserCreateManyTeamInput = {
   phone?: string | null
   zaloUserId?: string | null
   zaloLinkedAt?: Date | string | null
+  discordUserId?: string | null
+  discordUsername?: string | null
+  discordLinkedAt?: Date | string | null
   createdAt?: Date | string
 }
 
@@ -2556,6 +3007,9 @@ export type UserUpdateWithoutTeamInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ledTeams?: Prisma.TeamUpdateManyWithoutLeaderNestedInput
   ownedProjects?: Prisma.ProjectUpdateManyWithoutOwnerNestedInput
@@ -2569,6 +3023,7 @@ export type UserUpdateWithoutTeamInput = {
   triggeredNotifications?: Prisma.NotificationUpdateManyWithoutActorNestedInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUpdateManyWithoutUserNestedInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUpdateManyWithoutUserNestedInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUpdateManyWithoutUserNestedInput
   notificationPreference?: Prisma.UserNotificationPreferenceUpdateOneWithoutUserNestedInput
 }
 
@@ -2583,6 +3038,9 @@ export type UserUncheckedUpdateWithoutTeamInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   ledTeams?: Prisma.TeamUncheckedUpdateManyWithoutLeaderNestedInput
   ownedProjects?: Prisma.ProjectUncheckedUpdateManyWithoutOwnerNestedInput
@@ -2596,6 +3054,7 @@ export type UserUncheckedUpdateWithoutTeamInput = {
   triggeredNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutActorNestedInput
   zaloMessageLogs?: Prisma.ZaloMessageLogUncheckedUpdateManyWithoutUserNestedInput
   zaloLinkCodes?: Prisma.ZaloLinkCodeUncheckedUpdateManyWithoutUserNestedInput
+  discordMessageLogs?: Prisma.DiscordMessageLogUncheckedUpdateManyWithoutUserNestedInput
   notificationPreference?: Prisma.UserNotificationPreferenceUncheckedUpdateOneWithoutUserNestedInput
 }
 
@@ -2610,6 +3069,9 @@ export type UserUncheckedUpdateManyWithoutTeamInput = {
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   zaloLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  discordUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordUsername?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordLinkedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -2631,6 +3093,7 @@ export type UserCountOutputType = {
   triggeredNotifications: number
   zaloMessageLogs: number
   zaloLinkCodes: number
+  discordMessageLogs: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2646,6 +3109,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   triggeredNotifications?: boolean | UserCountOutputTypeCountTriggeredNotificationsArgs
   zaloMessageLogs?: boolean | UserCountOutputTypeCountZaloMessageLogsArgs
   zaloLinkCodes?: boolean | UserCountOutputTypeCountZaloLinkCodesArgs
+  discordMessageLogs?: boolean | UserCountOutputTypeCountDiscordMessageLogsArgs
 }
 
 /**
@@ -2742,6 +3206,13 @@ export type UserCountOutputTypeCountZaloLinkCodesArgs<ExtArgs extends runtime.Ty
   where?: Prisma.ZaloLinkCodeWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountDiscordMessageLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.DiscordMessageLogWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -2755,6 +3226,9 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   phone?: boolean
   zaloUserId?: boolean
   zaloLinkedAt?: boolean
+  discordUserId?: boolean
+  discordUsername?: boolean
+  discordLinkedAt?: boolean
   createdAt?: boolean
   team?: boolean | Prisma.User$teamArgs<ExtArgs>
   ledTeams?: boolean | Prisma.User$ledTeamsArgs<ExtArgs>
@@ -2769,6 +3243,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   triggeredNotifications?: boolean | Prisma.User$triggeredNotificationsArgs<ExtArgs>
   zaloMessageLogs?: boolean | Prisma.User$zaloMessageLogsArgs<ExtArgs>
   zaloLinkCodes?: boolean | Prisma.User$zaloLinkCodesArgs<ExtArgs>
+  discordMessageLogs?: boolean | Prisma.User$discordMessageLogsArgs<ExtArgs>
   notificationPreference?: boolean | Prisma.User$notificationPreferenceArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
@@ -2787,10 +3262,13 @@ export type UserSelectScalar = {
   phone?: boolean
   zaloUserId?: boolean
   zaloLinkedAt?: boolean
+  discordUserId?: boolean
+  discordUsername?: boolean
+  discordLinkedAt?: boolean
   createdAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "passwordHash" | "avatarColor" | "title" | "role" | "teamId" | "phone" | "zaloUserId" | "zaloLinkedAt" | "createdAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "passwordHash" | "avatarColor" | "title" | "role" | "teamId" | "phone" | "zaloUserId" | "zaloLinkedAt" | "discordUserId" | "discordUsername" | "discordLinkedAt" | "createdAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   team?: boolean | Prisma.User$teamArgs<ExtArgs>
   ledTeams?: boolean | Prisma.User$ledTeamsArgs<ExtArgs>
@@ -2805,6 +3283,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   triggeredNotifications?: boolean | Prisma.User$triggeredNotificationsArgs<ExtArgs>
   zaloMessageLogs?: boolean | Prisma.User$zaloMessageLogsArgs<ExtArgs>
   zaloLinkCodes?: boolean | Prisma.User$zaloLinkCodesArgs<ExtArgs>
+  discordMessageLogs?: boolean | Prisma.User$discordMessageLogsArgs<ExtArgs>
   notificationPreference?: boolean | Prisma.User$notificationPreferenceArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
@@ -2825,6 +3304,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     triggeredNotifications: Prisma.$NotificationPayload<ExtArgs>[]
     zaloMessageLogs: Prisma.$ZaloMessageLogPayload<ExtArgs>[]
     zaloLinkCodes: Prisma.$ZaloLinkCodePayload<ExtArgs>[]
+    discordMessageLogs: Prisma.$DiscordMessageLogPayload<ExtArgs>[]
     notificationPreference: Prisma.$UserNotificationPreferencePayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -2839,6 +3319,9 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     phone: string | null
     zaloUserId: string | null
     zaloLinkedAt: Date | null
+    discordUserId: string | null
+    discordUsername: string | null
+    discordLinkedAt: Date | null
     createdAt: Date
   }, ExtArgs["result"]["user"]>
   composites: {}
@@ -3193,6 +3676,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   triggeredNotifications<T extends Prisma.User$triggeredNotificationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$triggeredNotificationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   zaloMessageLogs<T extends Prisma.User$zaloMessageLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$zaloMessageLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ZaloMessageLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   zaloLinkCodes<T extends Prisma.User$zaloLinkCodesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$zaloLinkCodesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ZaloLinkCodePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  discordMessageLogs<T extends Prisma.User$discordMessageLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$discordMessageLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DiscordMessageLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   notificationPreference<T extends Prisma.User$notificationPreferenceArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$notificationPreferenceArgs<ExtArgs>>): Prisma.Prisma__UserNotificationPreferenceClient<runtime.Types.Result.GetResult<Prisma.$UserNotificationPreferencePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -3234,6 +3718,9 @@ export interface UserFieldRefs {
   readonly phone: Prisma.FieldRef<"User", 'String'>
   readonly zaloUserId: Prisma.FieldRef<"User", 'String'>
   readonly zaloLinkedAt: Prisma.FieldRef<"User", 'DateTime'>
+  readonly discordUserId: Prisma.FieldRef<"User", 'String'>
+  readonly discordUsername: Prisma.FieldRef<"User", 'String'>
+  readonly discordLinkedAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
 }
     
@@ -3886,6 +4373,30 @@ export type User$zaloLinkCodesArgs<ExtArgs extends runtime.Types.Extensions.Inte
   take?: number
   skip?: number
   distinct?: Prisma.ZaloLinkCodeScalarFieldEnum | Prisma.ZaloLinkCodeScalarFieldEnum[]
+}
+
+/**
+ * User.discordMessageLogs
+ */
+export type User$discordMessageLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the DiscordMessageLog
+   */
+  select?: Prisma.DiscordMessageLogSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the DiscordMessageLog
+   */
+  omit?: Prisma.DiscordMessageLogOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DiscordMessageLogInclude<ExtArgs> | null
+  where?: Prisma.DiscordMessageLogWhereInput
+  orderBy?: Prisma.DiscordMessageLogOrderByWithRelationInput | Prisma.DiscordMessageLogOrderByWithRelationInput[]
+  cursor?: Prisma.DiscordMessageLogWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.DiscordMessageLogScalarFieldEnum | Prisma.DiscordMessageLogScalarFieldEnum[]
 }
 
 /**

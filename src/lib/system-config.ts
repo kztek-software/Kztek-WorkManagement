@@ -42,6 +42,20 @@ export type ZaloConfig = {
   notifyOnComment: boolean;
 };
 
+export type DiscordConfig = {
+  enabled: boolean;
+  clientId: string;
+  clientSecret: string;
+  botToken: string;
+  webhookUrl: string;
+  notifyOnAssign: boolean; // DM cá nhân
+  notifyOnStatusChange: boolean;
+  notifyOnComment: boolean;
+  webhookOnAssign: boolean; // đăng vào kênh chung
+  webhookOnStatusChange: boolean;
+  webhookOnComment: boolean;
+};
+
 export type SystemConfigData = {
   smtp: {
     host: string;
@@ -55,6 +69,7 @@ export type SystemConfigData = {
   branding: SystemBrandingConfig;
   notifications: SystemNotificationRules;
   zalo: ZaloConfig;
+  discord: DiscordConfig;
   updatedAt: string;
   updatedBy?: string;
 };
@@ -99,6 +114,19 @@ function getDefaultSystemConfig(): SystemConfigData {
       notifyOnStatusChange: false,
       notifyOnComment: false,
     },
+    discord: {
+      enabled: false,
+      clientId: process.env.DISCORD_CLIENT_ID || "",
+      clientSecret: process.env.DISCORD_CLIENT_SECRET || "",
+      botToken: process.env.DISCORD_BOT_TOKEN || "",
+      webhookUrl: process.env.DISCORD_WEBHOOK_URL || "",
+      notifyOnAssign: false,
+      notifyOnStatusChange: false,
+      notifyOnComment: false,
+      webhookOnAssign: false,
+      webhookOnStatusChange: false,
+      webhookOnComment: false,
+    },
     updatedAt: new Date().toISOString(),
     updatedBy: "Hệ thống (Mặc định)",
   };
@@ -118,6 +146,7 @@ function loadSystemConfigFromDisk(): SystemConfigData {
       branding: { ...defaults.branding, ...saved.branding },
       notifications: { ...defaults.notifications, ...saved.notifications },
       zalo: { ...defaults.zalo, ...saved.zalo },
+      discord: { ...defaults.discord, ...saved.discord },
       updatedAt: saved.updatedAt || defaults.updatedAt,
       updatedBy: saved.updatedBy || defaults.updatedBy,
     };
@@ -172,6 +201,17 @@ function mapDbRecordToConfig(record: {
   notifyZaloOnAssign: boolean;
   notifyZaloOnStatusChange: boolean;
   notifyZaloOnComment: boolean;
+  enableDiscordIntegration: boolean;
+  discordClientId: string | null;
+  discordClientSecret: string | null;
+  discordBotToken: string | null;
+  discordWebhookUrl: string | null;
+  notifyDiscordOnAssign: boolean;
+  notifyDiscordOnStatusChange: boolean;
+  notifyDiscordOnComment: boolean;
+  discordWebhookOnAssign: boolean;
+  discordWebhookOnStatusChange: boolean;
+  discordWebhookOnComment: boolean;
   updatedAt: Date;
   updatedBy: string | null;
 }): SystemConfigData {
@@ -213,6 +253,19 @@ function mapDbRecordToConfig(record: {
       notifyOnAssign: record.notifyZaloOnAssign ?? defaults.zalo.notifyOnAssign,
       notifyOnStatusChange: record.notifyZaloOnStatusChange ?? defaults.zalo.notifyOnStatusChange,
       notifyOnComment: record.notifyZaloOnComment ?? defaults.zalo.notifyOnComment,
+    },
+    discord: {
+      enabled: record.enableDiscordIntegration ?? defaults.discord.enabled,
+      clientId: record.discordClientId ?? defaults.discord.clientId,
+      clientSecret: record.discordClientSecret ?? defaults.discord.clientSecret,
+      botToken: record.discordBotToken ?? defaults.discord.botToken,
+      webhookUrl: record.discordWebhookUrl ?? defaults.discord.webhookUrl,
+      notifyOnAssign: record.notifyDiscordOnAssign ?? defaults.discord.notifyOnAssign,
+      notifyOnStatusChange: record.notifyDiscordOnStatusChange ?? defaults.discord.notifyOnStatusChange,
+      notifyOnComment: record.notifyDiscordOnComment ?? defaults.discord.notifyOnComment,
+      webhookOnAssign: record.discordWebhookOnAssign ?? defaults.discord.webhookOnAssign,
+      webhookOnStatusChange: record.discordWebhookOnStatusChange ?? defaults.discord.webhookOnStatusChange,
+      webhookOnComment: record.discordWebhookOnComment ?? defaults.discord.webhookOnComment,
     },
     updatedAt: record.updatedAt ? record.updatedAt.toISOString() : defaults.updatedAt,
     updatedBy: record.updatedBy || defaults.updatedBy,
@@ -267,6 +320,17 @@ export async function loadSystemConfigFromDb(): Promise<SystemConfigData> {
         notifyZaloOnAssign: initialConfig.zalo.notifyOnAssign,
         notifyZaloOnStatusChange: initialConfig.zalo.notifyOnStatusChange,
         notifyZaloOnComment: initialConfig.zalo.notifyOnComment,
+        enableDiscordIntegration: initialConfig.discord.enabled,
+        discordClientId: initialConfig.discord.clientId,
+        discordClientSecret: initialConfig.discord.clientSecret,
+        discordBotToken: initialConfig.discord.botToken,
+        discordWebhookUrl: initialConfig.discord.webhookUrl,
+        notifyDiscordOnAssign: initialConfig.discord.notifyOnAssign,
+        notifyDiscordOnStatusChange: initialConfig.discord.notifyOnStatusChange,
+        notifyDiscordOnComment: initialConfig.discord.notifyOnComment,
+        discordWebhookOnAssign: initialConfig.discord.webhookOnAssign,
+        discordWebhookOnStatusChange: initialConfig.discord.webhookOnStatusChange,
+        discordWebhookOnComment: initialConfig.discord.webhookOnComment,
         updatedBy: initialConfig.updatedBy || "Khởi tạo hệ thống",
       },
     });
@@ -347,6 +411,26 @@ export function getEffectiveZaloConfig(): ZaloConfig {
   };
 }
 
+/**
+ * Lấy cấu hình Discord có hiệu lực (kết hợp cài đặt DB và biến môi trường), dùng cho lib/discord/* gọi API thật
+ */
+export function getEffectiveDiscordConfig(): DiscordConfig {
+  const cfg = currentSystemConfig.discord;
+  return {
+    enabled: cfg.enabled,
+    clientId: cfg.clientId || process.env.DISCORD_CLIENT_ID || "",
+    clientSecret: cfg.clientSecret || process.env.DISCORD_CLIENT_SECRET || "",
+    botToken: cfg.botToken || process.env.DISCORD_BOT_TOKEN || "",
+    webhookUrl: cfg.webhookUrl || process.env.DISCORD_WEBHOOK_URL || "",
+    notifyOnAssign: cfg.notifyOnAssign,
+    notifyOnStatusChange: cfg.notifyOnStatusChange,
+    notifyOnComment: cfg.notifyOnComment,
+    webhookOnAssign: cfg.webhookOnAssign,
+    webhookOnStatusChange: cfg.webhookOnStatusChange,
+    webhookOnComment: cfg.webhookOnComment,
+  };
+}
+
 const MASK = "••••••••••••";
 
 function maskSecrets(cfg: SystemConfigData): SystemConfigData {
@@ -362,6 +446,12 @@ function maskSecrets(cfg: SystemConfigData): SystemConfigData {
       oaSecretKey: cfg.zalo.oaSecretKey ? MASK : "",
       accessToken: cfg.zalo.accessToken ? MASK : "",
       refreshToken: cfg.zalo.refreshToken ? MASK : "",
+    },
+    discord: {
+      ...cfg.discord,
+      clientSecret: cfg.discord.clientSecret ? MASK : "",
+      botToken: cfg.discord.botToken ? MASK : "",
+      webhookUrl: cfg.discord.webhookUrl ? MASK : "",
     },
   };
 }
@@ -388,6 +478,7 @@ export type SystemConfigUpdateInput = {
   // Chỉ các field admin nhập tay qua form Cài đặt; accessToken/refreshToken được ghi riêng
   // qua updateZaloTokensAsync() (do OAuth callback thực hiện), không đi qua form này.
   zalo?: Partial<Pick<ZaloConfig, "enabled" | "appId" | "appSecret" | "oaId" | "oaSecretKey" | "znsTemplateId" | "notifyOnAssign" | "notifyOnStatusChange" | "notifyOnComment">>;
+  discord?: Partial<DiscordConfig>;
 };
 
 /**
@@ -454,6 +545,35 @@ export async function updateSystemConfigAsync(
     notifyOnComment: updates.zalo?.notifyOnComment !== undefined ? updates.zalo.notifyOnComment : existingZalo.notifyOnComment,
   };
 
+  const existingDiscord = currentSystemConfig.discord;
+  let finalClientSecret = updates.discord?.clientSecret;
+  if (!finalClientSecret || finalClientSecret === "••••••••••••") {
+    finalClientSecret = existingDiscord.clientSecret;
+  }
+  let finalBotToken = updates.discord?.botToken;
+  if (!finalBotToken || finalBotToken === "••••••••••••") {
+    finalBotToken = existingDiscord.botToken;
+  }
+  let finalWebhookUrl = updates.discord?.webhookUrl;
+  if (!finalWebhookUrl || finalWebhookUrl === "••••••••••••") {
+    finalWebhookUrl = existingDiscord.webhookUrl;
+  }
+
+  const newDiscord: DiscordConfig = {
+    ...existingDiscord,
+    enabled: updates.discord?.enabled !== undefined ? updates.discord.enabled : existingDiscord.enabled,
+    clientId: updates.discord?.clientId !== undefined ? updates.discord.clientId : existingDiscord.clientId,
+    clientSecret: finalClientSecret,
+    botToken: finalBotToken,
+    webhookUrl: finalWebhookUrl,
+    notifyOnAssign: updates.discord?.notifyOnAssign !== undefined ? updates.discord.notifyOnAssign : existingDiscord.notifyOnAssign,
+    notifyOnStatusChange: updates.discord?.notifyOnStatusChange !== undefined ? updates.discord.notifyOnStatusChange : existingDiscord.notifyOnStatusChange,
+    notifyOnComment: updates.discord?.notifyOnComment !== undefined ? updates.discord.notifyOnComment : existingDiscord.notifyOnComment,
+    webhookOnAssign: updates.discord?.webhookOnAssign !== undefined ? updates.discord.webhookOnAssign : existingDiscord.webhookOnAssign,
+    webhookOnStatusChange: updates.discord?.webhookOnStatusChange !== undefined ? updates.discord.webhookOnStatusChange : existingDiscord.webhookOnStatusChange,
+    webhookOnComment: updates.discord?.webhookOnComment !== undefined ? updates.discord.webhookOnComment : existingDiscord.webhookOnComment,
+  };
+
   try {
     const savedSetting = await prisma.systemSetting.upsert({
       where: { id: "default" },
@@ -484,6 +604,17 @@ export async function updateSystemConfigAsync(
         notifyZaloOnAssign: newZalo.notifyOnAssign,
         notifyZaloOnStatusChange: newZalo.notifyOnStatusChange,
         notifyZaloOnComment: newZalo.notifyOnComment,
+        enableDiscordIntegration: newDiscord.enabled,
+        discordClientId: newDiscord.clientId,
+        discordClientSecret: newDiscord.clientSecret,
+        discordBotToken: newDiscord.botToken,
+        discordWebhookUrl: newDiscord.webhookUrl,
+        notifyDiscordOnAssign: newDiscord.notifyOnAssign,
+        notifyDiscordOnStatusChange: newDiscord.notifyOnStatusChange,
+        notifyDiscordOnComment: newDiscord.notifyOnComment,
+        discordWebhookOnAssign: newDiscord.webhookOnAssign,
+        discordWebhookOnStatusChange: newDiscord.webhookOnStatusChange,
+        discordWebhookOnComment: newDiscord.webhookOnComment,
         updatedBy: updaterName,
       },
       create: {
@@ -514,6 +645,17 @@ export async function updateSystemConfigAsync(
         notifyZaloOnAssign: newZalo.notifyOnAssign,
         notifyZaloOnStatusChange: newZalo.notifyOnStatusChange,
         notifyZaloOnComment: newZalo.notifyOnComment,
+        enableDiscordIntegration: newDiscord.enabled,
+        discordClientId: newDiscord.clientId,
+        discordClientSecret: newDiscord.clientSecret,
+        discordBotToken: newDiscord.botToken,
+        discordWebhookUrl: newDiscord.webhookUrl,
+        notifyDiscordOnAssign: newDiscord.notifyOnAssign,
+        notifyDiscordOnStatusChange: newDiscord.notifyOnStatusChange,
+        notifyDiscordOnComment: newDiscord.notifyOnComment,
+        discordWebhookOnAssign: newDiscord.webhookOnAssign,
+        discordWebhookOnStatusChange: newDiscord.webhookOnStatusChange,
+        discordWebhookOnComment: newDiscord.webhookOnComment,
         updatedBy: updaterName,
       },
     });
@@ -527,6 +669,7 @@ export async function updateSystemConfigAsync(
       branding: newBranding,
       notifications: newNotifications,
       zalo: newZalo,
+      discord: newDiscord,
       updatedAt: new Date().toISOString(),
       updatedBy: updaterName,
     };

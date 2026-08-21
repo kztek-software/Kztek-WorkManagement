@@ -12,6 +12,7 @@ const createUserSchema = z.object({
   role: z.string().default("MEMBER"),
   teamId: z.string().optional().nullable(),
   phone: z.string().max(20).optional().nullable(),
+  discordUserId: z.string().max(32).optional().nullable(),
 });
 
 export async function GET() {
@@ -32,6 +33,9 @@ export async function GET() {
       phone: true,
       zaloUserId: true,
       zaloLinkedAt: true,
+      discordUserId: true,
+      discordUsername: true,
+      discordLinkedAt: true,
       team: {
         select: {
           id: true,
@@ -67,7 +71,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Thông tin người dùng không hợp lệ" }, { status: 400 });
   }
 
-  const { name, email, password, title, avatarColor, role, teamId, phone } = parsed.data;
+  const { name, email, password, title, avatarColor, role, teamId, phone, discordUserId } = parsed.data;
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
@@ -86,6 +90,7 @@ export async function POST(req: NextRequest) {
       role,
       teamId: teamId || null,
       phone: phone || null,
+      discordUserId: discordUserId || null,
     },
     select: {
       id: true,
@@ -96,6 +101,7 @@ export async function POST(req: NextRequest) {
       role: true,
       teamId: true,
       phone: true,
+      discordUserId: true,
       team: {
         select: {
           id: true,

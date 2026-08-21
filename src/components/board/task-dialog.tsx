@@ -43,6 +43,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, initials } from "@/components/ui/avatar";
+import { AssigneeQuickSelect } from "./assignee-quick-select";
+import { PriorityIcon } from "./priority-icon";
+import { TypeIcon } from "./type-icon";
 import { Dialog } from "primereact/dialog";
 import { Dropdown } from "primereact/dropdown";
 import {
@@ -52,7 +55,6 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { TypeIcon } from "./type-icon";
 
 export function TaskDialog({
   projectId,
@@ -432,101 +434,37 @@ export function TaskDialog({
               value={priority}
               options={PRIORITIES.map((p) => ({ label: p.label, value: p.id, color: p.color }))}
               onChange={(e) => setPriority(e.value)}
+              panelClassName="border border-line bg-surface rounded-xl shadow-2xl p-1 text-xs min-w-[180px]"
               className="p-dropdown-pill bg-surface border border-line"
               valueTemplate={(opt) => {
                 const p = PRIORITIES.find((x) => x.id === (opt?.value || priority));
                 return (
                   <div className="flex items-center gap-1.5 font-semibold text-foreground">
-                    <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: p?.color }} />
+                    <PriorityIcon priority={opt?.value || priority} />
                     <span>{p?.label || opt?.label}</span>
                   </div>
                 );
               }}
-              itemTemplate={(opt) => (
-                <div className="flex items-center gap-1.5 text-xs font-semibold">
-                  <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: opt.color }} />
-                  <span>{opt.label}</span>
-                </div>
-              )}
-            />
-
-            <Dropdown
-              value={assigneeId ?? "none"}
-              options={[
-                { label: "Chưa giao việc", value: "none", teamName: "" },
-                ...members.map((m) => ({
-                  label: `${m.user.name} (${m.role})`,
-                  value: m.user.id,
-                  user: m.user,
-                  teamName: m.user.team?.name || "",
-                })),
-              ]}
-              filter
-              filterBy="label,teamName,user.email,user.name"
-              filterPlaceholder="Tìm tên, nhóm, email..."
-              resetFilterOnHide
-              panelClassName="border border-line bg-surface rounded-2xl shadow-2xl p-1 text-xs min-w-[250px]"
-              onChange={(e) => setAssigneeId(e.value === "none" ? null : e.value)}
-              className="p-dropdown-pill bg-surface border border-line"
-              valueTemplate={(opt) => {
-                if (!assigneeId || opt?.value === "none") {
-                  return <span className="text-muted font-medium">Chưa giao</span>;
-                }
-                const assignee = members.find((m) => m.user.id === (opt?.value || assigneeId))?.user;
-                return (
-                  <div className="flex items-center gap-1.5 font-semibold text-foreground">
-                    {assignee && (
-                      <Avatar className="h-3.5 w-3.5 -ml-0.5">
-                        <AvatarFallback color={assignee.avatarColor} className="text-[7px] font-bold">
-                          {initials(assignee.name)}
-                        </AvatarFallback>
-                      </Avatar>
-                    )}
-                    <span className="truncate max-w-[120px]">{assignee?.name || opt?.label}</span>
-                  </div>
-                );
-              }}
               itemTemplate={(opt) => {
-                if (opt.value === "none") {
-                  return (
-                    <div className="flex items-center gap-1.5 text-xs text-muted py-1">
-                      <span>Chưa giao việc</span>
-                    </div>
-                  );
-                }
-                const isSelected = assigneeId === opt.value;
+                const isSelected = priority === opt.value;
                 return (
-                  <div className="flex items-center justify-between gap-2 text-xs py-1">
+                  <div className="flex items-center justify-between gap-2 text-xs py-1 px-1">
                     <div className="flex items-center gap-2 min-w-0">
-                      {opt.user && (
-                        <Avatar className="h-5 w-5 -ml-0.5 shrink-0">
-                          <AvatarFallback color={opt.user.avatarColor} className="text-[7.5px] font-bold">
-                            {initials(opt.user.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                      )}
-                      <div className="min-w-0">
-                        <div className="font-semibold text-foreground truncate">{opt.user?.name || opt.label}</div>
-                        <div className="flex items-center gap-1 text-[10px] text-muted truncate">
-                          {opt.user?.team && (
-                            <span
-                              className="font-semibold px-1 rounded text-[9px] shrink-0"
-                              style={{
-                                backgroundColor: `${opt.user.team.color || "#F05922"}20`,
-                                color: opt.user.team.color || "#F05922",
-                              }}
-                            >
-                              {opt.user.team.name}
-                            </span>
-                          )}
-                          <span className="truncate">{opt.user?.email || opt.user?.title}</span>
-                        </div>
-                      </div>
+                      <PriorityIcon priority={opt.value} />
+                      <span className={`font-semibold ${isSelected ? "text-accent" : "text-foreground"}`}>{opt.label}</span>
                     </div>
                     {isSelected && <Check className="h-3.5 w-3.5 text-accent shrink-0" />}
                   </div>
                 );
               }}
+            />
+
+            <AssigneeQuickSelect
+              variant="field"
+              className="h-7 sm:h-7.5 max-w-[190px] bg-surface rounded-full px-2.5 text-xs font-semibold shadow-2xs"
+              currentAssigneeId={assigneeId}
+              members={members}
+              onAssign={(_, userId) => setAssigneeId(userId)}
             />
 
             <Dropdown
@@ -584,7 +522,7 @@ export function TaskDialog({
               )}
 
               {/* 1. Description Section */}
-              <div className="shrink-0 space-y-1 rounded-lg border border-line bg-surface-2/20 p-2.5">
+              <div className="shrink-0 space-y-1 rounded-xl border border-line bg-surface p-2.5 sm:p-3 shadow-xs">
                 <div className="flex items-center justify-between">
                   <Label className="text-[11.5px] font-bold text-foreground flex items-center gap-1.5">
                     <FileText className="h-3.5 w-3.5 text-accent" />
@@ -617,6 +555,7 @@ export function TaskDialog({
                       placeholder="Thêm mô tả..."
                       minHeight="90px"
                       autoFocus
+                      borderless={true}
                       onSave={() => setIsEditingDescription(false)}
                       onCancel={() => {
                         setDescriptionValue(task.description ?? "");
@@ -637,7 +576,7 @@ export function TaskDialog({
                 ) : (
                   <div
                     onClick={() => setIsEditingDescription(true)}
-                    className="p-2 rounded-md bg-surface border border-line hover:border-line-strong transition-all max-h-[100px] overflow-y-auto no-scrollbar cursor-pointer group relative text-xs"
+                    className="p-2 rounded-md bg-surface-2 border border-line hover:border-line-strong transition-all max-h-[100px] overflow-y-auto no-scrollbar cursor-pointer group relative text-xs"
                   >
                     {descriptionValue?.trim() ? (
                       <RichMarkdown content={descriptionValue} members={members} />
@@ -649,7 +588,7 @@ export function TaskDialog({
               </div>
 
               {/* 2. Danh sách việc con (Checklist) */}
-              <div className="shrink-0 space-y-1.5 rounded-lg border border-line bg-surface-2/30 p-2.5">
+              <div className="shrink-0 space-y-1.5 rounded-xl border border-line bg-surface p-2.5 sm:p-3 shadow-xs">
                 <div className="flex items-center justify-between">
                   <Label className="text-[11.5px] font-bold text-foreground flex items-center gap-1.5">
                     <CheckSquare className="h-3.5 w-3.5 text-accent" />
@@ -844,11 +783,59 @@ export function TaskDialog({
                 <Dropdown
                   value={sprintId ?? "none"}
                   options={[
-                    { label: "Không gắn sprint (Backlog)", value: "none" },
-                    ...sprints.map((s) => ({ label: `🚀 ${s.name}`, value: s.id })),
+                    { label: "Không thuộc sprint (Backlog)", value: "none", isBacklog: true },
+                    ...sprints.map((s) => ({
+                      label: s.name,
+                      value: s.id,
+                      statusText: s.status === "ACTIVE" ? "Đang chạy" : s.status === "COMPLETED" ? "Đã xong" : "Kế hoạch",
+                    })),
                   ]}
                   onChange={(e) => setSprintId(e.value === "none" ? null : e.value)}
+                  panelClassName="border border-line bg-surface rounded-xl shadow-2xl p-1 text-xs min-w-[240px]"
                   className="h-7.5 w-full text-xs bg-surface-2 border border-line rounded-lg"
+                  valueTemplate={(opt) => {
+                    const s = sprints.find((x) => x.id === (opt?.value || sprintId));
+                    if (!s || (opt?.value === "none" || sprintId === "none" || !sprintId)) {
+                      return (
+                        <div className="flex items-center gap-1.5 font-normal text-muted truncate">
+                          <Layers className="h-3 w-3 text-muted shrink-0" />
+                          <span className="truncate">Không thuộc sprint (Backlog)</span>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="flex items-center gap-1.5 font-semibold text-foreground truncate">
+                        <span className="text-xs">🚀</span>
+                        <span className="truncate">{s.name}</span>
+                      </div>
+                    );
+                  }}
+                  itemTemplate={(opt) => {
+                    const isSelected = (sprintId || "none") === opt.value;
+                    if (opt.isBacklog) {
+                      return (
+                        <div className="flex items-center justify-between gap-2 text-xs py-1 px-1 text-muted">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <Layers className="h-3 w-3 text-muted shrink-0" />
+                            <span>Không thuộc sprint (Backlog)</span>
+                          </div>
+                          {isSelected && <Check className="h-3.5 w-3.5 text-accent shrink-0" />}
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="flex items-center justify-between gap-2 text-xs py-1 px-1">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-xs">🚀</span>
+                          <div className="min-w-0">
+                            <span className={`font-semibold block truncate ${isSelected ? "text-accent" : "text-foreground"}`}>{opt.label}</span>
+                            <span className="text-[10px] text-muted">{opt.statusText}</span>
+                          </div>
+                        </div>
+                        {isSelected && <Check className="h-3.5 w-3.5 text-accent shrink-0 ml-1" />}
+                      </div>
+                    );
+                  }}
                 />
               </div>
 

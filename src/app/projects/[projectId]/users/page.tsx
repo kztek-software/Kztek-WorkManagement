@@ -109,6 +109,9 @@ type UserItem = {
   phone: string | null;
   zaloUserId?: string | null;
   zaloLinkedAt?: string | null;
+  discordUserId?: string | null;
+  discordUsername?: string | null;
+  discordLinkedAt?: string | null;
   team: {
     id: string;
     name: string;
@@ -202,6 +205,7 @@ export default function UsersManagementPage() {
   const [createTeamId, setCreateTeamId] = useState<string | null>(null);
   const [createColor, setCreateColor] = useState("#F05922");
   const [createPhone, setCreatePhone] = useState("");
+  const [createDiscordUserId, setCreateDiscordUserId] = useState("");
   const [creatingUser, setCreatingUser] = useState(false);
 
   const [editUserOpen, setEditUserOpen] = useState(false);
@@ -214,6 +218,7 @@ export default function UsersManagementPage() {
   const [editTeamId, setEditTeamId] = useState<string | null>(null);
   const [editColor, setEditColor] = useState("#F05922");
   const [editPhone, setEditPhone] = useState("");
+  const [editDiscordUserId, setEditDiscordUserId] = useState("");
   const [updatingUser, setUpdatingUser] = useState(false);
 
   // ==========================================
@@ -457,6 +462,7 @@ export default function UsersManagementPage() {
           teamId: createTeamId || undefined,
           avatarColor: createColor,
           phone: createPhone.trim() || undefined,
+          discordUserId: createDiscordUserId.trim() || undefined,
         }),
       });
 
@@ -474,6 +480,7 @@ export default function UsersManagementPage() {
       setCreateTitle("");
       setCreateTeamId(null);
       setCreatePhone("");
+      setCreateDiscordUserId("");
       loadAllData();
     } catch {
       toast.current?.show({ severity: "error", summary: "Lỗi", detail: "Lỗi kết nối máy chủ" });
@@ -492,6 +499,7 @@ export default function UsersManagementPage() {
     setEditTeamId(u.teamId);
     setEditColor(u.avatarColor);
     setEditPhone(u.phone || "");
+    setEditDiscordUserId(u.discordUserId || "");
     setEditUserOpen(true);
   }
 
@@ -509,6 +517,7 @@ export default function UsersManagementPage() {
       teamId: editTeamId,
       avatarColor: editColor,
       phone: editPhone.trim() || null,
+      discordUserId: editDiscordUserId.trim() || null,
     };
 
     // Optimistic update tức thì trên UI
@@ -529,6 +538,7 @@ export default function UsersManagementPage() {
           teamId: editTeamId,
           avatarColor: editColor,
           phone: editPhone.trim() || null,
+          discordUserId: editDiscordUserId.trim() || null,
         }),
       });
 
@@ -1845,6 +1855,27 @@ export default function UsersManagementPage() {
             {editingUser?.zaloUserId && (
               <p className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1 pt-0.5">
                 <MessageCircle className="h-3 w-3" /> User đã tự liên kết Zalo (nhận thông báo qua OA miễn phí)
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-1">
+            <Label className="text-xs font-semibold flex items-center gap-1">
+              Discord User ID
+              <span className="text-[10px] text-muted font-normal normal-case">(dùng gửi DM Discord — cần Bật Chế độ Nhà phát triển trong Discord để lấy ID)</span>
+            </Label>
+            <Input
+              value={editingUser ? editDiscordUserId : createDiscordUserId}
+              onChange={(e) => (editingUser ? setEditDiscordUserId(e.target.value) : setCreateDiscordUserId(e.target.value))}
+              placeholder="VD: 123456789012345678"
+              className="text-xs h-9 bg-surface-2 font-mono"
+            />
+            {editingUser?.discordUserId && (
+              <p className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1 pt-0.5">
+                <Hash className="h-3 w-3" />
+                {editingUser.discordUsername
+                  ? `Đã liên kết Discord: ${editingUser.discordUsername}`
+                  : "Đã gắn Discord User ID (nhập tay, chưa xác thực qua OAuth)"}
               </p>
             )}
           </div>

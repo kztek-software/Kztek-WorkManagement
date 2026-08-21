@@ -28,6 +28,12 @@ export async function GET() {
         notifyOnStatusChange: systemConfig.zalo.notifyOnStatusChange,
         notifyOnComment: systemConfig.zalo.notifyOnComment,
       },
+      discordEnabled: systemConfig.discord.enabled,
+      discord: {
+        notifyOnAssign: systemConfig.discord.notifyOnAssign,
+        notifyOnStatusChange: systemConfig.discord.notifyOnStatusChange,
+        notifyOnComment: systemConfig.discord.notifyOnComment,
+      },
     },
   });
 }
@@ -45,6 +51,10 @@ const updatePreferenceSchema = z.object({
   inAppOnStatusChange: z.boolean().optional(),
   inAppOnComment: z.boolean().optional(),
   inAppOnMention: z.boolean().optional(),
+  discordOnAssign: z.boolean().optional(),
+  discordOnStatusChange: z.boolean().optional(),
+  discordOnComment: z.boolean().optional(),
+  discordOnMention: z.boolean().optional(),
 });
 
 /**
