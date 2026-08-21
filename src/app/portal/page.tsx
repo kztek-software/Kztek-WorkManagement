@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -28,6 +28,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { FileUploadZone, type UploadedFileItem } from "@/components/ui/file-upload-zone";
+import { RichMarkdown } from "@/components/ui/rich-markdown";
+import { RichTextToolbar, handleRichTextKeyDown } from "@/components/ui/rich-text-toolbar";
+import { WysiwygEditor } from "@/components/ui/wysiwyg-editor";
 
 const typeOptions = [
   { id: "BUG", label: "Lỗi phần mềm", icon: Bug, color: "text-accent bg-accent-subtle border-accent/30" },
@@ -43,7 +46,11 @@ const priorityOptions = [
   { id: "URGENT", label: "Khẩn cấp", desc: "Hệ thống dừng hoàn toàn", color: "text-accent border-accent/40 hover:bg-accent-subtle font-bold" },
 ] as const;
 
-export default function CustomerPortalPage() {
+export default function CustomerPortalPage({
+  initialProjectKey,
+}: {
+  initialProjectKey?: string;
+} = {}) {
   const router = useRouter();
 
   // Search state
@@ -59,6 +66,8 @@ export default function CustomerPortalPage() {
   const [customerCompany, setCustomerCompany] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [isPreviewDescription, setIsPreviewDescription] = useState(false);
+  const descriptionRef = useRef<HTMLTextAreaElement | null>(null);
   const [environment, setEnvironment] = useState("");
   const [attachments, setAttachments] = useState<UploadedFileItem[]>([]);
 
@@ -116,6 +125,7 @@ export default function CustomerPortalPage() {
         body: JSON.stringify({
           type,
           priority,
+          projectKey: initialProjectKey || null,
           customerName: customerName.trim(),
           customerEmail: customerEmail.trim(),
           customerPhone: customerPhone.trim() || null,
@@ -441,20 +451,19 @@ export default function CustomerPortalPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-foreground flex items-center gap-1">
-                    <span>Mô tả chi tiết & Các bước tái hiện lỗi</span>
-                    <span className="text-accent">*</span>
-                  </Label>
-                  <Textarea
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-bold text-foreground flex items-center gap-1">
+                      <span>Mô tả chi tiết & Các bước tái hiện lỗi</span>
+                      <span className="text-accent">*</span>
+                    </Label>
+                    <span className="text-[10px] text-muted">1. 2. 3., in đậm, màu trực quan</span>
+                  </div>
+
+                  <WysiwygEditor
                     value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    rows={4}
-                    placeholder="Mô tả cụ thể:
-1. Bạn đang thao tác ở màn hình nào?
-2. Các bước thực hiện gây ra lỗi?
-3. Kết quả mong đợi và kết quả thực tế xảy ra?"
-                    className="bg-surface-2 border-line text-xs leading-relaxed"
-                    required
+                    onChange={setDescription}
+                    placeholder="Mô tả cụ thể: 1. Bạn đang thao tác ở màn hình nào? 2. Các bước thực hiện gây ra lỗi? 3. Kết quả mong đợi và kết quả thực tế xảy ra? (Định dạng trực quan: in đậm, màu chữ, 1. 2. 3....)"
+                    minHeight="120px"
                   />
                 </div>
 

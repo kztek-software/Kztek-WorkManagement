@@ -20,6 +20,12 @@ import {
   AlertCircle,
   HelpCircle,
 } from "lucide-react";
+import { Dialog } from "primereact/dialog";
+import { Dropdown } from "primereact/dropdown";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { CommandPalette } from "@/components/desktop/command-palette";
 import { ShortcutsModal } from "@/components/desktop/shortcuts-modal";
 import { DesktopSplitView } from "@/components/desktop/desktop-split-view";
@@ -232,23 +238,22 @@ export default function DesktopWorkstationPage() {
 
           {/* Project Dropdown */}
           {projects.length > 0 && (
-            <select
+            <Dropdown
               value={currentProject?.id || ""}
+              options={projects.map((p) => ({
+                label: `📁 ${p.name} (${p.key || "KZ"})`,
+                value: p.id,
+              }))}
               onChange={(e) => {
-                const found = projects.find((p) => p.id === e.target.value);
+                const found = projects.find((p) => p.id === e.value);
                 if (found) {
                   setCurrentProject(found);
                   loadProjectDetails(found.id);
                 }
               }}
-              className="px-2.5 py-1 bg-zinc-900/80 border border-zinc-700/80 text-zinc-200 text-xs rounded-lg font-medium focus:outline-none focus:border-primary"
-            >
-              {projects.map((p) => (
-                <option key={p.id} value={p.id}>
-                  📁 {p.name} ({p.key || "KZ"})
-                </option>
-              ))}
-            </select>
+              placeholder="Chọn dự án"
+              className="p-inputtext-sm h-8 text-xs font-medium bg-surface-2 border border-line rounded-lg"
+            />
           )}
         </div>
 
@@ -260,7 +265,7 @@ export default function DesktopWorkstationPage() {
             className="w-full flex items-center justify-between px-3 py-1.5 bg-zinc-900/70 hover:bg-zinc-800/80 border border-zinc-700/60 rounded-xl text-xs text-zinc-400 hover:text-zinc-200 transition-all shadow-inner"
           >
             <div className="flex items-center gap-2">
-              <Search className="w-3.5 h-3.5 text-primary" />
+              <Search className="w-3.5 h-3.5 text-accent" />
               <span>Tìm kiếm tác vụ, dự án, tickets hoặc gõ lệnh...</span>
             </div>
             <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-zinc-800 border border-zinc-700 rounded text-zinc-300">
@@ -369,79 +374,86 @@ export default function DesktopWorkstationPage() {
       />
 
       {/* Quick New Task Modal */}
-      {isCreateTaskModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-lg bg-card border border-border/80 rounded-2xl p-6 shadow-2xl space-y-4">
-            <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-              <Plus className="w-4 h-4 text-primary" />
-              Tạo Công Việc Nhanh Trên Máy Tính
-            </h3>
-            <form onSubmit={handleCreateTask} className="space-y-4">
-              <div>
-                <label className="text-xs font-semibold text-muted-foreground block mb-1">
-                  Tiêu đề công việc *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={newTaskTitle}
-                  onChange={(e) => setNewTaskTitle(e.target.value)}
-                  placeholder="Nhập tiêu đề công việc..."
-                  className="w-full px-3 py-2 text-xs bg-background border border-border/80 rounded-lg text-foreground focus:outline-none focus:border-primary"
-                  autoFocus
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-muted-foreground block mb-1">
-                  Mô tả chi tiết
-                </label>
-                <textarea
-                  rows={3}
-                  value={newTaskDesc}
-                  onChange={(e) => setNewTaskDesc(e.target.value)}
-                  placeholder="Mô tả công việc cần làm..."
-                  className="w-full px-3 py-2 text-xs bg-background border border-border/80 rounded-lg text-foreground focus:outline-none focus:border-primary"
-                />
-              </div>
-
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <label className="text-xs font-semibold text-muted-foreground block mb-1">
-                    Độ ưu tiên
-                  </label>
-                  <select
-                    value={newTaskPriority}
-                    onChange={(e) => setNewTaskPriority(e.target.value)}
-                    className="w-full px-3 py-2 text-xs bg-background border border-border/80 rounded-lg text-foreground focus:outline-none"
-                  >
-                    <option value="LOW">Thấp (Low)</option>
-                    <option value="MEDIUM">Trung bình (Medium)</option>
-                    <option value="HIGH">Cao (High)</option>
-                    <option value="URGENT">Khẩn cấp (Urgent)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t border-border/50">
-                <button
-                  type="button"
-                  onClick={() => setIsCreateTaskModalOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold bg-muted hover:bg-muted/80 rounded-lg transition-colors"
-                >
-                  Hủy (Esc)
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors shadow-sm"
-                >
-                  Tạo công việc
-                </button>
-              </div>
-            </form>
+      <Dialog
+        visible={isCreateTaskModalOpen}
+        onHide={() => setIsCreateTaskModalOpen(false)}
+        header={
+          <div className="flex items-center gap-2 text-base font-bold text-foreground">
+            <Plus className="w-4 h-4 text-accent" />
+            <span>Tạo Công Việc Nhanh Trên Máy Tính</span>
           </div>
-        </div>
-      )}
+        }
+        className="w-full max-w-lg border border-line bg-surface rounded-2xl shadow-2xl overflow-hidden"
+        contentClassName="p-5"
+      >
+        <form onSubmit={handleCreateTask} className="space-y-4">
+          <div className="space-y-1">
+            <Label htmlFor="quickTaskTitle" className="text-xs font-semibold text-foreground">
+              Tiêu đề công việc *
+            </Label>
+            <Input
+              id="quickTaskTitle"
+              required
+              value={newTaskTitle}
+              onChange={(e) => setNewTaskTitle(e.target.value)}
+              placeholder="Nhập tiêu đề công việc..."
+              className="text-xs h-9"
+              autoFocus
+            />
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="quickTaskDesc" className="text-xs font-semibold text-foreground">
+              Mô tả chi tiết
+            </Label>
+            <Textarea
+              id="quickTaskDesc"
+              rows={3}
+              value={newTaskDesc}
+              onChange={(e) => setNewTaskDesc(e.target.value)}
+              placeholder="Mô tả công việc cần làm..."
+              className="text-xs"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="quickTaskPriority" className="text-xs font-semibold text-foreground">
+              Độ ưu tiên
+            </Label>
+            <Dropdown
+              id="quickTaskPriority"
+              value={newTaskPriority}
+              options={[
+                { label: "Thấp (Low)", value: "LOW" },
+                { label: "Trung bình (Medium)", value: "MEDIUM" },
+                { label: "Cao (High)", value: "HIGH" },
+                { label: "Khẩn cấp (Urgent)", value: "URGENT" },
+              ]}
+              onChange={(e) => setNewTaskPriority(e.value)}
+              className="w-full h-9 text-xs bg-surface-2 border border-line rounded-lg"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-3 border-t border-line">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setIsCreateTaskModalOpen(false)}
+              className="text-xs cursor-pointer"
+            >
+              Hủy (Esc)
+            </Button>
+            <Button
+              type="submit"
+              size="sm"
+              className="text-xs font-bold bg-accent hover:bg-accent/90 text-white shadow-sm cursor-pointer"
+            >
+              Tạo công việc
+            </Button>
+          </div>
+        </form>
+      </Dialog>
     </div>
   );
 }

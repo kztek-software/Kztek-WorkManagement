@@ -38,7 +38,18 @@ export async function GET(
     prisma.label.findMany({ where: { projectId }, orderBy: { name: "asc" } }),
     prisma.projectMember.findMany({
       where: { projectId },
-      include: { user: { select: { id: true, name: true, avatarColor: true, title: true } } },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatarColor: true,
+            title: true,
+            team: { select: { id: true, name: true, code: true, color: true } },
+          },
+        },
+      },
     }),
   ]);
 
@@ -65,7 +76,23 @@ const createTaskSchema = z.object({
   sprintId: z.string().nullable().optional(),
   dueDate: z.string().nullable().optional(),
   labelIds: z.array(z.string()).optional(),
-  subtasks: z.array(z.string()).optional(),
+  subtasks: z
+    .union([
+      z.array(z.string()),
+      z.array(z.object({ title: z.string() })),
+    ])
+    .optional(),
+  attachments: z
+    .array(
+      z.object({
+        fileName: z.string(),
+        fileUrl: z.string(),
+        fileType: z.string().optional().default("other"),
+        fileSize: z.number().nullable().optional(),
+        mimeType: z.string().nullable().optional(),
+      })
+    )
+    .optional(),
 });
 
 export async function POST(
@@ -120,7 +147,24 @@ export async function POST(
         ? { create: d.labelIds.map((labelId) => ({ labelId })) }
         : undefined,
       subtasks: d.subtasks?.length
-        ? { create: d.subtasks.map((title) => ({ title })) }
+        ? {
+            create: d.subtasks.map((item) =>
+              typeof item === "string" ? { title: item } : { title: item.title }
+            ),
+          }
+        : undefined,
+      attachments: d.attachments?.length
+        ? {
+            create: d.attachments.map((att) => ({
+              fileName: att.fileName,
+              fileUrl: att.fileUrl,
+              fileType: att.fileType || "other",
+              fileSize: att.fileSize ?? null,
+              mimeType: att.mimeType ?? null,
+              projectId,
+              uploaderId: user.id,
+            })),
+          }
         : undefined,
       activity: { create: { actorId: user.id, action: "CREATED", detail: "đã tạo task này" } },
     },

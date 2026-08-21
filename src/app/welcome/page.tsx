@@ -9,13 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, initials } from "@/components/ui/avatar";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { Dialog } from "primereact/dialog";
 import { PROJECT_STATUSES } from "@/lib/constants";
 
 type TeamData = {
@@ -160,15 +154,21 @@ export default function WelcomePage() {
         <p className="text-xs text-muted">Hệ thống điều phối dự án & công việc thông minh</p>
       </div>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-base font-bold">Tạo Dự Án Mới</DialogTitle>
-            <DialogDescription className="text-xs">
+      <Dialog
+        visible={open}
+        onHide={() => setOpen(false)}
+        header={
+          <div>
+            <div className="text-base font-bold text-foreground">Tạo Dự Án Mới</div>
+            <div className="text-xs text-muted font-normal mt-0.5">
               Dự án là không gian làm việc tập trung gồm Dashboard, Kanban Board, Sprint và Báo cáo KPI
-            </DialogDescription>
-          </DialogHeader>
-
+            </div>
+          </div>
+        }
+        className="w-full max-w-xl border border-line bg-surface rounded-2xl shadow-2xl overflow-hidden"
+        contentClassName="p-5 max-h-[80vh] overflow-y-auto"
+      >
+        <div className="space-y-4">
           {/* If existing projects found, show direct return button */}
           {existingProjects.length > 0 && (
             <div className="rounded-xl border border-line bg-surface-2 p-3 space-y-2 text-xs">
@@ -180,7 +180,7 @@ export default function WelcomePage() {
                     size="sm"
                     variant="outline"
                     onClick={() => router.push(`/projects/${p.id}/dashboard`)}
-                    className="h-8 text-xs font-semibold flex items-center gap-1.5 border-accent/40 text-accent hover:bg-accent/10"
+                    className="h-8 text-xs font-semibold flex items-center gap-1.5 border-accent/40 text-accent hover:bg-accent/10 cursor-pointer"
                   >
                     <LayoutDashboard className="h-3.5 w-3.5" />
                     Mở: {p.name} ({p.key}) →
@@ -239,19 +239,27 @@ export default function WelcomePage() {
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold">Trạng thái khởi tạo dự án</Label>
               <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
-                {PROJECT_STATUSES.map((st) => (
-                  <button
-                    key={st.id}
-                    type="button"
-                    onClick={() => setStatus(st.id)}
-                    className={`py-1.5 px-2 rounded-lg border text-center text-xs font-bold transition-all cursor-pointer ${
-                      status === st.id ? "bg-surface-3 ring-2 ring-accent" : "bg-surface-2/60 border-line"
-                    }`}
-                    style={{ borderColor: status === st.id ? st.color : undefined }}
-                  >
-                    <span style={{ color: st.color }}>{st.label}</span>
-                  </button>
-                ))}
+                {PROJECT_STATUSES.map((st) => {
+                  const isSelected = status === st.id;
+                  return (
+                    <button
+                      key={st.id}
+                      type="button"
+                      onClick={() => setStatus(st.id)}
+                      className={`py-1.5 px-2 rounded-lg border text-center text-xs font-bold transition-all cursor-pointer ${
+                        isSelected
+                          ? "border-2 shadow-sm scale-[1.02]"
+                          : "border-line bg-surface-2/60 hover:bg-surface-2 opacity-80 hover:opacity-100"
+                      }`}
+                      style={{
+                        borderColor: isSelected ? st.color : undefined,
+                        backgroundColor: isSelected ? `${st.color}18` : undefined,
+                      }}
+                    >
+                      <span style={{ color: isSelected ? st.color : "inherit" }}>{st.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -318,20 +326,20 @@ export default function WelcomePage() {
                   variant="ghost"
                   size="sm"
                   onClick={() => router.push(`/projects/${existingProjects[0].id}/dashboard`)}
-                  className="text-xs text-muted hover:text-foreground"
+                  className="text-xs text-muted hover:text-foreground cursor-pointer"
                 >
                   <ArrowLeft className="h-3.5 w-3.5 mr-1" /> Quay lại Dashboard
                 </Button>
               ) : <div />}
 
-              <Button type="submit" size="sm" disabled={loading} className="text-xs font-bold bg-accent hover:bg-accent/90 text-white shadow-md">
+              <Button type="submit" size="sm" disabled={loading} className="text-xs font-bold bg-accent hover:bg-accent/90 text-white shadow-md cursor-pointer">
                 {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Plus className="h-3.5 w-3.5 mr-1" />}
                 Tạo dự án ngay
               </Button>
             </div>
           </form>
           )}
-        </DialogContent>
+        </div>
       </Dialog>
     </div>
   );

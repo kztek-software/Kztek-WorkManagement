@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, use, useRef } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -31,6 +31,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { MediaGallery } from "@/components/ui/media-gallery";
+import { RichMarkdown } from "@/components/ui/rich-markdown";
+import { RichTextToolbar, handleRichTextKeyDown } from "@/components/ui/rich-text-toolbar";
+import { WysiwygEditor } from "@/components/ui/wysiwyg-editor";
 import type { CustomerTicketDto, TicketCommentDto } from "@/lib/types";
 
 export default function TicketTrackingPage({
@@ -52,6 +55,7 @@ export default function TicketTrackingPage({
   const [replyMessage, setReplyMessage] = useState("");
   const [sendingComment, setSendingComment] = useState(false);
   const [commentError, setCommentError] = useState("");
+  const replyMessageRef = useRef<HTMLTextAreaElement | null>(null);
 
   async function loadTicket() {
     setLoading(true);
@@ -311,8 +315,8 @@ export default function TicketTrackingPage({
                   <CheckCircle2 className="w-5 h-5" />
                   <span className="text-xs font-bold uppercase tracking-wider">Kết quả xử lý từ Đội ngũ Kỹ thuật KZTEK</span>
                 </div>
-                <div className="p-3.5 rounded-xl bg-surface-2/80 border border-emerald-500/20 text-xs sm:text-sm text-foreground leading-relaxed whitespace-pre-wrap">
-                  {ticket.resolutionNotes}
+                <div className="p-3.5 rounded-xl bg-surface-2/80 border border-emerald-500/20 text-xs sm:text-sm text-foreground leading-relaxed">
+                  <RichMarkdown content={ticket.resolutionNotes} />
                 </div>
                 {ticket.resolvedAt && (
                   <p className="text-[10px] text-muted text-right">
@@ -330,8 +334,8 @@ export default function TicketTrackingPage({
                   <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
                     <span>Mô tả chi tiết sự cố</span>
                   </h3>
-                  <div className="p-4 rounded-xl bg-surface-2 border border-line text-xs sm:text-sm leading-relaxed text-foreground whitespace-pre-wrap">
-                    {ticket.description}
+                  <div className="p-4 rounded-xl bg-surface-2 border border-line text-xs sm:text-sm leading-relaxed text-foreground">
+                    <RichMarkdown content={ticket.description} />
                   </div>
 
                   {ticket.environment && (
@@ -390,7 +394,9 @@ export default function TicketTrackingPage({
                               {format(new Date(c.createdAt), "HH:mm dd/MM/yyyy")}
                             </span>
                           </div>
-                          <p className="text-foreground whitespace-pre-wrap">{c.message}</p>
+                          <div className="text-foreground">
+                            <RichMarkdown content={c.message} />
+                          </div>
                         </div>
                       ))
                     )}
@@ -417,14 +423,16 @@ export default function TicketTrackingPage({
                         className="h-8 bg-surface-2 border-line text-xs"
                       />
                     </div>
-                    <Textarea
-                      value={replyMessage}
-                      onChange={(e) => setReplyMessage(e.target.value)}
-                      placeholder="Nhập nội dung bổ sung thông tin hoặc câu hỏi..."
-                      rows={3}
-                      className="bg-surface-2 border-line text-xs"
-                      required
-                    />
+
+                    <div className="space-y-1">
+                      <WysiwygEditor
+                        value={replyMessage}
+                        onChange={setReplyMessage}
+                        placeholder="Nhập nội dung bổ sung thông tin hoặc câu hỏi... (1. 2. 3., in đậm, màu sắc...)"
+                        minHeight="90px"
+                      />
+                    </div>
+
                     <div className="flex justify-end">
                       <Button
                         type="submit"

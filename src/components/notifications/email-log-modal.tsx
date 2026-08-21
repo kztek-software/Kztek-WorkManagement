@@ -88,6 +88,32 @@ export function EmailLogModal({
     }
   }, [visible, searchQuery]);
 
+  // Keyboard shortcuts listener for EmailLogModal
+  useEffect(() => {
+    if (!visible) return;
+
+    function handleEmailModalKeyDown(e: KeyboardEvent) {
+      // Ctrl + Enter / Cmd + Enter: Gửi thử email
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        if (testEmail && !sendingTest) {
+          e.preventDefault();
+          handleSendTest(e as unknown as React.FormEvent);
+          return;
+        }
+      }
+
+      // Alt + R: Tải lại danh sách log
+      if (e.altKey && e.key.toLowerCase() === "r") {
+        e.preventDefault();
+        fetchLogs();
+        return;
+      }
+    }
+
+    window.addEventListener("keydown", handleEmailModalKeyDown);
+    return () => window.removeEventListener("keydown", handleEmailModalKeyDown);
+  }, [visible, testEmail, testName, sendingTest]);
+
   async function handleSendTest(e: React.FormEvent) {
     e.preventDefault();
     if (!testEmail) return;
@@ -253,10 +279,13 @@ export function EmailLogModal({
                   type="submit"
                   size="sm"
                   disabled={sendingTest}
-                  className="h-7 text-xs ml-auto cursor-pointer font-semibold gap-1"
+                  className="h-7 text-xs ml-auto cursor-pointer font-semibold gap-1.5"
                 >
                   {sendingTest ? <RefreshCw className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
-                  {sendingTest ? "Đang gửi..." : "Gửi thử ngay"}
+                  <span>{sendingTest ? "Đang gửi..." : "Gửi thử ngay"}</span>
+                  <kbd className="hidden sm:inline-block px-1.5 py-0.2 text-[9px] font-mono font-bold bg-white/20 text-white rounded border border-white/30">
+                    Ctrl+Enter
+                  </kbd>
                 </Button>
               </div>
 
@@ -276,7 +305,7 @@ export function EmailLogModal({
           {/* List Header & Search */}
           <div className="p-3 border-b border-line flex items-center justify-between gap-2 bg-surface">
             <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-muted" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted pointer-events-none z-10" />
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -290,7 +319,7 @@ export function EmailLogModal({
               onClick={fetchLogs}
               disabled={loading}
               className="h-7.5 w-7.5 shrink-0 cursor-pointer"
-              title="Tải lại danh sách"
+              title="Tải lại danh sách (Alt+R)"
             >
               <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
             </Button>

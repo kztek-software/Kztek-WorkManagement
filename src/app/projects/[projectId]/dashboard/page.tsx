@@ -37,6 +37,7 @@ import {
   Trash2,
   Loader2,
   Edit3,
+  Paperclip,
 } from "lucide-react";
 import { Avatar, AvatarFallback, initials } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,7 @@ import { canManageMembers } from "@/lib/permissions";
 import { Tooltip } from "@/components/ui/tooltip";
 import type { ProjectDashboardData } from "@/lib/types";
 import { useTabCache } from "@/lib/tab-cache";
+import { ProjectAttachmentGallery } from "@/components/project/project-attachment-gallery";
 
 const tooltipStyle = {
   backgroundColor: "#181E2E",
@@ -74,7 +76,7 @@ export default function ProjectDashboardPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
-  const [leftTab, setLeftTab] = useState<"MEMBERS" | "TEAMS">("MEMBERS");
+  const [leftTab, setLeftTab] = useState<"MEMBERS" | "TEAMS" | "DOCS">("MEMBERS");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -341,7 +343,7 @@ export default function ProjectDashboardPage() {
                 </button>
 
                 {statusMenuOpen && (
-                  <div className="absolute right-0 top-[calc(100%+6px)] z-50 w-52 rounded-2xl border border-white/15 bg-[#131826] p-1.5 shadow-2xl backdrop-blur-2xl animate-fade-in-up">
+                  <div className="absolute right-0 top-[calc(100%+6px)] z-50 w-52 rounded-2xl border border-line bg-surface p-1.5 shadow-2xl backdrop-blur-2xl animate-fade-in-up ring-1 ring-line">
                     <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-muted border-b border-line/50 mb-1">
                       Cập nhật trạng thái
                     </div>
@@ -701,7 +703,7 @@ export default function ProjectDashboardPage() {
             </div>
           </div>
 
-          {/* ROW 2 - LEFT 7 COLS: MEMBERS WORKLOAD / TEAMS BREAKDOWN */}
+          {/* ROW 2 - LEFT 7 COLS: MEMBERS WORKLOAD / TEAMS BREAKDOWN / PROJECT ATTACHMENTS */}
           <div className="col-span-12 lg:col-span-7 lg:row-start-2 h-auto min-h-[280px] lg:min-h-0 lg:h-full rounded-xl border border-line bg-surface flex flex-col overflow-hidden shadow-sm">
             {/* Tabs Header */}
             <div className="flex items-center justify-between border-b border-line px-3 py-1.5 bg-surface-2/40 shrink-0">
@@ -716,7 +718,7 @@ export default function ProjectDashboardPage() {
                   }`}
                 >
                   <Users className="h-3 w-3" />
-                  <span>Năng suất Nhân sự ({memberWorkloads.length})</span>
+                  <span>Năng suất ({memberWorkloads.length})</span>
                 </button>
 
                 <button
@@ -730,6 +732,19 @@ export default function ProjectDashboardPage() {
                 >
                   <Building2 className="h-3 w-3" />
                   <span>Phòng ban ({teamBreakdown.length})</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setLeftTab("DOCS")}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    leftTab === "DOCS"
+                      ? "bg-accent text-white shadow-sm"
+                      : "text-muted hover:text-foreground hover:bg-surface"
+                  }`}
+                >
+                  <Paperclip className="h-3 w-3" />
+                  <span>Tài liệu & Media ({(data?.project?.attachments || []).length})</span>
                 </button>
               </div>
 
@@ -807,7 +822,7 @@ export default function ProjectDashboardPage() {
                     </tbody>
                   </table>
                 </div>
-              ) : (
+              ) : leftTab === "TEAMS" ? (
                 <div className="space-y-2">
                   {teamBreakdown.map((team) => (
                     <div key={team.id} className="p-2 rounded-lg border border-line bg-surface-2/50 space-y-1">
@@ -836,6 +851,16 @@ export default function ProjectDashboardPage() {
                   {teamBreakdown.length === 0 && (
                     <div className="p-4 text-center text-xs text-muted">Chưa có phòng ban nào được gán cho dự án</div>
                   )}
+                </div>
+              ) : (
+                <div className="p-1">
+                  <ProjectAttachmentGallery
+                    projectId={projectId || data?.project?.id || ""}
+                    attachments={data?.project?.attachments || []}
+                    onAttachmentsChanged={loadDashboard}
+                    canUpload={true}
+                    canDelete={true}
+                  />
                 </div>
               )}
             </div>
@@ -931,6 +956,16 @@ export default function ProjectDashboardPage() {
               rows={3}
               className="text-xs bg-surface-2"
               placeholder="Mô tả phạm vi và mục tiêu triển khai..."
+            />
+          </div>
+
+          {/* Quản lý tệp tài liệu dự án */}
+          <div className="rounded-xl border border-line bg-surface-2/40 p-3 space-y-2">
+            <ProjectAttachmentGallery
+              projectId={projectId || data?.project?.id || ""}
+              attachments={data?.project?.attachments || []}
+              onAttachmentsChanged={loadDashboard}
+              compact={true}
             />
           </div>
 

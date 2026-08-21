@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { format, formatDistanceToNow, isAfter, isBefore } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -40,13 +40,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, initials } from "@/components/ui/avatar";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { Dialog } from "primereact/dialog";
+import { Dropdown } from "primereact/dropdown";
 import {
   Select,
   SelectContent,
@@ -57,6 +52,9 @@ import {
 import { TypeIcon } from "@/components/board/type-icon";
 import { PriorityIcon } from "@/components/board/priority-icon";
 import { NewTaskDialog } from "@/components/board/new-task-dialog";
+import { RichMarkdown } from "@/components/ui/rich-markdown";
+import { RichTextToolbar, handleRichTextKeyDown } from "@/components/ui/rich-text-toolbar";
+import { WysiwygEditor } from "@/components/ui/wysiwyg-editor";
 
 interface SprintDetailDialogProps {
   projectId: string;
@@ -101,6 +99,7 @@ export function SprintDetailDialog({
   const [editEndDate, setEditEndDate] = useState(sprint.endDate ? sprint.endDate.slice(0, 10) : "");
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState("");
+  const editGoalRef = useRef<HTMLTextAreaElement | null>(null);
 
   // Filtering inside Sprint Tasks List
   const [taskFilterStatus, setTaskFilterStatus] = useState<string>("ALL");
@@ -390,6 +389,67 @@ export function SprintDetailDialog({
     }
   }
 
+  // Keyboard shortcuts listener for SprintDetailDialog
+  useEffect(() => {
+    if (!open) return;
+
+    function handleSprintDialogKeyDown(e: KeyboardEvent) {
+      // Ctrl + Enter / Cmd + Enter
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        if (editOpen) {
+          e.preventDefault();
+          handleSaveSprintEdit(e as unknown as React.FormEvent);
+          return;
+        }
+        if (addBacklogOpen && selectedBacklogIds.length > 0) {
+          e.preventDefault();
+          handleAddBacklogTasksToSprint();
+          return;
+        }
+      }
+
+      // Alt + N: Tạo việc mới vào Sprint
+      if (e.altKey && e.key.toLowerCase() === "n") {
+        e.preventDefault();
+        setNewTaskOpen(true);
+        return;
+      }
+
+      // Alt + B: Thêm từ Backlog
+      if (e.altKey && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        setSelectedBacklogIds([]);
+        setBacklogSearch("");
+        setAddBacklogOpen(true);
+        return;
+      }
+
+      // Alt + E: Sửa thông tin Sprint
+      if (e.altKey && e.key.toLowerCase() === "e") {
+        e.preventDefault();
+        setEditName(sprint.name);
+        setEditGoal(sprint.goal || "");
+        setEditStartDate(sprint.startDate ? sprint.startDate.slice(0, 10) : "");
+        setEditEndDate(sprint.endDate ? sprint.endDate.slice(0, 10) : "");
+        setEditOpen(true);
+        return;
+      }
+    }
+
+    window.addEventListener("keydown", handleSprintDialogKeyDown);
+    return () => window.removeEventListener("keydown", handleSprintDialogKeyDown);
+  }, [
+    open,
+    editOpen,
+    addBacklogOpen,
+    selectedBacklogIds,
+    editName,
+    editGoal,
+    editStartDate,
+    editEndDate,
+    sprint,
+  ]);
+
   function handleGoToBoard() {
     onOpenChange(false);
     router.push(`/projects/${projectId}/board?sprintId=${sprint.id}`);
@@ -397,8 +457,14 @@ export function SprintDetailDialog({
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-5xl p-0 overflow-hidden border border-line bg-surface shadow-2xl rounded-2xl flex flex-col max-h-[90vh]">
+      <Dialog
+        visible={open}
+        onHide={() => onOpenChange(false)}
+        showHeader={false}
+        className="max-w-5xl w-[96vw] p-0 overflow-hidden border border-line bg-surface shadow-2xl rounded-2xl flex flex-col max-h-[90vh]"
+        contentClassName="p-0 overflow-hidden flex flex-col max-h-[90vh] bg-surface"
+      >
+        <div className="flex flex-col h-full overflow-hidden bg-surface">
           {/* Header */}
           <div className="flex flex-col gap-2 border-b border-line bg-surface-2/60 px-5 py-3">
             <div className="flex items-start justify-between gap-4">
@@ -469,6 +535,7 @@ export function SprintDetailDialog({
                 <Button
                   size="sm"
                   variant="outline"
+                  title="Chỉnh sửa thông tin Sprint (Alt+E)"
                   onClick={() => {
                     setEditName(sprint.name);
                     setEditGoal(sprint.goal || "");
@@ -476,10 +543,13 @@ export function SprintDetailDialog({
                     setEditEndDate(sprint.endDate ? sprint.endDate.slice(0, 10) : "");
                     setEditOpen(true);
                   }}
-                  className="h-8 text-xs font-semibold border-line bg-surface hover:bg-surface-2"
+                  className="h-8 text-xs font-semibold border-line bg-surface hover:bg-surface-2 cursor-pointer gap-1"
                 >
-                  <Edit3 className="h-3.5 w-3.5 mr-1" />
-                  Sửa
+                  <Edit3 className="h-3.5 w-3.5 mr-0.5" />
+                  <span>Sửa</span>
+                  <kbd className="hidden sm:inline-block px-1 py-0.2 text-[9px] font-mono font-bold bg-surface-2 text-muted rounded border border-line">
+                    Alt+E
+                  </kbd>
                 </Button>
 
                 {/* Status Switcher */}
@@ -536,10 +606,10 @@ export function SprintDetailDialog({
               <div className="flex-1 min-w-0">
                 {sprint.goal ? (
                   <div className="bg-surface-2/70 border border-line/60 rounded-xl px-3.5 py-2 text-foreground/90 leading-relaxed flex items-start gap-2">
-                    <span className="text-base leading-none">🎯</span>
-                    <div>
-                      <strong className="text-foreground">Mục tiêu Sprint:</strong>{" "}
-                      <span className="text-muted-light">{sprint.goal}</span>
+                    <span className="text-base leading-none mt-0.5">🎯</span>
+                    <div className="flex-1 min-w-0">
+                      <strong className="text-foreground block mb-0.5">Mục tiêu Sprint:</strong>
+                      <RichMarkdown content={sprint.goal} />
                     </div>
                   </div>
                 ) : (
@@ -806,24 +876,32 @@ export function SprintDetailDialog({
                   <Button
                     size="sm"
                     variant="outline"
+                    title="Thêm công việc từ Backlog (Alt+B)"
                     onClick={() => {
                       setSelectedBacklogIds([]);
                       setBacklogSearch("");
                       setAddBacklogOpen(true);
                     }}
-                    className="h-8 text-xs font-semibold border-line bg-surface hover:bg-surface-2"
+                    className="h-8 text-xs font-semibold border-line bg-surface hover:bg-surface-2 cursor-pointer gap-1"
                   >
-                    <Plus className="h-3.5 w-3.5 mr-1 text-accent" />
-                    Thêm từ Backlog ({backlogTasks.length})
+                    <Plus className="h-3.5 w-3.5 mr-0.5 text-accent" />
+                    <span>Thêm từ Backlog ({backlogTasks.length})</span>
+                    <kbd className="hidden sm:inline-block px-1 py-0.2 text-[9px] font-mono font-bold bg-surface-2 text-muted rounded border border-line">
+                      Alt+B
+                    </kbd>
                   </Button>
 
                   <Button
                     size="sm"
+                    title="Tạo task mới vào sprint này (Alt+N)"
                     onClick={() => setNewTaskOpen(true)}
-                    className="h-8 text-xs font-bold bg-accent hover:bg-accent/90 text-white shadow-md shadow-accent/25"
+                    className="h-8 text-xs font-bold bg-accent hover:bg-accent/90 text-white shadow-md shadow-accent/25 cursor-pointer gap-1"
                   >
-                    <Plus className="h-3.5 w-3.5 mr-1" />
-                    Tạo Task mới
+                    <Plus className="h-3.5 w-3.5 mr-0.5" />
+                    <span>Tạo Task mới</span>
+                    <kbd className="hidden sm:inline-block px-1.5 py-0.2 text-[9px] font-mono font-bold bg-white/20 text-white rounded border border-white/30">
+                      Alt+N
+                    </kbd>
                   </Button>
                 </div>
               </div>
@@ -878,7 +956,7 @@ export function SprintDetailDialog({
 
                 {/* Search */}
                 <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
+                  <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted pointer-events-none z-10" />
                   <Input
                     placeholder="Tìm công việc..."
                     value={taskSearch}
@@ -888,19 +966,16 @@ export function SprintDetailDialog({
                 </div>
 
                 {/* Assignee Filter */}
-                <select
+                <Dropdown
                   value={taskAssigneeFilter}
-                  onChange={(e) => setTaskAssigneeFilter(e.target.value)}
-                  className="h-8 rounded-lg border border-line bg-surface px-2 text-xs text-foreground focus:outline-none cursor-pointer"
-                >
-                  <option value="ALL">👤 Mọi nhân sự</option>
-                  <option value="UNASSIGNED">Chưa giao</option>
-                  {members.map((m) => (
-                    <option key={m.user.id} value={m.user.id}>
-                      {m.user.name}
-                    </option>
-                  ))}
-                </select>
+                  options={[
+                    { label: "👤 Mọi nhân sự", value: "ALL" },
+                    { label: "Chưa giao", value: "UNASSIGNED" },
+                    ...members.map((m) => ({ label: m.user.name, value: m.user.id })),
+                  ]}
+                  onChange={(e) => setTaskAssigneeFilter(e.value)}
+                  className="p-inputtext-sm h-8 text-xs bg-surface border border-line rounded-lg"
+                />
               </div>
 
               {/* Task Items List Table */}
@@ -1083,17 +1158,12 @@ export function SprintDetailDialog({
 
                           {/* Col 7: Status Dropdown */}
                           <div onClick={(e) => e.stopPropagation()} className="w-full">
-                            <select
+                            <Dropdown
                               value={t.status}
-                              onChange={(e) => handleQuickStatusChange(t.id, e.target.value, e as any)}
-                              className="w-full h-7 text-[11px] font-bold rounded-lg border border-line bg-surface-2 px-2 text-foreground focus:outline-none cursor-pointer hover:border-accent"
-                            >
-                              {STATUSES.map((s) => (
-                                <option key={s.id} value={s.id}>
-                                  {s.label}
-                                </option>
-                              ))}
-                            </select>
+                              options={STATUSES.map((s) => ({ label: s.label, value: s.id }))}
+                              onChange={(e) => handleQuickStatusChange(t.id, e.value, e as any)}
+                              className="w-full h-7 text-[11px] font-bold rounded-lg border border-line bg-surface-2"
+                            />
                           </div>
 
                           {/* Col 8: Action Remove */}
@@ -1133,180 +1203,182 @@ export function SprintDetailDialog({
               Đóng
             </Button>
           </div>
-        </DialogContent>
+        </div>
       </Dialog>
 
       {/* EDIT SPRINT MODAL */}
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-base font-bold flex items-center gap-2">
-              <Edit3 className="h-4 w-4 text-accent" />
-              Chỉnh Sửa Thông Tin Sprint
-            </DialogTitle>
-            <DialogDescription className="text-xs">
-              Cập nhật tên, mục tiêu trọng tâm và khung thời gian chạy của Sprint
-            </DialogDescription>
-          </DialogHeader>
+      <Dialog
+        header={
+          <div className="flex items-center gap-2 text-base font-bold text-foreground">
+            <Edit3 className="h-4 w-4 text-accent" />
+            <span>Chỉnh Sửa Thông Tin Sprint</span>
+          </div>
+        }
+        visible={editOpen}
+        onHide={() => setEditOpen(false)}
+        className="w-full max-w-md border border-line bg-surface rounded-2xl shadow-2xl"
+      >
+        <form onSubmit={handleSaveSprintEdit} className="space-y-3.5 pt-2">
+          {editError && (
+            <div className="rounded-lg bg-accent/10 p-2.5 text-xs text-accent border border-accent/20">
+              {editError}
+            </div>
+          )}
 
-          <form onSubmit={handleSaveSprintEdit} className="mt-2 space-y-3.5">
-            {editError && (
-              <div className="rounded-lg bg-accent/10 p-2.5 text-xs text-accent border border-accent/20">
-                {editError}
-              </div>
-            )}
+          <div className="space-y-1">
+            <Label className="text-xs">Tên Sprint *</Label>
+            <Input
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              className="text-xs h-9"
+              required
+              minLength={2}
+            />
+          </div>
 
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-semibold">Mục tiêu Sprint (Goal)</Label>
+              <span className="text-[10px] text-muted">1. 2. 3., in đậm, màu trực quan</span>
+            </div>
+            <WysiwygEditor
+              value={editGoal}
+              onChange={setEditGoal}
+              placeholder="Mục tiêu cốt lõi cần đạt được trong đợt chạy này... (in đậm, màu, 1. 2. 3.)"
+              minHeight="90px"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className="text-xs">Tên Sprint *</Label>
+              <Label className="text-xs">Ngày bắt đầu</Label>
               <Input
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
+                type="date"
+                value={editStartDate}
+                onChange={(e) => setEditStartDate(e.target.value)}
                 className="text-xs h-9"
-                required
-                minLength={2}
               />
             </div>
-
             <div className="space-y-1">
-              <Label className="text-xs">Mục tiêu Sprint (Goal)</Label>
-              <Textarea
-                placeholder="Mục tiêu cốt lõi cần đạt được trong đợt chạy này..."
-                value={editGoal}
-                onChange={(e) => setEditGoal(e.target.value)}
-                rows={3}
-                className="text-xs"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs">Ngày bắt đầu</Label>
-                <Input
-                  type="date"
-                  value={editStartDate}
-                  onChange={(e) => setEditStartDate(e.target.value)}
-                  className="text-xs h-9"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Ngày kết thúc</Label>
-                <Input
-                  type="date"
-                  value={editEndDate}
-                  onChange={(e) => setEditEndDate(e.target.value)}
-                  className="text-xs h-9"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 pt-3 border-t border-line">
-              <Button type="button" variant="outline" size="sm" onClick={() => setEditOpen(false)}>
-                Hủy
-              </Button>
-              <Button type="submit" size="sm" disabled={editSaving} className="font-bold">
-                {editSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
-                Lưu Thay Đổi
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* ADD TASKS FROM BACKLOG MODAL */}
-      <Dialog open={addBacklogOpen} onOpenChange={setAddBacklogOpen}>
-        <DialogContent className="max-w-xl flex flex-col max-h-[85vh] p-0 overflow-hidden">
-          <DialogHeader className="p-5 pb-3 border-b border-line bg-surface-2/50">
-            <DialogTitle className="text-base font-bold flex items-center gap-2">
-              <Plus className="h-4 w-4 text-accent" />
-              Gán Công Việc Từ Backlog Vào {sprint.name}
-            </DialogTitle>
-            <DialogDescription className="text-xs">
-              Chọn các công việc hiện đang nằm trong Backlog để đưa vào kế hoạch chạy của Sprint này
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="p-5 space-y-4 flex-1 overflow-y-auto">
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
+              <Label className="text-xs">Ngày kết thúc</Label>
               <Input
-                placeholder="Tìm công việc trong Backlog..."
-                value={backlogSearch}
-                onChange={(e) => setBacklogSearch(e.target.value)}
-                className="h-8 pl-8 text-xs bg-surface border-line"
+                type="date"
+                value={editEndDate}
+                onChange={(e) => setEditEndDate(e.target.value)}
+                className="text-xs h-9"
               />
-            </div>
-
-            {/* Backlog List */}
-            <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
-              {filteredBacklogTasks.length === 0 ? (
-                <div className="py-10 text-center text-xs text-muted border border-dashed border-line rounded-xl">
-                  {backlogTasks.length === 0
-                    ? "Không có công việc nào còn trống trong Backlog"
-                    : "Không tìm thấy công việc khớp với tìm kiếm"}
-                </div>
-              ) : (
-                filteredBacklogTasks.map((t) => {
-                  const isSelected = selectedBacklogIds.includes(t.id);
-                  return (
-                    <div
-                      key={t.id}
-                      onClick={() => {
-                        setSelectedBacklogIds((prev) =>
-                          isSelected ? prev.filter((id) => id !== t.id) : [...prev, t.id]
-                        );
-                      }}
-                      className={`flex items-center justify-between gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
-                        isSelected
-                          ? "bg-accent/10 border-accent text-foreground"
-                          : "bg-surface border-line hover:border-line-strong hover:bg-surface-2/50"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        <div
-                          className={`h-4 w-4 rounded border flex items-center justify-center shrink-0 ${
-                            isSelected
-                              ? "bg-accent border-accent text-white"
-                              : "border-line bg-surface"
-                          }`}
-                        >
-                          {isSelected && <Check className="h-3 w-3" />}
-                        </div>
-                        <TypeIcon type={t.type} />
-                        <span className="font-mono text-xs font-bold text-accent shrink-0">
-                          #{projectKey}-{t.number}
-                        </span>
-                        <span className="text-xs font-semibold truncate text-foreground">
-                          {t.title}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0">
-                        {t.storyPoints !== null && (
-                          <span className="text-[10px] font-mono bg-surface-2 px-1.5 py-0.5 rounded text-muted font-bold">
-                            {t.storyPoints} pts
-                          </span>
-                        )}
-                        {t.assignee && (
-                          <Avatar className="h-5 w-5">
-                            <AvatarFallback
-                              color={t.assignee.avatarColor}
-                              className="text-[8px] font-bold"
-                            >
-                              {initials(t.assignee.name)}
-                            </AvatarFallback>
-                          </Avatar>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
-              )}
             </div>
           </div>
 
+          <div className="flex justify-end gap-2 pt-3 border-t border-line">
+            <Button type="button" variant="outline" size="sm" onClick={() => setEditOpen(false)} className="cursor-pointer">
+              <span>Hủy</span>
+              <kbd className="text-[10px] text-muted ml-1 font-mono">Esc</kbd>
+            </Button>
+            <Button type="submit" size="sm" disabled={editSaving} className="font-bold bg-accent hover:bg-accent/90 text-white shadow-sm cursor-pointer gap-1.5">
+              {editSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
+              <span>Lưu Thay Đổi</span>
+              <kbd className="hidden sm:inline-block px-1.5 py-0.2 text-[9px] font-mono font-bold bg-white/20 text-white rounded border border-white/30">
+                Ctrl+Enter
+              </kbd>
+            </Button>
+          </div>
+        </form>
+      </Dialog>
+
+      {/* ADD TASKS FROM BACKLOG MODAL */}
+      <Dialog
+        header={
+          <div className="flex items-center gap-2 text-base font-bold text-foreground">
+            <Plus className="h-4 w-4 text-accent" />
+            <span>Gán Công Việc Từ Backlog Vào {sprint.name}</span>
+          </div>
+        }
+        visible={addBacklogOpen}
+        onHide={() => setAddBacklogOpen(false)}
+        className="w-full max-w-xl border border-line bg-surface rounded-2xl shadow-2xl"
+      >
+        <div className="space-y-4 pt-2">
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted pointer-events-none z-10" />
+            <Input
+              placeholder="Tìm công việc trong Backlog..."
+              value={backlogSearch}
+              onChange={(e) => setBacklogSearch(e.target.value)}
+              className="h-8 pl-8 text-xs bg-surface border-line"
+            />
+          </div>
+
+          {/* Backlog List */}
+          <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
+            {filteredBacklogTasks.length === 0 ? (
+              <div className="py-10 text-center text-xs text-muted border border-dashed border-line rounded-xl">
+                {backlogTasks.length === 0
+                  ? "Không có công việc nào còn trống trong Backlog"
+                  : "Không tìm thấy công việc khớp với tìm kiếm"}
+              </div>
+            ) : (
+              filteredBacklogTasks.map((t) => {
+                const isSelected = selectedBacklogIds.includes(t.id);
+                return (
+                  <div
+                    key={t.id}
+                    onClick={() => {
+                      setSelectedBacklogIds((prev) =>
+                        isSelected ? prev.filter((id) => id !== t.id) : [...prev, t.id]
+                      );
+                    }}
+                    className={`flex items-center justify-between gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
+                      isSelected
+                        ? "bg-accent/10 border-accent text-foreground"
+                        : "bg-surface border-line hover:border-line-strong hover:bg-surface-2/50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <div
+                        className={`h-4 w-4 rounded border flex items-center justify-center shrink-0 ${
+                          isSelected
+                            ? "bg-accent border-accent text-white"
+                            : "border-line bg-surface"
+                        }`}
+                      >
+                        {isSelected && <Check className="h-3 w-3" />}
+                      </div>
+                      <TypeIcon type={t.type} />
+                      <span className="font-mono text-xs font-bold text-accent shrink-0">
+                        #{projectKey}-{t.number}
+                      </span>
+                      <span className="text-xs font-semibold truncate text-foreground">
+                        {t.title}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      {t.storyPoints !== null && (
+                        <span className="text-[10px] font-mono bg-surface-2 px-1.5 py-0.5 rounded text-muted font-bold">
+                          {t.storyPoints} pts
+                        </span>
+                      )}
+                      {t.assignee && (
+                        <Avatar className="h-5 w-5">
+                          <AvatarFallback
+                            color={t.assignee.avatarColor}
+                            className="text-[8px] font-bold"
+                          >
+                            {initials(t.assignee.name)}
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
           {/* Footer */}
-          <div className="flex items-center justify-between border-t border-line bg-surface-2/60 p-4">
+          <div className="flex items-center justify-between border-t border-line pt-3">
             <span className="text-xs text-muted font-medium">
               Đã chọn: <strong className="text-accent">{selectedBacklogIds.length}</strong> công việc
             </span>
@@ -1315,22 +1387,26 @@ export function SprintDetailDialog({
                 size="sm"
                 variant="outline"
                 onClick={() => setAddBacklogOpen(false)}
-                className="text-xs"
+                className="text-xs cursor-pointer"
               >
-                Hủy
+                <span>Hủy</span>
+                <kbd className="text-[10px] text-muted ml-1 font-mono">Esc</kbd>
               </Button>
               <Button
                 size="sm"
                 disabled={selectedBacklogIds.length === 0 || addingBacklog}
                 onClick={handleAddBacklogTasksToSprint}
-                className="text-xs font-bold bg-accent hover:bg-accent/90"
+                className="text-xs font-bold bg-accent hover:bg-accent/90 text-white shadow-sm cursor-pointer gap-1.5"
               >
                 {addingBacklog ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
-                Thêm {selectedBacklogIds.length} việc vào Sprint
+                <span>Thêm {selectedBacklogIds.length} việc vào Sprint</span>
+                <kbd className="hidden sm:inline-block px-1.5 py-0.2 text-[9px] font-mono font-bold bg-white/20 text-white rounded border border-white/30">
+                  Ctrl+Enter
+                </kbd>
               </Button>
             </div>
           </div>
-        </DialogContent>
+        </div>
       </Dialog>
 
       {/* CREATE NEW TASK IN THIS SPRINT MODAL */}

@@ -1,14 +1,9 @@
 "use client";
 
 import React from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { Command, Keyboard, Monitor, Sparkles, X } from "lucide-react";
+import { Dialog } from "primereact/dialog";
+import { Button } from "primereact/button";
+import { Keyboard, Monitor, Sparkles } from "lucide-react";
 
 interface ShortcutsModalProps {
   isOpen: boolean;
@@ -34,6 +29,23 @@ export function ShortcutsModal({ isOpen, onClose }: ShortcutsModalProps) {
       ],
     },
     {
+      title: "Thao tác trong Dialog & Biểu Mẫu (Dialog Shortcuts)",
+      shortcuts: [
+        { keys: ["Ctrl", "Enter"], desc: "Lưu / Tạo mới / Gửi / Xác nhận nhanh trong Dialog & Form" },
+        { keys: ["Esc"], desc: "Đóng Dialog hoặc Hủy chế độ đang sửa" },
+        { keys: ["Alt", "E"], desc: "Bật / Tắt chế độ Sửa mô tả Markdown (Task Dialog)" },
+        { keys: ["Alt", "1"], desc: "Tab Bình luận (Task) hoặc Chế độ Phòng ban (Member)" },
+        { keys: ["Alt", "2"], desc: "Tab Lịch sử (Task) hoặc Chế độ Từng người (Member)" },
+        { keys: ["Alt", "A"], desc: "Kích hoạt AI Gợi ý chi tiết (New Task Dialog)" },
+        { keys: ["Alt", "N"], desc: "Mở tạo task mới vào Sprint (Sprint Hub)" },
+        { keys: ["Alt", "B"], desc: "Mở gán việc từ Backlog vào Sprint (Sprint Hub)" },
+        { keys: ["Alt", "L"], desc: "Sao chép nhanh liên kết Task / Mã phiếu hỗ trợ" },
+        { keys: ["Alt", "C"], desc: "Chuyển đổi Ticket thành Task trên Board" },
+        { keys: ["Alt", "D"], desc: "Điều phối Ticket sang dự án khác" },
+        { keys: ["Alt", "R"], desc: "Làm mới dữ liệu trong Notion Hub / Hộp thư Mail" },
+      ],
+    },
+    {
       title: "Thao tác Nhanh & Điều hướng Trang",
       shortcuts: [
         { keys: ["C"], desc: "Tạo công việc mới (khi không gõ văn bản)" },
@@ -46,79 +58,85 @@ export function ShortcutsModal({ isOpen, onClose }: ShortcutsModalProps) {
     },
   ];
 
+  const dialogHeader = (
+    <div className="flex items-center gap-3">
+      <div className="w-9 h-9 rounded-xl bg-accent/20 flex items-center justify-center text-accent border border-accent/30">
+        <Keyboard className="w-5 h-5" />
+      </div>
+      <div>
+        <div className="text-base font-bold text-foreground flex items-center gap-2">
+          Phím Tắt Máy Tính (Desktop Shortcuts)
+        </div>
+        <div className="text-xs text-muted font-normal">
+          Tăng tốc độ làm việc tối đa với các tổ hợp phím tắt trên máy tính
+        </div>
+      </div>
+    </div>
+  );
+
+  const dialogFooter = (
+    <div className="flex justify-end gap-2 pt-2">
+      <Button
+        label="Đã hiểu (Esc)"
+        size="small"
+        onClick={onClose}
+        className="font-bold bg-accent hover:bg-accent/90 text-white shadow-sm"
+      />
+    </div>
+  );
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-2xl bg-card border-border/80 text-foreground p-0 overflow-hidden shadow-2xl">
-        <div className="bg-gradient-to-r from-primary/20 via-primary/10 to-transparent p-6 border-b border-border/60 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary border border-primary/30">
-              <Keyboard className="w-5 h-5" />
-            </div>
-            <div>
-              <DialogTitle className="text-xl font-bold text-foreground flex items-center gap-2">
-                Phím Tắt Máy Tính (Desktop Shortcuts)
-              </DialogTitle>
-              <DialogDescription className="text-xs text-muted-foreground mt-0.5">
-                Tăng tốc độ làm việc tối đa với các tổ hợp phím tắt trên máy tính
-              </DialogDescription>
-            </div>
-          </div>
-        </div>
-
-        <div className="p-6 max-h-[70vh] overflow-y-auto space-y-6">
-          {shortcutGroups.map((group, idx) => (
-            <div key={idx} className="space-y-3">
-              <h3 className="text-xs font-semibold text-primary uppercase tracking-wider flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5" />
-                {group.title}
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                {group.shortcuts.map((item, sIdx) => (
-                  <div
-                    key={sIdx}
-                    className="flex items-center justify-between p-2.5 rounded-lg bg-muted/40 hover:bg-muted/70 border border-border/40 transition-colors"
-                  >
-                    <span className="text-xs font-medium text-foreground pr-3">{item.desc}</span>
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      {item.keys.map((k, kIdx) => (
-                        <React.Fragment key={kIdx}>
-                          <kbd className="px-2 py-0.5 text-[11px] font-mono font-semibold bg-background border border-border/80 rounded shadow-sm text-foreground">
-                            {k}
-                          </kbd>
-                          {kIdx < item.keys.length - 1 && (
-                            <span className="text-[10px] text-muted-foreground">+</span>
-                          )}
-                        </React.Fragment>
-                      ))}
-                    </div>
+    <Dialog
+      header={dialogHeader}
+      footer={dialogFooter}
+      visible={isOpen}
+      onHide={onClose}
+      className="w-full max-w-2xl border border-line bg-surface rounded-2xl shadow-2xl"
+    >
+      <div className="space-y-6 pt-2 max-h-[70vh] overflow-y-auto pr-1">
+        {shortcutGroups.map((group, idx) => (
+          <div key={idx} className="space-y-3">
+            <h3 className="text-xs font-semibold text-accent uppercase tracking-wider flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5" />
+              {group.title}
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+              {group.shortcuts.map((item, sIdx) => (
+                <div
+                  key={sIdx}
+                  className="flex items-center justify-between p-2.5 rounded-xl bg-surface-2/60 hover:bg-surface-2 border border-line transition-colors"
+                >
+                  <span className="text-xs font-medium text-foreground pr-3">{item.desc}</span>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {item.keys.map((k, kIdx) => (
+                      <React.Fragment key={kIdx}>
+                        <kbd className="px-2 py-0.5 text-[11px] font-mono font-semibold bg-surface border border-line rounded shadow-xs text-foreground">
+                          {k}
+                        </kbd>
+                        {kIdx < item.keys.length - 1 && (
+                          <span className="text-[10px] text-muted">+</span>
+                        )}
+                      </React.Fragment>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
-          ))}
-
-          <div className="p-3 rounded-xl bg-primary/10 border border-primary/20 flex items-start gap-3">
-            <Monitor className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-            <div className="text-xs text-muted-foreground leading-relaxed">
-              <strong className="text-foreground">Mẹo chuyên nghiệp:</strong> Nhấn{" "}
-              <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-background border border-border rounded font-semibold text-foreground">
-                Ctrl + K
-              </kbd>{" "}
-              ở bất kỳ màn hình nào để mở thanh tìm kiếm và hành động nhanh mà không cần dùng chuột.
+                </div>
+              ))}
             </div>
           </div>
-        </div>
+        ))}
 
-        <div className="bg-muted/30 p-3.5 border-t border-border/50 flex justify-end">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors shadow-sm"
-          >
-            Đã hiểu (Esc)
-          </button>
+        <div className="p-3 rounded-xl bg-accent/10 border border-accent/20 flex items-start gap-3">
+          <Monitor className="w-5 h-5 text-accent shrink-0 mt-0.5" />
+          <div className="text-xs text-muted leading-relaxed">
+            <strong className="text-foreground">Mẹo chuyên nghiệp:</strong> Nhấn{" "}
+            <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-surface border border-line rounded font-semibold text-foreground">
+              Ctrl + K
+            </kbd>{" "}
+            ở bất kỳ màn hình nào để mở thanh tìm kiếm và hành động nhanh mà không cần dùng chuột.
+          </div>
         </div>
-      </DialogContent>
+      </div>
     </Dialog>
   );
 }
+

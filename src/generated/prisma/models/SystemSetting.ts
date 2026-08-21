@@ -53,6 +53,29 @@ export type SystemSettingMinAggregateOutputType = {
   notifyOnStatusChange: boolean | null
   notifyOnComment: boolean | null
   enableRealtimeSse: boolean | null
+  enableZaloIntegration: boolean | null
+  zaloAppId: string | null
+  zaloAppSecret: string | null
+  zaloOaId: string | null
+  zaloOaSecretKey: string | null
+  zaloAccessToken: string | null
+  zaloRefreshToken: string | null
+  zaloTokenExpiresAt: Date | null
+  zaloZnsTemplateId: string | null
+  notifyZaloOnAssign: boolean | null
+  notifyZaloOnStatusChange: boolean | null
+  notifyZaloOnComment: boolean | null
+  enableDiscordIntegration: boolean | null
+  discordClientId: string | null
+  discordClientSecret: string | null
+  discordBotToken: string | null
+  discordWebhookUrl: string | null
+  notifyDiscordOnAssign: boolean | null
+  notifyDiscordOnStatusChange: boolean | null
+  notifyDiscordOnComment: boolean | null
+  discordWebhookOnAssign: boolean | null
+  discordWebhookOnStatusChange: boolean | null
+  discordWebhookOnComment: boolean | null
   updatedAt: Date | null
   updatedBy: string | null
 }
@@ -76,6 +99,29 @@ export type SystemSettingMaxAggregateOutputType = {
   notifyOnStatusChange: boolean | null
   notifyOnComment: boolean | null
   enableRealtimeSse: boolean | null
+  enableZaloIntegration: boolean | null
+  zaloAppId: string | null
+  zaloAppSecret: string | null
+  zaloOaId: string | null
+  zaloOaSecretKey: string | null
+  zaloAccessToken: string | null
+  zaloRefreshToken: string | null
+  zaloTokenExpiresAt: Date | null
+  zaloZnsTemplateId: string | null
+  notifyZaloOnAssign: boolean | null
+  notifyZaloOnStatusChange: boolean | null
+  notifyZaloOnComment: boolean | null
+  enableDiscordIntegration: boolean | null
+  discordClientId: string | null
+  discordClientSecret: string | null
+  discordBotToken: string | null
+  discordWebhookUrl: string | null
+  notifyDiscordOnAssign: boolean | null
+  notifyDiscordOnStatusChange: boolean | null
+  notifyDiscordOnComment: boolean | null
+  discordWebhookOnAssign: boolean | null
+  discordWebhookOnStatusChange: boolean | null
+  discordWebhookOnComment: boolean | null
   updatedAt: Date | null
   updatedBy: string | null
 }
@@ -99,6 +145,29 @@ export type SystemSettingCountAggregateOutputType = {
   notifyOnStatusChange: number
   notifyOnComment: number
   enableRealtimeSse: number
+  enableZaloIntegration: number
+  zaloAppId: number
+  zaloAppSecret: number
+  zaloOaId: number
+  zaloOaSecretKey: number
+  zaloAccessToken: number
+  zaloRefreshToken: number
+  zaloTokenExpiresAt: number
+  zaloZnsTemplateId: number
+  notifyZaloOnAssign: number
+  notifyZaloOnStatusChange: number
+  notifyZaloOnComment: number
+  enableDiscordIntegration: number
+  discordClientId: number
+  discordClientSecret: number
+  discordBotToken: number
+  discordWebhookUrl: number
+  notifyDiscordOnAssign: number
+  notifyDiscordOnStatusChange: number
+  notifyDiscordOnComment: number
+  discordWebhookOnAssign: number
+  discordWebhookOnStatusChange: number
+  discordWebhookOnComment: number
   updatedAt: number
   updatedBy: number
   _all: number
@@ -132,6 +201,29 @@ export type SystemSettingMinAggregateInputType = {
   notifyOnStatusChange?: true
   notifyOnComment?: true
   enableRealtimeSse?: true
+  enableZaloIntegration?: true
+  zaloAppId?: true
+  zaloAppSecret?: true
+  zaloOaId?: true
+  zaloOaSecretKey?: true
+  zaloAccessToken?: true
+  zaloRefreshToken?: true
+  zaloTokenExpiresAt?: true
+  zaloZnsTemplateId?: true
+  notifyZaloOnAssign?: true
+  notifyZaloOnStatusChange?: true
+  notifyZaloOnComment?: true
+  enableDiscordIntegration?: true
+  discordClientId?: true
+  discordClientSecret?: true
+  discordBotToken?: true
+  discordWebhookUrl?: true
+  notifyDiscordOnAssign?: true
+  notifyDiscordOnStatusChange?: true
+  notifyDiscordOnComment?: true
+  discordWebhookOnAssign?: true
+  discordWebhookOnStatusChange?: true
+  discordWebhookOnComment?: true
   updatedAt?: true
   updatedBy?: true
 }
@@ -155,6 +247,29 @@ export type SystemSettingMaxAggregateInputType = {
   notifyOnStatusChange?: true
   notifyOnComment?: true
   enableRealtimeSse?: true
+  enableZaloIntegration?: true
+  zaloAppId?: true
+  zaloAppSecret?: true
+  zaloOaId?: true
+  zaloOaSecretKey?: true
+  zaloAccessToken?: true
+  zaloRefreshToken?: true
+  zaloTokenExpiresAt?: true
+  zaloZnsTemplateId?: true
+  notifyZaloOnAssign?: true
+  notifyZaloOnStatusChange?: true
+  notifyZaloOnComment?: true
+  enableDiscordIntegration?: true
+  discordClientId?: true
+  discordClientSecret?: true
+  discordBotToken?: true
+  discordWebhookUrl?: true
+  notifyDiscordOnAssign?: true
+  notifyDiscordOnStatusChange?: true
+  notifyDiscordOnComment?: true
+  discordWebhookOnAssign?: true
+  discordWebhookOnStatusChange?: true
+  discordWebhookOnComment?: true
   updatedAt?: true
   updatedBy?: true
 }
@@ -178,6 +293,29 @@ export type SystemSettingCountAggregateInputType = {
   notifyOnStatusChange?: true
   notifyOnComment?: true
   enableRealtimeSse?: true
+  enableZaloIntegration?: true
+  zaloAppId?: true
+  zaloAppSecret?: true
+  zaloOaId?: true
+  zaloOaSecretKey?: true
+  zaloAccessToken?: true
+  zaloRefreshToken?: true
+  zaloTokenExpiresAt?: true
+  zaloZnsTemplateId?: true
+  notifyZaloOnAssign?: true
+  notifyZaloOnStatusChange?: true
+  notifyZaloOnComment?: true
+  enableDiscordIntegration?: true
+  discordClientId?: true
+  discordClientSecret?: true
+  discordBotToken?: true
+  discordWebhookUrl?: true
+  notifyDiscordOnAssign?: true
+  notifyDiscordOnStatusChange?: true
+  notifyDiscordOnComment?: true
+  discordWebhookOnAssign?: true
+  discordWebhookOnStatusChange?: true
+  discordWebhookOnComment?: true
   updatedAt?: true
   updatedBy?: true
   _all?: true
@@ -288,6 +426,29 @@ export type SystemSettingGroupByOutputType = {
   notifyOnStatusChange: boolean
   notifyOnComment: boolean
   enableRealtimeSse: boolean
+  enableZaloIntegration: boolean
+  zaloAppId: string | null
+  zaloAppSecret: string | null
+  zaloOaId: string | null
+  zaloOaSecretKey: string | null
+  zaloAccessToken: string | null
+  zaloRefreshToken: string | null
+  zaloTokenExpiresAt: Date | null
+  zaloZnsTemplateId: string | null
+  notifyZaloOnAssign: boolean
+  notifyZaloOnStatusChange: boolean
+  notifyZaloOnComment: boolean
+  enableDiscordIntegration: boolean
+  discordClientId: string | null
+  discordClientSecret: string | null
+  discordBotToken: string | null
+  discordWebhookUrl: string | null
+  notifyDiscordOnAssign: boolean
+  notifyDiscordOnStatusChange: boolean
+  notifyDiscordOnComment: boolean
+  discordWebhookOnAssign: boolean
+  discordWebhookOnStatusChange: boolean
+  discordWebhookOnComment: boolean
   updatedAt: Date
   updatedBy: string | null
   _count: SystemSettingCountAggregateOutputType | null
@@ -334,6 +495,29 @@ export type SystemSettingWhereInput = {
   notifyOnStatusChange?: Prisma.BoolFilter<"SystemSetting"> | boolean
   notifyOnComment?: Prisma.BoolFilter<"SystemSetting"> | boolean
   enableRealtimeSse?: Prisma.BoolFilter<"SystemSetting"> | boolean
+  enableZaloIntegration?: Prisma.BoolFilter<"SystemSetting"> | boolean
+  zaloAppId?: Prisma.StringNullableFilter<"SystemSetting"> | string | null
+  zaloAppSecret?: Prisma.StringNullableFilter<"SystemSetting"> | string | null
+  zaloOaId?: Prisma.StringNullableFilter<"SystemSetting"> | string | null
+  zaloOaSecretKey?: Prisma.StringNullableFilter<"SystemSetting"> | string | null
+  zaloAccessToken?: Prisma.StringNullableFilter<"SystemSetting"> | string | null
+  zaloRefreshToken?: Prisma.StringNullableFilter<"SystemSetting"> | string | null
+  zaloTokenExpiresAt?: Prisma.DateTimeNullableFilter<"SystemSetting"> | Date | string | null
+  zaloZnsTemplateId?: Prisma.StringNullableFilter<"SystemSetting"> | string | null
+  notifyZaloOnAssign?: Prisma.BoolFilter<"SystemSetting"> | boolean
+  notifyZaloOnStatusChange?: Prisma.BoolFilter<"SystemSetting"> | boolean
+  notifyZaloOnComment?: Prisma.BoolFilter<"SystemSetting"> | boolean
+  enableDiscordIntegration?: Prisma.BoolFilter<"SystemSetting"> | boolean
+  discordClientId?: Prisma.StringNullableFilter<"SystemSetting"> | string | null
+  discordClientSecret?: Prisma.StringNullableFilter<"SystemSetting"> | string | null
+  discordBotToken?: Prisma.StringNullableFilter<"SystemSetting"> | string | null
+  discordWebhookUrl?: Prisma.StringNullableFilter<"SystemSetting"> | string | null
+  notifyDiscordOnAssign?: Prisma.BoolFilter<"SystemSetting"> | boolean
+  notifyDiscordOnStatusChange?: Prisma.BoolFilter<"SystemSetting"> | boolean
+  notifyDiscordOnComment?: Prisma.BoolFilter<"SystemSetting"> | boolean
+  discordWebhookOnAssign?: Prisma.BoolFilter<"SystemSetting"> | boolean
+  discordWebhookOnStatusChange?: Prisma.BoolFilter<"SystemSetting"> | boolean
+  discordWebhookOnComment?: Prisma.BoolFilter<"SystemSetting"> | boolean
   updatedAt?: Prisma.DateTimeFilter<"SystemSetting"> | Date | string
   updatedBy?: Prisma.StringNullableFilter<"SystemSetting"> | string | null
 }
@@ -357,6 +541,29 @@ export type SystemSettingOrderByWithRelationInput = {
   notifyOnStatusChange?: Prisma.SortOrder
   notifyOnComment?: Prisma.SortOrder
   enableRealtimeSse?: Prisma.SortOrder
+  enableZaloIntegration?: Prisma.SortOrder
+  zaloAppId?: Prisma.SortOrderInput | Prisma.SortOrder
+  zaloAppSecret?: Prisma.SortOrderInput | Prisma.SortOrder
+  zaloOaId?: Prisma.SortOrderInput | Prisma.SortOrder
+  zaloOaSecretKey?: Prisma.SortOrderInput | Prisma.SortOrder
+  zaloAccessToken?: Prisma.SortOrderInput | Prisma.SortOrder
+  zaloRefreshToken?: Prisma.SortOrderInput | Prisma.SortOrder
+  zaloTokenExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  zaloZnsTemplateId?: Prisma.SortOrderInput | Prisma.SortOrder
+  notifyZaloOnAssign?: Prisma.SortOrder
+  notifyZaloOnStatusChange?: Prisma.SortOrder
+  notifyZaloOnComment?: Prisma.SortOrder
+  enableDiscordIntegration?: Prisma.SortOrder
+  discordClientId?: Prisma.SortOrderInput | Prisma.SortOrder
+  discordClientSecret?: Prisma.SortOrderInput | Prisma.SortOrder
+  discordBotToken?: Prisma.SortOrderInput | Prisma.SortOrder
+  discordWebhookUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  notifyDiscordOnAssign?: Prisma.SortOrder
+  notifyDiscordOnStatusChange?: Prisma.SortOrder
+  notifyDiscordOnComment?: Prisma.SortOrder
+  discordWebhookOnAssign?: Prisma.SortOrder
+  discordWebhookOnStatusChange?: Prisma.SortOrder
+  discordWebhookOnComment?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   updatedBy?: Prisma.SortOrderInput | Prisma.SortOrder
 }
@@ -383,6 +590,29 @@ export type SystemSettingWhereUniqueInput = Prisma.AtLeast<{
   notifyOnStatusChange?: Prisma.BoolFilter<"SystemSetting"> | boolean
   notifyOnComment?: Prisma.BoolFilter<"SystemSetting"> | boolean
   enableRealtimeSse?: Prisma.BoolFilter<"SystemSetting"> | boolean
+  enableZaloIntegration?: Prisma.BoolFilter<"SystemSetting"> | boolean
+  zaloAppId?: Prisma.StringNullableFilter<"SystemSetting"> | string | null
+  zaloAppSecret?: Prisma.StringNullableFilter<"SystemSetting"> | string | null
+  zaloOaId?: Prisma.StringNullableFilter<"SystemSetting"> | string | null
+  zaloOaSecretKey?: Prisma.StringNullableFilter<"SystemSetting"> | string | null
+  zaloAccessToken?: Prisma.StringNullableFilter<"SystemSetting"> | string | null
+  zaloRefreshToken?: Prisma.StringNullableFilter<"SystemSetting"> | string | null
+  zaloTokenExpiresAt?: Prisma.DateTimeNullableFilter<"SystemSetting"> | Date | string | null
+  zaloZnsTemplateId?: Prisma.StringNullableFilter<"SystemSetting"> | string | null
+  notifyZaloOnAssign?: Prisma.BoolFilter<"SystemSetting"> | boolean
+  notifyZaloOnStatusChange?: Prisma.BoolFilter<"SystemSetting"> | boolean
+  notifyZaloOnComment?: Prisma.BoolFilter<"SystemSetting"> | boolean
+  enableDiscordIntegration?: Prisma.BoolFilter<"SystemSetting"> | boolean
+  discordClientId?: Prisma.StringNullableFilter<"SystemSetting"> | string | null
+  discordClientSecret?: Prisma.StringNullableFilter<"SystemSetting"> | string | null
+  discordBotToken?: Prisma.StringNullableFilter<"SystemSetting"> | string | null
+  discordWebhookUrl?: Prisma.StringNullableFilter<"SystemSetting"> | string | null
+  notifyDiscordOnAssign?: Prisma.BoolFilter<"SystemSetting"> | boolean
+  notifyDiscordOnStatusChange?: Prisma.BoolFilter<"SystemSetting"> | boolean
+  notifyDiscordOnComment?: Prisma.BoolFilter<"SystemSetting"> | boolean
+  discordWebhookOnAssign?: Prisma.BoolFilter<"SystemSetting"> | boolean
+  discordWebhookOnStatusChange?: Prisma.BoolFilter<"SystemSetting"> | boolean
+  discordWebhookOnComment?: Prisma.BoolFilter<"SystemSetting"> | boolean
   updatedAt?: Prisma.DateTimeFilter<"SystemSetting"> | Date | string
   updatedBy?: Prisma.StringNullableFilter<"SystemSetting"> | string | null
 }, "id">
@@ -406,6 +636,29 @@ export type SystemSettingOrderByWithAggregationInput = {
   notifyOnStatusChange?: Prisma.SortOrder
   notifyOnComment?: Prisma.SortOrder
   enableRealtimeSse?: Prisma.SortOrder
+  enableZaloIntegration?: Prisma.SortOrder
+  zaloAppId?: Prisma.SortOrderInput | Prisma.SortOrder
+  zaloAppSecret?: Prisma.SortOrderInput | Prisma.SortOrder
+  zaloOaId?: Prisma.SortOrderInput | Prisma.SortOrder
+  zaloOaSecretKey?: Prisma.SortOrderInput | Prisma.SortOrder
+  zaloAccessToken?: Prisma.SortOrderInput | Prisma.SortOrder
+  zaloRefreshToken?: Prisma.SortOrderInput | Prisma.SortOrder
+  zaloTokenExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  zaloZnsTemplateId?: Prisma.SortOrderInput | Prisma.SortOrder
+  notifyZaloOnAssign?: Prisma.SortOrder
+  notifyZaloOnStatusChange?: Prisma.SortOrder
+  notifyZaloOnComment?: Prisma.SortOrder
+  enableDiscordIntegration?: Prisma.SortOrder
+  discordClientId?: Prisma.SortOrderInput | Prisma.SortOrder
+  discordClientSecret?: Prisma.SortOrderInput | Prisma.SortOrder
+  discordBotToken?: Prisma.SortOrderInput | Prisma.SortOrder
+  discordWebhookUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  notifyDiscordOnAssign?: Prisma.SortOrder
+  notifyDiscordOnStatusChange?: Prisma.SortOrder
+  notifyDiscordOnComment?: Prisma.SortOrder
+  discordWebhookOnAssign?: Prisma.SortOrder
+  discordWebhookOnStatusChange?: Prisma.SortOrder
+  discordWebhookOnComment?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   updatedBy?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.SystemSettingCountOrderByAggregateInput
@@ -437,6 +690,29 @@ export type SystemSettingScalarWhereWithAggregatesInput = {
   notifyOnStatusChange?: Prisma.BoolWithAggregatesFilter<"SystemSetting"> | boolean
   notifyOnComment?: Prisma.BoolWithAggregatesFilter<"SystemSetting"> | boolean
   enableRealtimeSse?: Prisma.BoolWithAggregatesFilter<"SystemSetting"> | boolean
+  enableZaloIntegration?: Prisma.BoolWithAggregatesFilter<"SystemSetting"> | boolean
+  zaloAppId?: Prisma.StringNullableWithAggregatesFilter<"SystemSetting"> | string | null
+  zaloAppSecret?: Prisma.StringNullableWithAggregatesFilter<"SystemSetting"> | string | null
+  zaloOaId?: Prisma.StringNullableWithAggregatesFilter<"SystemSetting"> | string | null
+  zaloOaSecretKey?: Prisma.StringNullableWithAggregatesFilter<"SystemSetting"> | string | null
+  zaloAccessToken?: Prisma.StringNullableWithAggregatesFilter<"SystemSetting"> | string | null
+  zaloRefreshToken?: Prisma.StringNullableWithAggregatesFilter<"SystemSetting"> | string | null
+  zaloTokenExpiresAt?: Prisma.DateTimeNullableWithAggregatesFilter<"SystemSetting"> | Date | string | null
+  zaloZnsTemplateId?: Prisma.StringNullableWithAggregatesFilter<"SystemSetting"> | string | null
+  notifyZaloOnAssign?: Prisma.BoolWithAggregatesFilter<"SystemSetting"> | boolean
+  notifyZaloOnStatusChange?: Prisma.BoolWithAggregatesFilter<"SystemSetting"> | boolean
+  notifyZaloOnComment?: Prisma.BoolWithAggregatesFilter<"SystemSetting"> | boolean
+  enableDiscordIntegration?: Prisma.BoolWithAggregatesFilter<"SystemSetting"> | boolean
+  discordClientId?: Prisma.StringNullableWithAggregatesFilter<"SystemSetting"> | string | null
+  discordClientSecret?: Prisma.StringNullableWithAggregatesFilter<"SystemSetting"> | string | null
+  discordBotToken?: Prisma.StringNullableWithAggregatesFilter<"SystemSetting"> | string | null
+  discordWebhookUrl?: Prisma.StringNullableWithAggregatesFilter<"SystemSetting"> | string | null
+  notifyDiscordOnAssign?: Prisma.BoolWithAggregatesFilter<"SystemSetting"> | boolean
+  notifyDiscordOnStatusChange?: Prisma.BoolWithAggregatesFilter<"SystemSetting"> | boolean
+  notifyDiscordOnComment?: Prisma.BoolWithAggregatesFilter<"SystemSetting"> | boolean
+  discordWebhookOnAssign?: Prisma.BoolWithAggregatesFilter<"SystemSetting"> | boolean
+  discordWebhookOnStatusChange?: Prisma.BoolWithAggregatesFilter<"SystemSetting"> | boolean
+  discordWebhookOnComment?: Prisma.BoolWithAggregatesFilter<"SystemSetting"> | boolean
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"SystemSetting"> | Date | string
   updatedBy?: Prisma.StringNullableWithAggregatesFilter<"SystemSetting"> | string | null
 }
@@ -460,6 +736,29 @@ export type SystemSettingCreateInput = {
   notifyOnStatusChange?: boolean
   notifyOnComment?: boolean
   enableRealtimeSse?: boolean
+  enableZaloIntegration?: boolean
+  zaloAppId?: string | null
+  zaloAppSecret?: string | null
+  zaloOaId?: string | null
+  zaloOaSecretKey?: string | null
+  zaloAccessToken?: string | null
+  zaloRefreshToken?: string | null
+  zaloTokenExpiresAt?: Date | string | null
+  zaloZnsTemplateId?: string | null
+  notifyZaloOnAssign?: boolean
+  notifyZaloOnStatusChange?: boolean
+  notifyZaloOnComment?: boolean
+  enableDiscordIntegration?: boolean
+  discordClientId?: string | null
+  discordClientSecret?: string | null
+  discordBotToken?: string | null
+  discordWebhookUrl?: string | null
+  notifyDiscordOnAssign?: boolean
+  notifyDiscordOnStatusChange?: boolean
+  notifyDiscordOnComment?: boolean
+  discordWebhookOnAssign?: boolean
+  discordWebhookOnStatusChange?: boolean
+  discordWebhookOnComment?: boolean
   updatedAt?: Date | string
   updatedBy?: string | null
 }
@@ -483,6 +782,29 @@ export type SystemSettingUncheckedCreateInput = {
   notifyOnStatusChange?: boolean
   notifyOnComment?: boolean
   enableRealtimeSse?: boolean
+  enableZaloIntegration?: boolean
+  zaloAppId?: string | null
+  zaloAppSecret?: string | null
+  zaloOaId?: string | null
+  zaloOaSecretKey?: string | null
+  zaloAccessToken?: string | null
+  zaloRefreshToken?: string | null
+  zaloTokenExpiresAt?: Date | string | null
+  zaloZnsTemplateId?: string | null
+  notifyZaloOnAssign?: boolean
+  notifyZaloOnStatusChange?: boolean
+  notifyZaloOnComment?: boolean
+  enableDiscordIntegration?: boolean
+  discordClientId?: string | null
+  discordClientSecret?: string | null
+  discordBotToken?: string | null
+  discordWebhookUrl?: string | null
+  notifyDiscordOnAssign?: boolean
+  notifyDiscordOnStatusChange?: boolean
+  notifyDiscordOnComment?: boolean
+  discordWebhookOnAssign?: boolean
+  discordWebhookOnStatusChange?: boolean
+  discordWebhookOnComment?: boolean
   updatedAt?: Date | string
   updatedBy?: string | null
 }
@@ -506,6 +828,29 @@ export type SystemSettingUpdateInput = {
   notifyOnStatusChange?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyOnComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   enableRealtimeSse?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  enableZaloIntegration?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  zaloAppId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  zaloAppSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  zaloOaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  zaloOaSecretKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  zaloAccessToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  zaloRefreshToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  zaloTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  zaloZnsTemplateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notifyZaloOnAssign?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyZaloOnStatusChange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyZaloOnComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  enableDiscordIntegration?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordClientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordClientSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordBotToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordWebhookUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notifyDiscordOnAssign?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyDiscordOnStatusChange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyDiscordOnComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordWebhookOnAssign?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordWebhookOnStatusChange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordWebhookOnComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
@@ -529,6 +874,29 @@ export type SystemSettingUncheckedUpdateInput = {
   notifyOnStatusChange?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyOnComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   enableRealtimeSse?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  enableZaloIntegration?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  zaloAppId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  zaloAppSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  zaloOaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  zaloOaSecretKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  zaloAccessToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  zaloRefreshToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  zaloTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  zaloZnsTemplateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notifyZaloOnAssign?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyZaloOnStatusChange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyZaloOnComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  enableDiscordIntegration?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordClientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordClientSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordBotToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordWebhookUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notifyDiscordOnAssign?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyDiscordOnStatusChange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyDiscordOnComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordWebhookOnAssign?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordWebhookOnStatusChange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordWebhookOnComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
@@ -552,6 +920,29 @@ export type SystemSettingCreateManyInput = {
   notifyOnStatusChange?: boolean
   notifyOnComment?: boolean
   enableRealtimeSse?: boolean
+  enableZaloIntegration?: boolean
+  zaloAppId?: string | null
+  zaloAppSecret?: string | null
+  zaloOaId?: string | null
+  zaloOaSecretKey?: string | null
+  zaloAccessToken?: string | null
+  zaloRefreshToken?: string | null
+  zaloTokenExpiresAt?: Date | string | null
+  zaloZnsTemplateId?: string | null
+  notifyZaloOnAssign?: boolean
+  notifyZaloOnStatusChange?: boolean
+  notifyZaloOnComment?: boolean
+  enableDiscordIntegration?: boolean
+  discordClientId?: string | null
+  discordClientSecret?: string | null
+  discordBotToken?: string | null
+  discordWebhookUrl?: string | null
+  notifyDiscordOnAssign?: boolean
+  notifyDiscordOnStatusChange?: boolean
+  notifyDiscordOnComment?: boolean
+  discordWebhookOnAssign?: boolean
+  discordWebhookOnStatusChange?: boolean
+  discordWebhookOnComment?: boolean
   updatedAt?: Date | string
   updatedBy?: string | null
 }
@@ -575,6 +966,29 @@ export type SystemSettingUpdateManyMutationInput = {
   notifyOnStatusChange?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyOnComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   enableRealtimeSse?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  enableZaloIntegration?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  zaloAppId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  zaloAppSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  zaloOaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  zaloOaSecretKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  zaloAccessToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  zaloRefreshToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  zaloTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  zaloZnsTemplateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notifyZaloOnAssign?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyZaloOnStatusChange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyZaloOnComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  enableDiscordIntegration?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordClientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordClientSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordBotToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordWebhookUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notifyDiscordOnAssign?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyDiscordOnStatusChange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyDiscordOnComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordWebhookOnAssign?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordWebhookOnStatusChange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordWebhookOnComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
@@ -598,6 +1012,29 @@ export type SystemSettingUncheckedUpdateManyInput = {
   notifyOnStatusChange?: Prisma.BoolFieldUpdateOperationsInput | boolean
   notifyOnComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   enableRealtimeSse?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  enableZaloIntegration?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  zaloAppId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  zaloAppSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  zaloOaId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  zaloOaSecretKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  zaloAccessToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  zaloRefreshToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  zaloTokenExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  zaloZnsTemplateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notifyZaloOnAssign?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyZaloOnStatusChange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyZaloOnComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  enableDiscordIntegration?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordClientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordClientSecret?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordBotToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  discordWebhookUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notifyDiscordOnAssign?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyDiscordOnStatusChange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  notifyDiscordOnComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordWebhookOnAssign?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordWebhookOnStatusChange?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  discordWebhookOnComment?: Prisma.BoolFieldUpdateOperationsInput | boolean
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
@@ -621,6 +1058,29 @@ export type SystemSettingCountOrderByAggregateInput = {
   notifyOnStatusChange?: Prisma.SortOrder
   notifyOnComment?: Prisma.SortOrder
   enableRealtimeSse?: Prisma.SortOrder
+  enableZaloIntegration?: Prisma.SortOrder
+  zaloAppId?: Prisma.SortOrder
+  zaloAppSecret?: Prisma.SortOrder
+  zaloOaId?: Prisma.SortOrder
+  zaloOaSecretKey?: Prisma.SortOrder
+  zaloAccessToken?: Prisma.SortOrder
+  zaloRefreshToken?: Prisma.SortOrder
+  zaloTokenExpiresAt?: Prisma.SortOrder
+  zaloZnsTemplateId?: Prisma.SortOrder
+  notifyZaloOnAssign?: Prisma.SortOrder
+  notifyZaloOnStatusChange?: Prisma.SortOrder
+  notifyZaloOnComment?: Prisma.SortOrder
+  enableDiscordIntegration?: Prisma.SortOrder
+  discordClientId?: Prisma.SortOrder
+  discordClientSecret?: Prisma.SortOrder
+  discordBotToken?: Prisma.SortOrder
+  discordWebhookUrl?: Prisma.SortOrder
+  notifyDiscordOnAssign?: Prisma.SortOrder
+  notifyDiscordOnStatusChange?: Prisma.SortOrder
+  notifyDiscordOnComment?: Prisma.SortOrder
+  discordWebhookOnAssign?: Prisma.SortOrder
+  discordWebhookOnStatusChange?: Prisma.SortOrder
+  discordWebhookOnComment?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   updatedBy?: Prisma.SortOrder
 }
@@ -648,6 +1108,29 @@ export type SystemSettingMaxOrderByAggregateInput = {
   notifyOnStatusChange?: Prisma.SortOrder
   notifyOnComment?: Prisma.SortOrder
   enableRealtimeSse?: Prisma.SortOrder
+  enableZaloIntegration?: Prisma.SortOrder
+  zaloAppId?: Prisma.SortOrder
+  zaloAppSecret?: Prisma.SortOrder
+  zaloOaId?: Prisma.SortOrder
+  zaloOaSecretKey?: Prisma.SortOrder
+  zaloAccessToken?: Prisma.SortOrder
+  zaloRefreshToken?: Prisma.SortOrder
+  zaloTokenExpiresAt?: Prisma.SortOrder
+  zaloZnsTemplateId?: Prisma.SortOrder
+  notifyZaloOnAssign?: Prisma.SortOrder
+  notifyZaloOnStatusChange?: Prisma.SortOrder
+  notifyZaloOnComment?: Prisma.SortOrder
+  enableDiscordIntegration?: Prisma.SortOrder
+  discordClientId?: Prisma.SortOrder
+  discordClientSecret?: Prisma.SortOrder
+  discordBotToken?: Prisma.SortOrder
+  discordWebhookUrl?: Prisma.SortOrder
+  notifyDiscordOnAssign?: Prisma.SortOrder
+  notifyDiscordOnStatusChange?: Prisma.SortOrder
+  notifyDiscordOnComment?: Prisma.SortOrder
+  discordWebhookOnAssign?: Prisma.SortOrder
+  discordWebhookOnStatusChange?: Prisma.SortOrder
+  discordWebhookOnComment?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   updatedBy?: Prisma.SortOrder
 }
@@ -671,6 +1154,29 @@ export type SystemSettingMinOrderByAggregateInput = {
   notifyOnStatusChange?: Prisma.SortOrder
   notifyOnComment?: Prisma.SortOrder
   enableRealtimeSse?: Prisma.SortOrder
+  enableZaloIntegration?: Prisma.SortOrder
+  zaloAppId?: Prisma.SortOrder
+  zaloAppSecret?: Prisma.SortOrder
+  zaloOaId?: Prisma.SortOrder
+  zaloOaSecretKey?: Prisma.SortOrder
+  zaloAccessToken?: Prisma.SortOrder
+  zaloRefreshToken?: Prisma.SortOrder
+  zaloTokenExpiresAt?: Prisma.SortOrder
+  zaloZnsTemplateId?: Prisma.SortOrder
+  notifyZaloOnAssign?: Prisma.SortOrder
+  notifyZaloOnStatusChange?: Prisma.SortOrder
+  notifyZaloOnComment?: Prisma.SortOrder
+  enableDiscordIntegration?: Prisma.SortOrder
+  discordClientId?: Prisma.SortOrder
+  discordClientSecret?: Prisma.SortOrder
+  discordBotToken?: Prisma.SortOrder
+  discordWebhookUrl?: Prisma.SortOrder
+  notifyDiscordOnAssign?: Prisma.SortOrder
+  notifyDiscordOnStatusChange?: Prisma.SortOrder
+  notifyDiscordOnComment?: Prisma.SortOrder
+  discordWebhookOnAssign?: Prisma.SortOrder
+  discordWebhookOnStatusChange?: Prisma.SortOrder
+  discordWebhookOnComment?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   updatedBy?: Prisma.SortOrder
 }
@@ -700,6 +1206,29 @@ export type SystemSettingSelect<ExtArgs extends runtime.Types.Extensions.Interna
   notifyOnStatusChange?: boolean
   notifyOnComment?: boolean
   enableRealtimeSse?: boolean
+  enableZaloIntegration?: boolean
+  zaloAppId?: boolean
+  zaloAppSecret?: boolean
+  zaloOaId?: boolean
+  zaloOaSecretKey?: boolean
+  zaloAccessToken?: boolean
+  zaloRefreshToken?: boolean
+  zaloTokenExpiresAt?: boolean
+  zaloZnsTemplateId?: boolean
+  notifyZaloOnAssign?: boolean
+  notifyZaloOnStatusChange?: boolean
+  notifyZaloOnComment?: boolean
+  enableDiscordIntegration?: boolean
+  discordClientId?: boolean
+  discordClientSecret?: boolean
+  discordBotToken?: boolean
+  discordWebhookUrl?: boolean
+  notifyDiscordOnAssign?: boolean
+  notifyDiscordOnStatusChange?: boolean
+  notifyDiscordOnComment?: boolean
+  discordWebhookOnAssign?: boolean
+  discordWebhookOnStatusChange?: boolean
+  discordWebhookOnComment?: boolean
   updatedAt?: boolean
   updatedBy?: boolean
 }, ExtArgs["result"]["systemSetting"]>
@@ -725,11 +1254,34 @@ export type SystemSettingSelectScalar = {
   notifyOnStatusChange?: boolean
   notifyOnComment?: boolean
   enableRealtimeSse?: boolean
+  enableZaloIntegration?: boolean
+  zaloAppId?: boolean
+  zaloAppSecret?: boolean
+  zaloOaId?: boolean
+  zaloOaSecretKey?: boolean
+  zaloAccessToken?: boolean
+  zaloRefreshToken?: boolean
+  zaloTokenExpiresAt?: boolean
+  zaloZnsTemplateId?: boolean
+  notifyZaloOnAssign?: boolean
+  notifyZaloOnStatusChange?: boolean
+  notifyZaloOnComment?: boolean
+  enableDiscordIntegration?: boolean
+  discordClientId?: boolean
+  discordClientSecret?: boolean
+  discordBotToken?: boolean
+  discordWebhookUrl?: boolean
+  notifyDiscordOnAssign?: boolean
+  notifyDiscordOnStatusChange?: boolean
+  notifyDiscordOnComment?: boolean
+  discordWebhookOnAssign?: boolean
+  discordWebhookOnStatusChange?: boolean
+  discordWebhookOnComment?: boolean
   updatedAt?: boolean
   updatedBy?: boolean
 }
 
-export type SystemSettingOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "smtpHost" | "smtpPort" | "smtpUser" | "smtpPass" | "smtpSecure" | "smtpFrom" | "smtpFromName" | "systemName" | "companyName" | "hotline" | "supportEmail" | "website" | "appUrl" | "notifyOnAssign" | "notifyOnStatusChange" | "notifyOnComment" | "enableRealtimeSse" | "updatedAt" | "updatedBy", ExtArgs["result"]["systemSetting"]>
+export type SystemSettingOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "smtpHost" | "smtpPort" | "smtpUser" | "smtpPass" | "smtpSecure" | "smtpFrom" | "smtpFromName" | "systemName" | "companyName" | "hotline" | "supportEmail" | "website" | "appUrl" | "notifyOnAssign" | "notifyOnStatusChange" | "notifyOnComment" | "enableRealtimeSse" | "enableZaloIntegration" | "zaloAppId" | "zaloAppSecret" | "zaloOaId" | "zaloOaSecretKey" | "zaloAccessToken" | "zaloRefreshToken" | "zaloTokenExpiresAt" | "zaloZnsTemplateId" | "notifyZaloOnAssign" | "notifyZaloOnStatusChange" | "notifyZaloOnComment" | "enableDiscordIntegration" | "discordClientId" | "discordClientSecret" | "discordBotToken" | "discordWebhookUrl" | "notifyDiscordOnAssign" | "notifyDiscordOnStatusChange" | "notifyDiscordOnComment" | "discordWebhookOnAssign" | "discordWebhookOnStatusChange" | "discordWebhookOnComment" | "updatedAt" | "updatedBy", ExtArgs["result"]["systemSetting"]>
 
 export type $SystemSettingPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "SystemSetting"
@@ -753,6 +1305,29 @@ export type $SystemSettingPayload<ExtArgs extends runtime.Types.Extensions.Inter
     notifyOnStatusChange: boolean
     notifyOnComment: boolean
     enableRealtimeSse: boolean
+    enableZaloIntegration: boolean
+    zaloAppId: string | null
+    zaloAppSecret: string | null
+    zaloOaId: string | null
+    zaloOaSecretKey: string | null
+    zaloAccessToken: string | null
+    zaloRefreshToken: string | null
+    zaloTokenExpiresAt: Date | null
+    zaloZnsTemplateId: string | null
+    notifyZaloOnAssign: boolean
+    notifyZaloOnStatusChange: boolean
+    notifyZaloOnComment: boolean
+    enableDiscordIntegration: boolean
+    discordClientId: string | null
+    discordClientSecret: string | null
+    discordBotToken: string | null
+    discordWebhookUrl: string | null
+    notifyDiscordOnAssign: boolean
+    notifyDiscordOnStatusChange: boolean
+    notifyDiscordOnComment: boolean
+    discordWebhookOnAssign: boolean
+    discordWebhookOnStatusChange: boolean
+    discordWebhookOnComment: boolean
     updatedAt: Date
     updatedBy: string | null
   }, ExtArgs["result"]["systemSetting"]>
@@ -1142,6 +1717,29 @@ export interface SystemSettingFieldRefs {
   readonly notifyOnStatusChange: Prisma.FieldRef<"SystemSetting", 'Boolean'>
   readonly notifyOnComment: Prisma.FieldRef<"SystemSetting", 'Boolean'>
   readonly enableRealtimeSse: Prisma.FieldRef<"SystemSetting", 'Boolean'>
+  readonly enableZaloIntegration: Prisma.FieldRef<"SystemSetting", 'Boolean'>
+  readonly zaloAppId: Prisma.FieldRef<"SystemSetting", 'String'>
+  readonly zaloAppSecret: Prisma.FieldRef<"SystemSetting", 'String'>
+  readonly zaloOaId: Prisma.FieldRef<"SystemSetting", 'String'>
+  readonly zaloOaSecretKey: Prisma.FieldRef<"SystemSetting", 'String'>
+  readonly zaloAccessToken: Prisma.FieldRef<"SystemSetting", 'String'>
+  readonly zaloRefreshToken: Prisma.FieldRef<"SystemSetting", 'String'>
+  readonly zaloTokenExpiresAt: Prisma.FieldRef<"SystemSetting", 'DateTime'>
+  readonly zaloZnsTemplateId: Prisma.FieldRef<"SystemSetting", 'String'>
+  readonly notifyZaloOnAssign: Prisma.FieldRef<"SystemSetting", 'Boolean'>
+  readonly notifyZaloOnStatusChange: Prisma.FieldRef<"SystemSetting", 'Boolean'>
+  readonly notifyZaloOnComment: Prisma.FieldRef<"SystemSetting", 'Boolean'>
+  readonly enableDiscordIntegration: Prisma.FieldRef<"SystemSetting", 'Boolean'>
+  readonly discordClientId: Prisma.FieldRef<"SystemSetting", 'String'>
+  readonly discordClientSecret: Prisma.FieldRef<"SystemSetting", 'String'>
+  readonly discordBotToken: Prisma.FieldRef<"SystemSetting", 'String'>
+  readonly discordWebhookUrl: Prisma.FieldRef<"SystemSetting", 'String'>
+  readonly notifyDiscordOnAssign: Prisma.FieldRef<"SystemSetting", 'Boolean'>
+  readonly notifyDiscordOnStatusChange: Prisma.FieldRef<"SystemSetting", 'Boolean'>
+  readonly notifyDiscordOnComment: Prisma.FieldRef<"SystemSetting", 'Boolean'>
+  readonly discordWebhookOnAssign: Prisma.FieldRef<"SystemSetting", 'Boolean'>
+  readonly discordWebhookOnStatusChange: Prisma.FieldRef<"SystemSetting", 'Boolean'>
+  readonly discordWebhookOnComment: Prisma.FieldRef<"SystemSetting", 'Boolean'>
   readonly updatedAt: Prisma.FieldRef<"SystemSetting", 'DateTime'>
   readonly updatedBy: Prisma.FieldRef<"SystemSetting", 'String'>
 }

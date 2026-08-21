@@ -99,12 +99,12 @@ export function TaskAttachmentGallery({
   }
 
   return (
-    <div className="space-y-3 rounded-xl border border-line bg-surface-2/40 p-3.5">
+    <div className="space-y-2 rounded-lg border border-line bg-surface-2/30 p-2.5">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <Paperclip className="h-3.5 w-3.5 text-accent" />
-          <span className="text-xs font-bold text-foreground">
+          <span className="text-[11.5px] font-bold text-foreground">
             Tệp, Ảnh & Video Quay Lỗi ({attachments.length})
           </span>
         </div>
@@ -124,12 +124,12 @@ export function TaskAttachmentGallery({
             size="sm"
             disabled={uploading}
             onClick={() => fileInputRef.current?.click()}
-            className="h-7 text-xs font-semibold px-2.5 border-dashed border-accent/40 bg-accent/5 hover:bg-accent/15 text-accent cursor-pointer"
+            className="h-7.5 text-xs font-semibold px-2.5 border-dashed border-accent/40 bg-accent/5 hover:bg-accent/15 text-accent cursor-pointer rounded-lg gap-1"
           >
             {uploading ? (
-              <Loader2 className="h-3 w-3 animate-spin mr-1" />
+              <Loader2 className="h-3.5 w-3.5 animate-spin mr-0.5" />
             ) : (
-              <Plus className="h-3 w-3 mr-1" />
+              <Plus className="h-3.5 w-3.5 mr-0.5" />
             )}
             Đính kèm tệp
           </Button>
@@ -172,15 +172,15 @@ export function TaskAttachmentGallery({
 
       {/* Media Grid: Images & Videos */}
       {(images.length > 0 || videos.length > 0) && (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
             Ảnh & Video mô phỏng ({images.length + videos.length})
           </span>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[110px] overflow-y-auto no-scrollbar">
             {images.map((img) => (
               <div
                 key={img.id}
-                className="group relative rounded-lg border border-line bg-surface overflow-hidden aspect-video flex items-center justify-center"
+                className="group relative rounded-lg border border-line bg-surface overflow-hidden aspect-[16/10] max-h-[80px] flex items-center justify-center"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -188,9 +188,9 @@ export function TaskAttachmentGallery({
                   alt={img.fileName}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                 />
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-1.5">
                   <div className="flex justify-between items-start">
-                    <span className="text-[10px] text-white/90 font-medium truncate max-w-[80%]">
+                    <span className="text-[9.5px] text-white/90 font-medium truncate max-w-[80%]">
                       {img.fileName}
                     </span>
                     <button
@@ -199,19 +199,19 @@ export function TaskAttachmentGallery({
                         e.stopPropagation();
                         deleteAttachment(img.id);
                       }}
-                      className="p-1 rounded bg-accent/80 hover:bg-accent-hover text-white cursor-pointer"
+                      className="p-0.5 rounded bg-accent/80 hover:bg-accent-hover text-white cursor-pointer"
                       title="Xóa ảnh"
                     >
                       <Trash2 className="h-2.5 w-2.5" />
                     </button>
                   </div>
-                  <div className="flex justify-center gap-1.5">
+                  <div className="flex justify-center gap-1">
                     <button
                       type="button"
                       onClick={() => setPreviewMedia(img)}
-                      className="px-2 py-1 rounded bg-white/20 hover:bg-white/30 text-white text-[10px] font-bold flex items-center gap-1 cursor-pointer"
+                      className="px-1.5 py-0.5 rounded bg-white/20 hover:bg-white/30 text-white text-[9.5px] font-bold flex items-center gap-0.5 cursor-pointer"
                     >
-                      <Eye className="h-3 w-3" /> Phóng to
+                      <Eye className="h-2.5 w-2.5" /> Xem
                     </button>
                     <a
                       href={img.fileUrl}
@@ -219,7 +219,7 @@ export function TaskAttachmentGallery({
                       className="p-1 rounded bg-white/20 hover:bg-white/30 text-white"
                       title="Tải về"
                     >
-                      <Download className="h-3 w-3" />
+                      <Download className="h-2.5 w-2.5" />
                     </a>
                   </div>
                 </div>
@@ -229,15 +229,15 @@ export function TaskAttachmentGallery({
             {videos.map((vid) => (
               <div
                 key={vid.id}
-                className="group relative rounded-lg border border-line bg-black/80 overflow-hidden aspect-video flex flex-col items-center justify-center"
+                className="group relative rounded-lg border border-line bg-black/80 overflow-hidden aspect-[16/10] max-h-[80px] flex flex-col items-center justify-center"
               >
-                <Video className="h-8 w-8 text-purple-400 opacity-70 group-hover:scale-110 transition-transform" />
-                <span className="text-[10px] text-white/80 font-medium truncate max-w-[90%] px-2 mt-1">
+                <Video className="h-6 w-6 text-purple-400 opacity-70 group-hover:scale-110 transition-transform" />
+                <span className="text-[9.5px] text-white/80 font-medium truncate max-w-[90%] px-1 mt-0.5">
                   {vid.fileName}
                 </span>
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-1.5">
                   <div className="flex justify-between items-start">
-                    <span className="text-[9px] text-purple-300 font-mono">
+                    <span className="text-[8.5px] text-purple-300 font-mono">
                       {formatFileSize(vid.fileSize)}
                     </span>
                     <button
@@ -246,19 +246,19 @@ export function TaskAttachmentGallery({
                         e.stopPropagation();
                         deleteAttachment(vid.id);
                       }}
-                      className="p-1 rounded bg-accent/80 hover:bg-accent-hover text-white cursor-pointer"
+                      className="p-0.5 rounded bg-accent/80 hover:bg-accent-hover text-white cursor-pointer"
                       title="Xóa video"
                     >
                       <Trash2 className="h-2.5 w-2.5" />
                     </button>
                   </div>
-                  <div className="flex justify-center gap-1.5">
+                  <div className="flex justify-center gap-1">
                     <button
                       type="button"
                       onClick={() => setPreviewMedia(vid)}
-                      className="px-2.5 py-1 rounded bg-purple-600 hover:bg-purple-500 text-white text-[10px] font-bold flex items-center gap-1 cursor-pointer shadow-lg"
+                      className="px-2 py-0.5 rounded bg-purple-600 hover:bg-purple-500 text-white text-[9.5px] font-bold flex items-center gap-0.5 cursor-pointer shadow-lg"
                     >
-                      <Play className="h-3 w-3 fill-current" /> Xem video
+                      <Play className="h-2.5 w-2.5 fill-current" /> Xem
                     </button>
                   </div>
                 </div>
@@ -270,51 +270,51 @@ export function TaskAttachmentGallery({
 
       {/* Documents & Logs List */}
       {docs.length > 0 && (
-        <div className="space-y-1.5 pt-1">
+        <div className="space-y-1 pt-0.5">
           <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
             Tài liệu & Tệp đính kèm ({docs.length})
           </span>
-          <div className="divide-y divide-line/60 rounded-lg border border-line bg-surface">
+          <div className="divide-y divide-line/60 rounded-lg border border-line bg-surface max-h-[85px] overflow-y-auto no-scrollbar">
             {docs.map((doc) => (
               <div
                 key={doc.id}
-                className="flex items-center justify-between p-2 hover:bg-surface-2/60 transition-colors text-xs"
+                className="flex items-center justify-between p-1.5 hover:bg-surface-2/60 transition-colors text-xs"
               >
                 <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
                   {getFileIcon(doc.fileType, doc.fileName)}
                   <div className="min-w-0">
-                    <div className="font-medium text-foreground truncate">{doc.fileName}</div>
-                    <div className="text-[10px] text-muted font-mono">
+                    <div className="font-medium text-foreground truncate text-[11.5px]">{doc.fileName}</div>
+                    <div className="text-[9.5px] text-muted font-mono">
                       {formatFileSize(doc.fileSize)}
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="flex items-center gap-0.5 shrink-0">
                   <a
                     href={doc.fileUrl}
                     download={doc.fileName}
-                    className="p-1.5 rounded hover:bg-line text-muted hover:text-foreground cursor-pointer transition-colors"
+                    className="p-1 rounded hover:bg-line text-muted hover:text-foreground cursor-pointer transition-colors"
                     title="Tải về"
                   >
-                    <Download className="h-3.5 w-3.5" />
+                    <Download className="h-3 w-3" />
                   </a>
                   <a
                     href={doc.fileUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="p-1.5 rounded hover:bg-line text-muted hover:text-accent cursor-pointer transition-colors"
+                    className="p-1 rounded hover:bg-line text-muted hover:text-accent cursor-pointer transition-colors"
                     title="Mở trong tab mới"
                   >
-                    <ExternalLink className="h-3.5 w-3.5" />
+                    <ExternalLink className="h-3 w-3" />
                   </a>
                   <button
                     type="button"
                     onClick={() => deleteAttachment(doc.id)}
-                    className="p-1.5 rounded hover:bg-accent/20 text-muted hover:text-accent cursor-pointer transition-colors"
+                    className="p-1 rounded hover:bg-accent/20 text-muted hover:text-accent cursor-pointer transition-colors"
                     title="Xóa tệp"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Trash2 className="h-3 w-3" />
                   </button>
                 </div>
               </div>

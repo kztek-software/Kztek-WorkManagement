@@ -188,10 +188,10 @@ export default function ReportsPage() {
           <div className="flex items-center rounded-lg bg-surface p-1 border border-line overflow-x-auto no-scrollbar">
             <button
               onClick={() => setActiveTab("accounts")}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-all duration-200 active:scale-95 cursor-pointer ${
                 activeTab === "accounts"
-                  ? "bg-accent text-white shadow-sm"
-                  : "text-muted hover:text-foreground"
+                  ? "bg-accent text-white shadow-sm font-semibold"
+                  : "text-muted hover:text-foreground hover:bg-surface-2"
               }`}
             >
               <UserCheck className="h-3.5 w-3.5" />
@@ -199,10 +199,10 @@ export default function ReportsPage() {
             </button>
             <button
               onClick={() => setActiveTab("overview")}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-all duration-200 active:scale-95 cursor-pointer ${
                 activeTab === "overview"
-                  ? "bg-accent text-white shadow-sm"
-                  : "text-muted hover:text-foreground"
+                  ? "bg-accent text-white shadow-sm font-semibold"
+                  : "text-muted hover:text-foreground hover:bg-surface-2"
               }`}
             >
               <TrendingDown className="h-3.5 w-3.5" />
@@ -222,7 +222,7 @@ export default function ReportsPage() {
       <div className="flex-1 space-y-4 overflow-y-auto p-3 sm:p-4">
         {/* ================= TAB 1: BÁO CÁO THEO TÀI KHOẢN ================= */}
         {activeTab === "accounts" && (
-          <div className="space-y-4">
+          <div key="accounts" className="space-y-4 animate-tab-fade">
             {/* Member Selector Bar */}
             <div className="flex items-center justify-between gap-3 rounded-xl border border-line bg-surface p-3">
               <div className="flex items-center gap-2">
@@ -601,7 +601,7 @@ export default function ReportsPage() {
 
         {/* ================= TAB 2: TỔNG QUAN & SPRINT ================= */}
         {activeTab === "overview" && (
-          <div className="space-y-4">
+          <div key="overview" className="space-y-4 animate-tab-fade">
             {/* Summary cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="rounded-xl border border-line bg-surface p-3 sm:p-4">

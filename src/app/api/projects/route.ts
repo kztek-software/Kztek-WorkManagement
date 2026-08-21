@@ -49,6 +49,17 @@ const createSchema = z.object({
   status: z.enum(["PLANNING", "IN_PROGRESS", "ON_HOLD", "COMPLETED", "CANCELLED"]).default("PLANNING"),
   teamIds: z.array(z.string()).optional(),
   memberIds: z.array(z.string()).optional(),
+  attachments: z
+    .array(
+      z.object({
+        fileName: z.string().min(1),
+        fileUrl: z.string().min(1),
+        fileType: z.string().optional().default("other"),
+        fileSize: z.number().optional().nullable(),
+        mimeType: z.string().optional().nullable(),
+      })
+    )
+    .optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -72,7 +83,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { name, key, description, status, teamIds, memberIds } = parsed.data;
+    const { name, key, description, status, teamIds, memberIds, attachments } = parsed.data;
 
     const existing = await prisma.project.findUnique({ where: { key } });
     if (existing) {
@@ -115,6 +126,19 @@ export async function POST(req: NextRequest) {
         members: {
           create: memberCreateData,
         },
+        attachments:
+          attachments && attachments.length > 0
+            ? {
+                create: attachments.map((att) => ({
+                  fileName: att.fileName,
+                  fileUrl: att.fileUrl,
+                  fileType: att.fileType || "other",
+                  fileSize: att.fileSize || null,
+                  mimeType: att.mimeType || null,
+                  uploaderId: user.id,
+                })),
+              }
+            : undefined,
         labels: {
           create: ["frontend", "backend", "bug", "design", "hardware", "firmware"].map((name, i) => ({
             name,
@@ -129,6 +153,12 @@ export async function POST(req: NextRequest) {
           },
         },
         owner: { select: { id: true, name: true, avatarColor: true } },
+        attachments: {
+          include: {
+            uploader: { select: { id: true, name: true, avatarColor: true, title: true } },
+          },
+          orderBy: { createdAt: "desc" },
+        },
       },
     });
 

@@ -115,7 +115,7 @@ export function DesktopStatusBar({
         </div>
 
         <div className="hidden sm:flex items-center gap-1.5 text-zinc-400 border-l border-zinc-700/60 pl-3">
-          <Layers className="w-3.5 h-3.5 text-primary" />
+          <Layers className="w-3.5 h-3.5 text-accent" />
           <span className="font-medium text-zinc-200 truncate max-w-[200px]">
             {currentProjectName}
           </span>
@@ -134,7 +134,7 @@ export function DesktopStatusBar({
           onClick={onOpenCommandPalette}
           className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-zinc-800/60 hover:bg-zinc-700/60 text-zinc-300 border border-zinc-700/50 transition-colors"
         >
-          <Command className="w-3 h-3 text-primary" />
+          <Command className="w-3 h-3 text-accent" />
           <span>Command Palette</span>
           <kbd className="px-1 py-0.2 bg-zinc-900 text-[9px] rounded font-mono border border-zinc-700">
             Ctrl+K

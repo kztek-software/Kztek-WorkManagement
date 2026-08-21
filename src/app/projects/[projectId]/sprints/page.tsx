@@ -25,13 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { Dialog } from "primereact/dialog";
 import { SprintDetailDialog } from "@/components/sprint/sprint-detail-dialog";
 import { TaskDialog } from "@/components/board/task-dialog";
 import { useTabCache } from "@/lib/tab-cache";
@@ -61,6 +55,7 @@ export default function SprintsPage() {
   const {
     data: tabData,
     loading,
+    mutate: setTabData,
     revalidate: load,
   } = useTabCache<{
     sprints?: SprintDto[];
@@ -134,15 +129,25 @@ export default function SprintsPage() {
 
   async function updateSprintStatus(sprintId: string, status: string, e?: React.MouseEvent) {
     if (e) e.stopPropagation();
+    // Optimistic update tức thì trên UI (< 1ms)
+    if (setTabData) {
+      setTabData((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          sprints: (prev.sprints || []).map((s) => (s.id === sprintId ? { ...s, status: status as any } : s)),
+        };
+      });
+    }
     try {
       await fetch(`/api/projects/${projectId}/sprints/${sprintId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       });
-      load();
     } catch {
       alert("Lỗi cập nhật sprint");
+      load();
     }
   }
 
@@ -158,12 +163,21 @@ export default function SprintsPage() {
 
   const selectedSprint = sprints.find((s) => s.id === selectedSprintId);
 
-  if (loading) {
+  if (loading && !tabData) {
     return (
-      <div className="flex flex-1 items-center justify-center">
-        <div className="text-xs font-semibold text-muted flex items-center gap-2">
-          <Loader2 className="h-4 w-4 animate-spin text-accent" />
-          Đang tải danh sách Sprint...
+      <div className="flex flex-1 flex-col overflow-hidden bg-background animate-pulse p-4 sm:p-5 space-y-4">
+        <div className="flex h-14 shrink-0 items-center justify-between border-b border-line pb-2">
+          <div className="h-6 w-36 bg-surface-2 rounded-lg" />
+          <div className="h-8 w-28 bg-surface-2 rounded-xl" />
+        </div>
+        <div className="flex gap-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-8 w-28 bg-surface-2 rounded-xl" />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
+          <div className="rounded-2xl border border-line bg-surface p-5 space-y-3" />
+          <div className="rounded-2xl border border-line bg-surface p-5 space-y-3" />
         </div>
       </div>
     );
@@ -368,80 +382,98 @@ export default function SprintsPage() {
       )}
 
       {/* CREATE SPRINT MODAL */}
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-base font-bold flex items-center gap-2">
-              <Rocket className="h-4 w-4 text-accent" />
-              Tạo Sprint Kế Hoạch Mới
-            </DialogTitle>
-            <DialogDescription className="text-xs">
-              Sprint là chu kỳ phát triển 1-2 tuần để hoàn thành tập trung các mục tiêu
-            </DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={createSprint} className="mt-2 space-y-3.5">
-            {error && (
-              <div className="rounded-lg bg-accent-subtle p-2.5 text-xs text-accent border border-accent/20">
-                {error}
+      <Dialog
+        visible={createOpen}
+        onHide={() => setCreateOpen(false)}
+        header={
+          <div className="flex items-center gap-2">
+            <Rocket className="h-4 w-4 text-accent" />
+            <div>
+              <div className="text-base font-bold text-foreground">Tạo Sprint Kế Hoạch Mới</div>
+              <div className="text-xs text-muted font-normal mt-0.5">
+                Sprint là chu kỳ phát triển 1-2 tuần để hoàn thành tập trung các mục tiêu
               </div>
-            )}
+            </div>
+          </div>
+        }
+        className="w-full max-w-md border border-line bg-surface rounded-2xl shadow-2xl overflow-hidden"
+        contentClassName="p-5"
+      >
+        <form
+          onSubmit={createSprint}
+          onKeyDown={(e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+              e.preventDefault();
+              createSprint(e);
+            }
+          }}
+          className="space-y-3.5 pt-1"
+        >
+          {error && (
+            <div className="rounded-lg bg-accent-subtle p-2.5 text-xs text-accent border border-accent/20">
+              {error}
+            </div>
+          )}
 
+          <div className="space-y-1">
+            <Label className="text-xs">Tên Sprint *</Label>
+            <Input
+              placeholder="VD: Sprint 1 — Hoàn thiện tính năng Quản lý xe"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="text-xs h-9"
+              required
+              minLength={2}
+              autoFocus
+            />
+          </div>
+
+          <div className="space-y-1">
+            <Label className="text-xs">Mục tiêu Sprint (Goal)</Label>
+            <Textarea
+              placeholder="Mục tiêu cốt lõi cần đạt được trong đợt chạy này..."
+              value={goal}
+              onChange={(e) => setGoal(e.target.value)}
+              rows={2}
+              className="text-xs"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className="text-xs">Tên Sprint *</Label>
+              <Label className="text-xs">Ngày bắt đầu</Label>
               <Input
-                placeholder="VD: Sprint 1 — Hoàn thiện tính năng Quản lý xe"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
                 className="text-xs h-9"
-                required
-                minLength={2}
               />
             </div>
-
             <div className="space-y-1">
-              <Label className="text-xs">Mục tiêu Sprint (Goal)</Label>
-              <Textarea
-                placeholder="Mục tiêu cốt lõi cần đạt được trong đợt chạy này..."
-                value={goal}
-                onChange={(e) => setGoal(e.target.value)}
-                rows={2}
-                className="text-xs"
+              <Label className="text-xs">Ngày kết thúc</Label>
+              <Input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="text-xs h-9"
               />
             </div>
+          </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs">Ngày bắt đầu</Label>
-                <Input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="text-xs h-9"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Ngày kết thúc</Label>
-                <Input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="text-xs h-9"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 pt-3 border-t border-line">
-              <Button type="button" variant="outline" size="sm" onClick={() => setCreateOpen(false)}>
-                Hủy
-              </Button>
-              <Button type="submit" size="sm" disabled={submitting} className="font-bold">
-                {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
-                Tạo Sprint
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
+          <div className="flex justify-end gap-2 pt-3 border-t border-line">
+            <Button type="button" variant="outline" size="sm" onClick={() => setCreateOpen(false)} className="cursor-pointer">
+              <span>Hủy</span>
+              <kbd className="text-[10px] text-muted ml-1 font-mono">Esc</kbd>
+            </Button>
+            <Button type="submit" size="sm" disabled={submitting} className="font-bold bg-accent hover:bg-accent/90 text-white cursor-pointer gap-1.5">
+              {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
+              <span>Tạo Sprint</span>
+              <kbd className="hidden sm:inline-block px-1.5 py-0.2 text-[9px] font-mono font-bold bg-white/20 text-white rounded border border-white/30">
+                Ctrl+Enter
+              </kbd>
+            </Button>
+          </div>
+        </form>
       </Dialog>
     </div>
   );

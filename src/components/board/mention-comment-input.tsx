@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Send, AtSign, Loader2, Sparkles } from "lucide-react";
 import { Avatar, AvatarFallback, initials } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import type { MemberDto } from "@/lib/types";
+import { RichTextToolbar, handleRichTextKeyDown } from "@/components/ui/rich-text-toolbar";
+import { RichMarkdown } from "@/components/ui/rich-markdown";
 
-export function MentionCommentInput({
+export const MentionCommentInput = React.memo(function MentionCommentInput({
   members = [],
   onSubmit,
   disabled = false,
@@ -26,16 +28,16 @@ export function MentionCommentInput({
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
-  // Filter members based on mentionQuery
-  const filteredMembers = members.filter((m) => {
-    if (!mentionQuery) return true;
+  // Memoize filtered members to prevent lag on every keystroke
+  const filteredMembers = useMemo(() => {
+    if (!mentionQuery) return members;
     const q = mentionQuery.toLowerCase();
-    return (
+    return members.filter((m) =>
       m.user.name.toLowerCase().includes(q) ||
       (m.user.email && m.user.email.toLowerCase().includes(q)) ||
       (m.role && m.role.toLowerCase().includes(q))
     );
-  });
+  }, [members, mentionQuery]);
 
   const insertMention = useCallback((member: MemberDto) => {
     if (!textareaRef.current) return;
@@ -92,6 +94,11 @@ export function MentionCommentInput({
         setShowMentionMenu(false);
         return;
       }
+    }
+
+    // Handle rich text hotkeys (Ctrl+B, Ctrl+I, Ctrl+U, etc.)
+    if (handleRichTextKeyDown(e, textareaRef, text, setText)) {
+      return;
     }
 
     // Submit on Ctrl+Enter or Cmd+Enter
@@ -215,8 +222,17 @@ export function MentionCommentInput({
         </div>
       )}
 
-      {/* Main Comment Textarea Box */}
-      <div className="rounded-xl border border-line bg-surface-2/60 p-2 focus-within:border-accent transition-colors shadow-sm">
+      {/* Main Comment Textarea Box with Rich Toolbar */}
+      <div className="rounded-xl border border-line bg-surface-2/60 p-2 focus-within:border-accent transition-colors shadow-sm space-y-1.5">
+        <RichTextToolbar
+          textareaRef={textareaRef}
+          value={text}
+          onChange={setText}
+          compact
+          disabled={disabled || submitting}
+          className="border-none bg-transparent p-0 mb-1"
+        />
+
         <textarea
           ref={textareaRef}
           value={text}
@@ -225,18 +241,18 @@ export function MentionCommentInput({
           disabled={disabled || submitting}
           rows={3}
           placeholder={placeholder}
-          className="w-full resize-none bg-transparent text-xs text-foreground placeholder:text-muted focus:outline-none leading-relaxed"
+          className="w-full resize-none bg-transparent text-xs text-foreground placeholder:text-muted focus:outline-none leading-relaxed font-sans"
         />
 
         <div className="flex items-center justify-between pt-2 border-t border-line/50">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={triggerMentionButton}
-              className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold text-muted hover:text-accent hover:bg-accent/10 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 h-8 text-xs font-semibold text-muted hover:text-accent hover:bg-accent/10 transition-colors cursor-pointer"
               title="Gắn thẻ thành viên (@mention)"
             >
-              <AtSign className="h-3.5 w-3.5 text-accent" />
+              <AtSign className="h-4 w-4 text-accent" />
               <span>Gắn thẻ (@)</span>
             </button>
             <span className="text-[10px] text-muted hidden sm:inline">
@@ -246,28 +262,27 @@ export function MentionCommentInput({
 
           <Button
             type="button"
-            size="sm"
             onClick={() => handleSubmit()}
             disabled={!text.trim() || submitting || disabled}
-            className="h-7 px-3 text-xs font-bold bg-accent hover:bg-accent/90 text-white shadow-md shadow-accent/20 cursor-pointer"
+            className="h-9 sm:h-10 px-5 text-xs sm:text-sm font-bold bg-accent hover:bg-accent/90 text-white shadow-md shadow-accent/25 cursor-pointer rounded-xl gap-2 transition-all"
           >
             {submitting ? (
-              <Loader2 className="h-3 w-3 animate-spin mr-1" />
+              <Loader2 className="h-4.5 w-4.5 animate-spin mr-0.5" />
             ) : (
-              <Send className="h-3 w-3 mr-1" />
+              <Send className="h-4.5 w-4.5 mr-0.5" />
             )}
-            Gửi bình luận
+            <span>Gửi bình luận</span>
           </Button>
         </div>
       </div>
     </div>
   );
-}
+});
 
 /**
- * Helper render comment body with styled mention badges
+ * Helper render comment body with rich markdown & styled mention badges
  */
-export function RenderCommentContent({
+export const RenderCommentContent = React.memo(function RenderCommentContent({
   body,
   members = [],
 }: {
@@ -276,64 +291,5 @@ export function RenderCommentContent({
 }) {
   if (!body) return null;
 
-  // Lấy danh sách tên thành viên (sắp xếp theo độ dài giảm dần để match tên dài trước)
-  const sortedNames = members
-    .map((m) => m.user.name.trim())
-    .filter(Boolean)
-    .sort((a, b) => b.length - a.length);
-
-  if (sortedNames.length > 0) {
-    // Escape regex special characters in names
-    const escapedNames = sortedNames.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
-    // Match @FullName (chính xác nguyên cụm họ và tên có dấu cách)
-    const regex = new RegExp(`(@(?:${escapedNames}))(?=[.,!?;:\\s]|$)`, "gi");
-
-    const parts = body.split(regex);
-
-    return (
-      <p className="whitespace-pre-wrap text-xs text-muted-light leading-relaxed">
-        {parts.map((part, i) => {
-          if (part && part.startsWith("@")) {
-            const rawName = part.slice(1).trim();
-            const isMatch = sortedNames.some((n) => n.toLowerCase() === rawName.toLowerCase());
-            if (isMatch) {
-              return (
-                <span
-                  key={i}
-                  className="inline-flex items-center gap-0.5 rounded-md bg-accent/15 px-1.5 py-0.2 text-[11px] font-bold text-accent border border-accent/25 mx-0.5 align-middle"
-                >
-                  <AtSign className="h-2.5 w-2.5 inline" />
-                  {rawName}
-                </span>
-              );
-            }
-          }
-          return <span key={i}>{part}</span>;
-        })}
-      </p>
-    );
-  }
-
-  // Fallback regex nếu không truyền danh sách thành viên
-  const fallbackRegex = /(@[a-zA-Z0-9_\u00C0-\u1EF9]+(?:\s+[a-zA-Z0-9_\u00C0-\u1EF9]+)*)(?=[.,!?;:]|\s|$)/g;
-  const parts = body.split(fallbackRegex);
-
-  return (
-    <p className="whitespace-pre-wrap text-xs text-muted-light leading-relaxed">
-      {parts.map((part, i) => {
-        if (part && part.startsWith("@")) {
-          return (
-            <span
-              key={i}
-              className="inline-flex items-center gap-0.5 rounded-md bg-accent/15 px-1.5 py-0.2 text-[11px] font-bold text-accent border border-accent/25 mx-0.5 align-middle"
-            >
-              <AtSign className="h-2.5 w-2.5 inline" />
-              {part.slice(1)}
-            </span>
-          );
-        }
-        return <span key={i}>{part}</span>;
-      })}
-    </p>
-  );
-}
+  return <RichMarkdown content={body} members={members} className="space-y-1 text-xs" />;
+});

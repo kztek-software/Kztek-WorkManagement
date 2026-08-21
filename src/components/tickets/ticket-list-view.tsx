@@ -33,6 +33,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog } from "primereact/dialog";
+import { Dropdown } from "primereact/dropdown";
 import { Paginator, type PaginatorPageChangeEvent } from "primereact/paginator";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -382,7 +383,7 @@ export function TicketListView({
       {/* Filter Toolbar */}
       <div className="p-3 sm:px-6 border-b border-line bg-surface/50 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shrink-0">
         <form onSubmit={handleSearchSubmit} className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted pointer-events-none z-10" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -393,45 +394,48 @@ export function TicketListView({
 
         <div className="flex items-center gap-2 flex-wrap">
           {/* Status filter */}
-          <select
+          <Dropdown
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-8 px-2.5 rounded-lg border border-line bg-surface-2 text-xs font-semibold text-foreground focus:border-accent focus:outline-none"
-          >
-            <option value="ALL">Mọi trạng thái</option>
-            <option value="OPEN">Mới (OPEN)</option>
-            <option value="TRIAGED">Đã phân loại (TRIAGED)</option>
-            <option value="IN_PROGRESS">Đang xử lý (IN_PROGRESS)</option>
-            <option value="RESOLVED">Đã giải quyết (RESOLVED)</option>
-            <option value="CLOSED">Đã đóng (CLOSED)</option>
-            <option value="REJECTED">Từ chối (REJECTED)</option>
-          </select>
+            options={[
+              { label: "Mọi trạng thái", value: "ALL" },
+              { label: "Mới (OPEN)", value: "OPEN" },
+              { label: "Đã phân loại (TRIAGED)", value: "TRIAGED" },
+              { label: "Đang xử lý (IN_PROGRESS)", value: "IN_PROGRESS" },
+              { label: "Đã giải quyết (RESOLVED)", value: "RESOLVED" },
+              { label: "Đã đóng (CLOSED)", value: "CLOSED" },
+              { label: "Từ chối (REJECTED)", value: "REJECTED" },
+            ]}
+            onChange={(e) => setStatusFilter(e.value)}
+            className="p-inputtext-sm h-8 text-xs font-semibold bg-surface-2 border border-line rounded-lg"
+          />
 
           {/* Priority filter */}
-          <select
+          <Dropdown
             value={priorityFilter}
-            onChange={(e) => setPriorityFilter(e.target.value)}
-            className="h-8 px-2.5 rounded-lg border border-line bg-surface-2 text-xs font-semibold text-foreground focus:border-accent focus:outline-none"
-          >
-            <option value="ALL">Mọi mức độ</option>
-            <option value="URGENT">Khẩn cấp</option>
-            <option value="HIGH">Cao</option>
-            <option value="MEDIUM">Trung bình</option>
-            <option value="LOW">Thấp</option>
-          </select>
+            options={[
+              { label: "Mọi mức độ", value: "ALL" },
+              { label: "Khẩn cấp", value: "URGENT" },
+              { label: "Cao", value: "HIGH" },
+              { label: "Trung bình", value: "MEDIUM" },
+              { label: "Thấp", value: "LOW" },
+            ]}
+            onChange={(e) => setPriorityFilter(e.value)}
+            className="p-inputtext-sm h-8 text-xs font-semibold bg-surface-2 border border-line rounded-lg"
+          />
 
           {/* Type filter */}
-          <select
+          <Dropdown
             value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="h-8 px-2.5 rounded-lg border border-line bg-surface-2 text-xs font-semibold text-foreground focus:border-accent focus:outline-none"
-          >
-            <option value="ALL">Mọi loại lỗi</option>
-            <option value="BUG">Lỗi phần mềm</option>
-            <option value="SUPPORT">Hỗ trợ kỹ thuật</option>
-            <option value="FEATURE_REQ">Tính năng mới</option>
-            <option value="INQUIRY">Hỏi đáp</option>
-          </select>
+            options={[
+              { label: "Mọi loại lỗi", value: "ALL" },
+              { label: "Lỗi phần mềm", value: "BUG" },
+              { label: "Hỗ trợ kỹ thuật", value: "SUPPORT" },
+              { label: "Tính năng mới", value: "FEATURE_REQ" },
+              { label: "Hỏi đáp", value: "INQUIRY" },
+            ]}
+            onChange={(e) => setTypeFilter(e.value)}
+            className="p-inputtext-sm h-8 text-xs font-semibold bg-surface-2 border border-line rounded-lg"
+          />
 
           <Button
             variant="ghost"
@@ -691,30 +695,32 @@ export function TicketListView({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-xs font-semibold">Phân loại</Label>
-              <select
+              <Dropdown
                 value={newType}
-                onChange={(e) => setNewType(e.target.value as any)}
-                className="w-full h-8 px-2.5 rounded-lg border border-line bg-surface-2 text-xs font-medium focus:border-accent"
-              >
-                <option value="BUG">Báo lỗi phần mềm (BUG)</option>
-                <option value="SUPPORT">Hỗ trợ kỹ thuật (SUPPORT)</option>
-                <option value="FEATURE_REQ">Tính năng mới (FEATURE_REQ)</option>
-                <option value="INQUIRY">Hỏi đáp & Tư vấn (INQUIRY)</option>
-              </select>
+                options={[
+                  { label: "Báo lỗi phần mềm (BUG)", value: "BUG" },
+                  { label: "Hỗ trợ kỹ thuật (SUPPORT)", value: "SUPPORT" },
+                  { label: "Tính năng mới (FEATURE_REQ)", value: "FEATURE_REQ" },
+                  { label: "Hỏi đáp & Tư vấn (INQUIRY)", value: "INQUIRY" },
+                ]}
+                onChange={(e) => setNewType(e.value)}
+                className="w-full h-8 text-xs font-medium bg-surface-2 border border-line rounded-lg"
+              />
             </div>
 
             <div className="space-y-1">
               <Label className="text-xs font-semibold">Mức độ ưu tiên</Label>
-              <select
+              <Dropdown
                 value={newPriority}
-                onChange={(e) => setNewPriority(e.target.value as any)}
-                className="w-full h-8 px-2.5 rounded-lg border border-line bg-surface-2 text-xs font-medium focus:border-accent"
-              >
-                <option value="LOW">Thấp (LOW)</option>
-                <option value="MEDIUM">Trung bình (MEDIUM)</option>
-                <option value="HIGH">Cao (HIGH)</option>
-                <option value="URGENT">Khẩn cấp (URGENT)</option>
-              </select>
+                options={[
+                  { label: "Thấp (LOW)", value: "LOW" },
+                  { label: "Trung bình (MEDIUM)", value: "MEDIUM" },
+                  { label: "Cao (HIGH)", value: "HIGH" },
+                  { label: "Khẩn cấp (URGENT)", value: "URGENT" },
+                ]}
+                onChange={(e) => setNewPriority(e.value)}
+                className="w-full h-8 text-xs font-medium bg-surface-2 border border-line rounded-lg"
+              />
             </div>
           </div>
 

@@ -106,6 +106,12 @@ export async function GET(
         where: { id: targetProjectId },
         include: {
           owner: { select: { id: true, name: true, email: true, avatarColor: true, title: true } },
+          attachments: {
+            include: {
+              uploader: { select: { id: true, name: true, avatarColor: true, title: true } },
+            },
+            orderBy: { createdAt: "desc" },
+          },
           members: {
             include: {
               user: {
@@ -466,6 +472,27 @@ export async function GET(
         owner: project.owner,
         createdAt: safeIsoString(project.createdAt),
         updatedAt: safeIsoString(project.updatedAt),
+        attachments: (project.attachments || []).map((att) => ({
+          id: att.id,
+          projectId: att.projectId,
+          taskId: att.taskId,
+          ticketId: att.ticketId,
+          uploaderId: att.uploaderId,
+          fileName: att.fileName,
+          fileUrl: att.fileUrl,
+          fileType: att.fileType,
+          fileSize: att.fileSize,
+          mimeType: att.mimeType,
+          createdAt: safeIsoString(att.createdAt),
+          uploader: att.uploader
+            ? {
+                id: att.uploader.id,
+                name: att.uploader.name,
+                avatarColor: att.uploader.avatarColor,
+                title: att.uploader.title,
+              }
+            : null,
+        })),
         members: project.members.map((m) => ({
           id: m.id,
           role: m.role,

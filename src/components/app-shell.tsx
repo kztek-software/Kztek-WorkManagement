@@ -34,10 +34,16 @@ import {
   Sun,
   Moon,
   Pin,
+  MessageCircle,
+  Bell,
+  Bot,
 } from "lucide-react";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { CommandPalette } from "@/components/desktop/command-palette";
+import { ZaloLinkModal } from "@/components/account/zalo-link-modal";
+import { DiscordLinkModal } from "@/components/account/discord-link-modal";
+import { NotificationPreferencesModal } from "@/components/account/notification-preferences-modal";
 import { ShortcutsModal } from "@/components/desktop/shortcuts-modal";
 import { SmartWorkCalculator } from "@/components/desktop/smart-work-calculator";
 import { DesktopScratchpad } from "@/components/desktop/desktop-scratchpad";
@@ -48,6 +54,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog } from "primereact/dialog";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { FileUploadZone, type UploadedFileItem } from "@/components/ui/file-upload-zone";
 import { PROJECT_STATUSES, projectStatusMeta } from "@/lib/constants";
 import type { UserLite } from "@/lib/types";
 
@@ -124,6 +131,7 @@ export function AppShell({
   const [newProjectStatus, setNewProjectStatus] = useState<string>("PLANNING");
   const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
+  const [newProjectAttachments, setNewProjectAttachments] = useState<UploadedFileItem[]>([]);
   const [creatingProject, setCreatingProject] = useState(false);
   const [createProjectError, setCreateProjectError] = useState("");
 
@@ -141,6 +149,9 @@ export function AppShell({
   // Desktop Productivity Tools & Modal States
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
+  const [isZaloLinkOpen, setIsZaloLinkOpen] = useState(false);
+  const [isDiscordLinkOpen, setIsDiscordLinkOpen] = useState(false);
+  const [isNotificationPrefsOpen, setIsNotificationPrefsOpen] = useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   const [isScratchpadOpen, setIsScratchpadOpen] = useState(false);
 
@@ -213,6 +224,19 @@ export function AppShell({
   useEffect(() => {
     setMobileDrawerOpen(false);
   }, [pathname]);
+
+  // Xử lý kết quả redirect về từ Discord OAuth callback (?discord_oauth=connected|error)
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const discordOauthStatus = searchParams.get("discord_oauth");
+    if (!discordOauthStatus) return;
+
+    if (discordOauthStatus === "error") {
+      alert(searchParams.get("discord_oauth_message") || "Kết nối Discord thất bại");
+    }
+    setIsDiscordLinkOpen(true);
+    window.history.replaceState({}, "", window.location.pathname);
+  }, []);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -351,6 +375,13 @@ export function AppShell({
           status: newProjectStatus,
           teamIds: selectedTeamIds,
           memberIds: selectedMemberIds,
+          attachments: newProjectAttachments.map((att) => ({
+            fileName: att.fileName,
+            fileUrl: att.fileUrl,
+            fileType: att.fileType,
+            fileSize: att.fileSize,
+            mimeType: att.mimeType,
+          })),
         }),
       });
 
@@ -367,6 +398,7 @@ export function AppShell({
       setNewProjectStatus("PLANNING");
       setSelectedTeamIds([]);
       setSelectedMemberIds([]);
+      setNewProjectAttachments([]);
       setProjectMenuOpen(false);
 
       // Redirect directly to the new project dashboard
@@ -395,7 +427,7 @@ export function AppShell({
     pathname.endsWith("/tickets") ? "Tickets Khách Hàng" :
     pathname.endsWith("/notion") ? "Tích Hợp Notion Hub" :
     pathname.endsWith("/users") ? "Người Dùng & Phân Quyền" :
-    pathname.endsWith("/settings") ? "Cài Đặt Dự Án" :
+    pathname.endsWith("/settings") ? "Cấu Hình Hệ Thống" :
     pathname.endsWith("/all-projects") ? "Tất Cả Dự Án" :
     (pathname.endsWith("/dashboard") || pathname === `/projects/${project.id}`) ? "Tổng Quan" :
     "";
@@ -418,10 +450,21 @@ export function AppShell({
     const handlePrefetch = () => {
       if (item.href.endsWith("/dashboard")) {
         prefetchTab(`/api/projects/${project.id}/dashboard`);
-      } else if (item.href.endsWith("/board") || item.href.endsWith("/sprints")) {
+      } else if (item.href.endsWith("/board")) {
         prefetchTab(`/api/projects/${project.id}/tasks`);
+      } else if (item.href.endsWith("/sprints")) {
+        prefetchTab(`/api/projects/${project.id}/tasks`);
+        prefetchTab(`/api/projects/${project.id}/sprints`);
       } else if (item.href.endsWith("/reports")) {
         prefetchTab(`/api/projects/${project.id}/reports`);
+      } else if (item.href.endsWith("/users")) {
+        prefetchTab(`/api/users`);
+        prefetchTab(`/api/teams`);
+        prefetchTab(`/api/roles`);
+      } else if (item.href.endsWith("/all-projects")) {
+        prefetchTab(`/api/projects`);
+      } else if (item.href.endsWith("/tickets")) {
+        prefetchTab(`/api/projects/${project.id}/tickets`);
       }
     };
 
@@ -435,7 +478,7 @@ export function AppShell({
             if (isMobile) setMobileDrawerOpen(false);
           }}
           className={cn(
-            "flex flex-1 min-w-0 items-center gap-2.5 rounded-xl px-3 py-2 pr-8 text-xs font-semibold transition-all group/link",
+            "flex flex-1 min-w-0 items-center gap-2.5 rounded-xl px-3 py-2 pr-8 text-xs font-semibold transition-all duration-150 active:scale-[0.97] group/link",
             active
               ? "bg-accent text-white shadow-md shadow-accent/25 font-bold"
               : "text-muted hover:bg-surface-2 hover:text-foreground"
@@ -572,7 +615,7 @@ export function AppShell({
           <div className="absolute left-3 right-3 top-[calc(100%+6px)] z-50 rounded-2xl border border-line bg-surface p-2 shadow-2xl backdrop-blur-2xl animate-fade-in-up ring-1 ring-line">
             {/* Header */}
             <div className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted flex items-center justify-between border-b border-line/50 pb-2">
-              <span>Dự án của bạn ({projects.length})</span>
+              <span>{isAdmin ? `Toàn bộ dự án (${projects.length})` : `Dự án của bạn (${projects.length})`}</span>
               <span className="rounded bg-surface-2 px-1.5 py-0.2 text-[9px] font-mono text-muted-light">
                 ESC
               </span>
@@ -636,11 +679,15 @@ export function AppShell({
                           {p.name}
                         </div>
                         <div className="flex items-center gap-1.5 text-[10px] text-muted font-mono mt-0.5">
-                          <span>{p.key}</span>
+                          <span className="font-bold text-foreground/80">{p.key}</span>
                           <span>•</span>
                           <span
-                            className="px-1 py-0.1 rounded text-[8px] font-semibold"
-                            style={{ color: pStatusMeta.color }}
+                            className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-bold"
+                            style={{
+                              backgroundColor: pStatusMeta.bg,
+                              color: pStatusMeta.color,
+                              border: `1px solid ${pStatusMeta.border}`,
+                            }}
                           >
                             {pStatusMeta.label}
                           </span>
@@ -983,6 +1030,42 @@ export function AppShell({
                       <Settings className="h-4 w-4 text-blue-500 dark:text-blue-400" />
                       <span>Cài đặt Dự án & Cấu hình</span>
                     </Link>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUserMenuOpen(false);
+                        setIsZaloLinkOpen(true);
+                      }}
+                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-foreground hover:bg-surface-2 transition-colors cursor-pointer"
+                    >
+                      <MessageCircle className="h-4 w-4 text-emerald-500" />
+                      <span>Kết nối Zalo (nhận thông báo)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUserMenuOpen(false);
+                        setIsDiscordLinkOpen(true);
+                      }}
+                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-foreground hover:bg-surface-2 transition-colors cursor-pointer"
+                    >
+                      <Bot className="h-4 w-4 text-[#5865F2]" />
+                      <span>Kết nối Discord (nhận thông báo)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUserMenuOpen(false);
+                        setIsNotificationPrefsOpen(true);
+                      }}
+                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-foreground hover:bg-surface-2 transition-colors cursor-pointer"
+                    >
+                      <Bell className="h-4 w-4 text-accent" />
+                      <span>Tùy chọn kênh nhận thông báo</span>
+                    </button>
                   </div>
 
                   {/* Logout Button */}
@@ -1002,8 +1085,8 @@ export function AppShell({
           </div>
         </header>
 
-        {/* Page Content Body */}
-        <div className="flex-1 overflow-hidden flex flex-col">
+        {/* Page Content Body with smooth page transition animation */}
+        <div key={pathname} className="flex-1 overflow-hidden flex flex-col animate-page-enter">
           {children}
         </div>
       </main>
@@ -1013,7 +1096,7 @@ export function AppShell({
         <Link
           href={`/projects/${project.id}/dashboard`}
           className={cn(
-            "flex flex-col items-center justify-center flex-1 h-full py-1 text-[10px] font-semibold transition-all",
+            "flex flex-col items-center justify-center flex-1 h-full py-1 text-[10px] font-semibold transition-all duration-150 active:scale-90 cursor-pointer",
             pathname === `/projects/${project.id}/dashboard` || pathname === `/projects/${project.id}`
               ? "text-accent font-bold"
               : "text-muted hover:text-foreground"
@@ -1026,7 +1109,7 @@ export function AppShell({
         <Link
           href={`/projects/${project.id}/board`}
           className={cn(
-            "flex flex-col items-center justify-center flex-1 h-full py-1 text-[10px] font-semibold transition-all",
+            "flex flex-col items-center justify-center flex-1 h-full py-1 text-[10px] font-semibold transition-all duration-150 active:scale-90 cursor-pointer",
             pathname.endsWith("/board") ? "text-accent font-bold" : "text-muted hover:text-foreground"
           )}
         >
@@ -1037,7 +1120,7 @@ export function AppShell({
         <Link
           href={`/projects/${project.id}/sprints`}
           className={cn(
-            "flex flex-col items-center justify-center flex-1 h-full py-1 text-[10px] font-semibold transition-all",
+            "flex flex-col items-center justify-center flex-1 h-full py-1 text-[10px] font-semibold transition-all duration-150 active:scale-90 cursor-pointer",
             pathname.endsWith("/sprints") ? "text-accent font-bold" : "text-muted hover:text-foreground"
           )}
         >
@@ -1048,7 +1131,7 @@ export function AppShell({
         <Link
           href={`/projects/${project.id}/tickets`}
           className={cn(
-            "flex flex-col items-center justify-center flex-1 h-full py-1 text-[10px] font-semibold transition-all",
+            "flex flex-col items-center justify-center flex-1 h-full py-1 text-[10px] font-semibold transition-all duration-150 active:scale-90 cursor-pointer",
             pathname.endsWith("/tickets") ? "text-accent font-bold" : "text-muted hover:text-foreground"
           )}
         >
@@ -1076,9 +1159,19 @@ export function AppShell({
         header="Khởi Tạo Dự Án Mới"
         visible={createProjectOpen}
         onHide={() => setCreateProjectOpen(false)}
-        className="w-full max-w-2xl border border-line bg-surface rounded-2xl shadow-2xl"
+        className="w-full max-w-2xl border border-line bg-surface rounded-2xl shadow-2xl overflow-hidden"
+        contentClassName="p-4 sm:p-5 max-h-[82vh] overflow-y-auto"
       >
-        <form onSubmit={handleCreateProject} className="space-y-4 pt-2 max-h-[80vh] overflow-y-auto pr-1">
+        <form
+          onSubmit={handleCreateProject}
+          onKeyDown={(e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+              e.preventDefault();
+              handleCreateProject(e);
+            }
+          }}
+          className="space-y-4"
+        >
           {createProjectError && (
             <div className="rounded-xl bg-accent-subtle border border-accent/30 p-2.5 text-xs text-accent font-medium">
               {createProjectError}
@@ -1127,16 +1220,17 @@ export function AppShell({
                     type="button"
                     onClick={() => setNewProjectStatus(st.id)}
                     className={cn(
-                      "flex flex-col items-center justify-center p-2 rounded-xl border text-center transition-all cursor-pointer",
+                      "flex flex-col items-center justify-center p-2 rounded-xl border text-center transition-all cursor-pointer font-bold",
                       isSelected
-                        ? "bg-surface-3 shadow-sm ring-2 ring-accent"
-                        : "bg-surface-2/60 border-line hover:bg-surface-2"
+                        ? "border-2 shadow-sm scale-[1.02]"
+                        : "border-line bg-surface-2/60 hover:bg-surface-2 opacity-80 hover:opacity-100"
                     )}
                     style={{
                       borderColor: isSelected ? st.color : undefined,
+                      backgroundColor: isSelected ? `${st.color}18` : undefined,
                     }}
                   >
-                    <span className="text-xs font-bold" style={{ color: st.color }}>
+                    <span className="text-xs font-bold" style={{ color: isSelected ? st.color : "inherit" }}>
                       {st.label}
                     </span>
                   </button>
@@ -1153,6 +1247,19 @@ export function AppShell({
               onChange={(e) => setNewProjectDesc(e.target.value)}
               rows={2}
               className="text-xs bg-surface-2"
+            />
+          </div>
+
+          {/* ========================================================================= */}
+          {/* ĐÍNH KÈM TÀI LIỆU DỰ ÁN (FILE, ẢNH, VIDEO)                               */}
+          {/* ========================================================================= */}
+          <div className="space-y-2 rounded-xl border border-line bg-surface-2/40 p-3.5">
+            <FileUploadZone
+              files={newProjectAttachments}
+              onChange={setNewProjectAttachments}
+              label="Tài liệu, hình ảnh & video dự án (Tùy chọn)"
+              helperText="Hỗ trợ đính kèm tài liệu đặc tả, bản vẽ sơ đồ hoặc video demo (PNG, JPG, WebP, MP4, WebM, MOV, PDF, Word, Excel, Zip... Tối đa 25MB/file & 100MB/video)"
+              maxFiles={10}
             />
           </div>
 
@@ -1290,21 +1397,26 @@ export function AppShell({
               variant="outline"
               size="sm"
               onClick={() => setCreateProjectOpen(false)}
+              className="cursor-pointer"
             >
-              Hủy
+              <span>Hủy</span>
+              <kbd className="text-[10px] text-muted ml-1 font-mono">Esc</kbd>
             </Button>
             <Button
               type="submit"
               size="sm"
               disabled={creatingProject}
-              className="font-bold bg-accent hover:bg-accent/90 text-white shadow-md shadow-accent/25 px-4"
+              className="font-bold bg-accent hover:bg-accent/90 text-white shadow-md shadow-accent/25 px-4 cursor-pointer gap-1.5"
             >
               {creatingProject ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
               ) : (
                 <Plus className="h-3.5 w-3.5 mr-1 stroke-[2.5]" />
               )}
-              Tạo dự án ngay
+              <span>Tạo dự án ngay</span>
+              <kbd className="hidden sm:inline-block px-1.5 py-0.2 text-[9px] font-mono font-bold bg-white/20 text-white rounded border border-white/30">
+                Ctrl+Enter
+              </kbd>
             </Button>
           </div>
         </form>
@@ -1324,6 +1436,24 @@ export function AppShell({
       <ShortcutsModal
         isOpen={isShortcutsOpen}
         onClose={() => setIsShortcutsOpen(false)}
+      />
+
+      {/* Modal tự liên kết tài khoản Zalo cá nhân để nhận thông báo */}
+      <ZaloLinkModal
+        isOpen={isZaloLinkOpen}
+        onClose={() => setIsZaloLinkOpen(false)}
+      />
+
+      {/* Modal tự liên kết tài khoản Discord cá nhân để nhận thông báo */}
+      <DiscordLinkModal
+        isOpen={isDiscordLinkOpen}
+        onClose={() => setIsDiscordLinkOpen(false)}
+      />
+
+      {/* Modal tùy chọn kênh nhận thông báo cá nhân (Email/Zalo/In-app) theo từng loại sự kiện */}
+      <NotificationPreferencesModal
+        isOpen={isNotificationPrefsOpen}
+        onClose={() => setIsNotificationPrefsOpen(false)}
       />
 
       {/* Floating Smart Work Calculator */}

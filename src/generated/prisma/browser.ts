@@ -23,6 +23,11 @@ export * from './enums';
  */
 export type User = Prisma.UserModel
 /**
+ * Model UserNotificationPreference
+ * 
+ */
+export type UserNotificationPreference = Prisma.UserNotificationPreferenceModel
+/**
  * Model Team
  * 
  */
@@ -102,3 +107,18 @@ export type Attachment = Prisma.AttachmentModel
  * 
  */
 export type SystemSetting = Prisma.SystemSettingModel
+/**
+ * Model DiscordMessageLog
+ * 
+ */
+export type DiscordMessageLog = Prisma.DiscordMessageLogModel
+/**
+ * Model ZaloMessageLog
+ * 
+ */
+export type ZaloMessageLog = Prisma.ZaloMessageLogModel
+/**
+ * Model ZaloLinkCode
+ * 
+ */
+export type ZaloLinkCode = Prisma.ZaloLinkCodeModel

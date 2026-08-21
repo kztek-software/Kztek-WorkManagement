@@ -218,12 +218,12 @@ export function CommandPalette({
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
       <div
-        className="w-full max-w-2xl bg-card border border-border/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-150"
+        className="w-full max-w-2xl bg-surface border border-line rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-150"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search Header */}
-        <div className="flex items-center px-4 py-3.5 border-b border-border/60 bg-muted/20">
-          <Search className="w-5 h-5 text-primary mr-3 flex-shrink-0" />
+        <div className="flex items-center px-4 py-3.5 border-b border-line bg-surface-2/60">
+          <Search className="w-5 h-5 text-accent mr-3 flex-shrink-0" />
           <input
             ref={inputRef}
             type="text"
@@ -233,9 +233,9 @@ export function CommandPalette({
               setSelectedIndex(0);
             }}
             placeholder="Tìm kiếm hành động, dự án, công việc... (Esc để đóng)"
-            className="w-full bg-transparent text-foreground placeholder:text-muted-foreground text-sm focus:outline-none"
+            className="w-full bg-transparent text-foreground placeholder:text-muted text-sm focus:outline-none"
           />
-          <kbd className="hidden sm:inline-flex px-2 py-0.5 text-[10px] font-mono bg-background border border-border/80 rounded text-muted-foreground">
+          <kbd className="hidden sm:inline-flex px-2 py-0.5 text-[10px] font-mono bg-surface-2 border border-line rounded text-muted">
             ESC
           </kbd>
         </div>
@@ -243,8 +243,8 @@ export function CommandPalette({
         {/* Results List */}
         <div className="overflow-y-auto p-2 space-y-1 max-h-[60vh]">
           {filteredItems.length === 0 ? (
-            <div className="py-12 text-center text-muted-foreground text-sm">
-              <Sparkles className="w-8 h-8 mx-auto mb-2 opacity-40 text-primary" />
+            <div className="py-12 text-center text-muted text-sm">
+              <Sparkles className="w-8 h-8 mx-auto mb-2 opacity-40 text-accent" />
               Không tìm thấy lệnh hoặc công việc nào khớp với &quot;{query}&quot;
             </div>
           ) : (
@@ -258,16 +258,16 @@ export function CommandPalette({
                   onMouseEnter={() => setSelectedIndex(idx)}
                   className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl cursor-pointer transition-all ${
                     isSelected
-                      ? "bg-primary text-primary-foreground shadow-md"
-                      : "hover:bg-muted/60 text-foreground"
+                      ? "bg-accent text-white shadow-md shadow-accent/25 font-medium"
+                      : "hover:bg-surface-2 text-foreground"
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div
                       className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
                         isSelected
-                          ? "bg-primary-foreground/20 text-primary-foreground"
-                          : "bg-primary/10 text-primary"
+                          ? "bg-white/20 text-white"
+                          : "bg-accent/10 text-accent border border-accent/20"
                       }`}
                     >
                       <IconComp className="w-4 h-4" />
@@ -277,10 +277,10 @@ export function CommandPalette({
                         <span>{item.title}</span>
                         {item.category && (
                           <span
-                            className={`text-[10px] px-1.5 py-0.5 rounded font-normal ${
+                            className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
                               isSelected
-                                ? "bg-primary-foreground/20 text-primary-foreground"
-                                : "bg-muted text-muted-foreground"
+                                ? "bg-white/20 text-white"
+                                : "bg-surface-2 text-muted border border-line"
                             }`}
                           >
                             {item.category}
@@ -289,7 +289,7 @@ export function CommandPalette({
                       </div>
                       <div
                         className={`text-[11px] truncate ${
-                          isSelected ? "text-primary-foreground/80" : "text-muted-foreground"
+                          isSelected ? "text-white/80" : "text-muted"
                         }`}
                       >
                         {item.subtitle}
@@ -298,7 +298,7 @@ export function CommandPalette({
                   </div>
                   <ArrowRight
                     className={`w-4 h-4 flex-shrink-0 ml-2 transition-transform ${
-                      isSelected ? "translate-x-1 opacity-100" : "opacity-0"
+                      isSelected ? "translate-x-1 opacity-100 text-white" : "opacity-0"
                     }`}
                   />
                 </div>
@@ -308,25 +308,25 @@ export function CommandPalette({
         </div>
 
         {/* Footer info */}
-        <div className="px-4 py-2.5 bg-muted/40 border-t border-border/50 flex items-center justify-between text-[11px] text-muted-foreground">
+        <div className="px-4 py-2.5 bg-surface-2/80 border-t border-line flex items-center justify-between text-[11px] text-muted">
           <div className="flex items-center gap-3">
             <span>
-              <kbd className="px-1.5 py-0.5 bg-background border border-border/80 rounded font-mono text-[10px]">
+              <kbd className="px-1.5 py-0.5 bg-surface border border-line rounded font-mono text-[10px] text-foreground">
                 ↑
               </kbd>{" "}
-              <kbd className="px-1.5 py-0.5 bg-background border border-border/80 rounded font-mono text-[10px]">
+              <kbd className="px-1.5 py-0.5 bg-surface border border-line rounded font-mono text-[10px] text-foreground">
                 ↓
               </kbd>{" "}
               để chọn
             </span>
             <span>
-              <kbd className="px-1.5 py-0.5 bg-background border border-border/80 rounded font-mono text-[10px]">
+              <kbd className="px-1.5 py-0.5 bg-surface border border-line rounded font-mono text-[10px] text-foreground">
                 ↵
               </kbd>{" "}
               để mở
             </span>
           </div>
-          <span className="hidden sm:inline">KZTEK Desktop Workstation</span>
+          <span className="hidden sm:inline font-medium">KZTEK Desktop Workstation</span>
         </div>
       </div>
     </div>

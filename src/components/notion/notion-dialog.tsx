@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ExternalLink,
   CheckCircle2,
@@ -17,13 +17,7 @@ import type { NotionDatabaseInfo, NotionTaskItem } from "@/lib/notion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { Dialog } from "primereact/dialog";
 
 export function NotionDialog({
   projectId,
@@ -180,62 +174,128 @@ export function NotionDialog({
     }
   }
 
+  // Keyboard shortcuts listener for NotionDialog
+  useEffect(() => {
+    if (!open) return;
+
+    function handleNotionDialogKeyDown(e: KeyboardEvent) {
+      // Ctrl + Enter / Cmd + Enter
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        if (step === "token" && apiKey.trim() && !testing) {
+          e.preventDefault();
+          handleTestConnection();
+          return;
+        }
+        if (step === "inspect" && tasks.length > 0 && !importing) {
+          e.preventDefault();
+          handleImportTasks();
+          return;
+        }
+      }
+
+      // Alt + 1: Token & Kết nối
+      if (e.altKey && e.key === "1") {
+        e.preventDefault();
+        setStep("token");
+        return;
+      }
+
+      // Alt + 2: Danh sách Database
+      if (e.altKey && e.key === "2" && databases.length > 0) {
+        e.preventDefault();
+        setStep("databases");
+        return;
+      }
+
+      // Alt + 3: Tasks
+      if (e.altKey && e.key === "3" && selectedDb) {
+        e.preventDefault();
+        setStep("inspect");
+        return;
+      }
+
+      // Alt + R: Refresh
+      if (e.altKey && e.key.toLowerCase() === "r") {
+        e.preventDefault();
+        if (step === "databases") {
+          handleFetchDatabases();
+        } else if (step === "inspect" && selectedDb) {
+          handleInspectDatabase(selectedDb);
+        }
+        return;
+      }
+    }
+
+    window.addEventListener("keydown", handleNotionDialogKeyDown);
+    return () => window.removeEventListener("keydown", handleNotionDialogKeyDown);
+  }, [open, step, apiKey, testing, tasks, importing, databases, selectedDb]);
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
-        <DialogHeader>
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-800 text-white font-bold text-base shadow-sm">
-              N
+    <Dialog
+      visible={open}
+      onHide={() => onOpenChange(false)}
+      header={
+        <div className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-neutral-800 text-white font-bold text-base shadow-sm">
+            N
+          </div>
+          <div>
+            <div className="text-base font-bold flex items-center gap-2 text-foreground">
+              <span>Notion Live Hub & Trình Kiểm Tra Trực Tiếp</span>
+              <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-semibold text-accent">
+                Official API v1
+              </span>
             </div>
-            <div>
-              <DialogTitle className="text-base font-bold flex items-center gap-2">
-                Notion Live Hub & Trình Kiểm Tra Trực Tiếp
-                <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-semibold text-accent">
-                  Official API v1
-                </span>
-              </DialogTitle>
-              <DialogDescription className="text-xs">
-                Liên kết trực tiếp tới Workspace Notion của KZTEK để kiểm tra, duyệt và đồng bộ task
-              </DialogDescription>
+            <div className="text-xs text-muted font-normal mt-0.5">
+              Liên kết trực tiếp tới Workspace Notion của KZTEK để kiểm tra, duyệt và đồng bộ task
             </div>
           </div>
-        </DialogHeader>
+        </div>
+      }
+      className="w-full max-w-4xl border border-line bg-surface rounded-2xl shadow-2xl overflow-hidden"
+      contentClassName="p-5 max-h-[85vh] overflow-y-auto flex flex-col"
+    >
 
         {/* Thanh chuyển bước */}
         <div className="flex items-center justify-between border-b border-line py-2 px-1 text-xs">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setStep("token")}
+              title="Bước 1: Token & Kết nối (Alt+1)"
               className={`flex items-center gap-1.5 font-medium px-2 py-1 rounded cursor-pointer ${
                 step === "token" ? "bg-surface-2 text-foreground font-semibold" : "text-muted hover:text-foreground"
               }`}
             >
-              1. Token & Kết nối
+              <span>1. Token & Kết nối</span>
+              <kbd className="hidden sm:inline-block text-[9px] font-mono opacity-70">Alt+1</kbd>
             </button>
             <ArrowRight className="h-3 w-3 text-muted" />
             <button
               onClick={() => databases.length > 0 && setStep("databases")}
               disabled={databases.length === 0}
+              title="Bước 2: Danh sách Database (Alt+2)"
               className={`flex items-center gap-1.5 font-medium px-2 py-1 rounded cursor-pointer ${
                 step === "databases"
                   ? "bg-surface-2 text-foreground font-semibold"
                   : "text-muted hover:text-foreground disabled:opacity-40"
               }`}
             >
-              2. Danh sách Database ({databases.length})
+              <span>2. Danh sách Database ({databases.length})</span>
+              <kbd className="hidden sm:inline-block text-[9px] font-mono opacity-70">Alt+2</kbd>
             </button>
             <ArrowRight className="h-3 w-3 text-muted" />
             <button
               onClick={() => selectedDb && setStep("inspect")}
               disabled={!selectedDb}
+              title="Bước 3: Kiểm tra Tasks trực tiếp (Alt+3)"
               className={`flex items-center gap-1.5 font-medium px-2 py-1 rounded cursor-pointer ${
                 step === "inspect"
                   ? "bg-surface-2 text-foreground font-semibold"
                   : "text-muted hover:text-foreground disabled:opacity-40"
               }`}
             >
-              3. Kiểm tra Tasks trực tiếp ({tasks.length})
+              <span>3. Kiểm tra Tasks trực tiếp ({tasks.length})</span>
+              <kbd className="hidden sm:inline-block text-[9px] font-mono opacity-70">Alt+3</kbd>
             </button>
           </div>
 
@@ -282,11 +342,14 @@ export function NotionDialog({
                   <Button
                     onClick={handleTestConnection}
                     disabled={testing}
-                    className="shrink-0"
+                    className="shrink-0 cursor-pointer gap-1.5"
                     size="sm"
                   >
                     {testing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
-                    Kiểm tra kết nối
+                    <span>Kiểm tra kết nối</span>
+                    <kbd className="hidden sm:inline-block px-1.5 py-0.2 text-[9px] font-mono font-bold bg-white/20 text-white rounded border border-white/30">
+                      Ctrl+Enter
+                    </kbd>
                   </Button>
                 </div>
                 <p className="text-[11px] text-muted leading-relaxed">
@@ -447,14 +510,17 @@ export function NotionDialog({
                     size="sm"
                     onClick={handleImportTasks}
                     disabled={importing || tasks.length === 0}
-                    className="h-8 text-xs font-semibold"
+                    className="h-8 text-xs font-semibold cursor-pointer gap-1.5"
                   >
                     {importing ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     ) : (
                       <Sparkles className="h-3.5 w-3.5 text-amber-400" />
                     )}
-                    Nhập ({tasks.length}) Task vào Board
+                    <span>Nhập ({tasks.length}) Task vào Board</span>
+                    <kbd className="hidden sm:inline-block px-1.5 py-0.2 text-[9px] font-mono font-bold bg-white/20 text-white rounded border border-white/30">
+                      Ctrl+Enter
+                    </kbd>
                   </Button>
                 </div>
               </div>
@@ -531,16 +597,17 @@ export function NotionDialog({
                 variant="ghost"
                 size="sm"
                 onClick={() => setStep(step === "inspect" ? "databases" : "token")}
+                className="cursor-pointer"
               >
                 ← Quay lại
               </Button>
             )}
           </div>
-          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
-            Đóng
+          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} className="cursor-pointer">
+            <span>Đóng</span>
+            <kbd className="text-[10px] text-muted ml-1 font-mono">Esc</kbd>
           </Button>
         </div>
-      </DialogContent>
     </Dialog>
   );
 }
