@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: kztek-work-management:latest
+    image: kztek/OneMoreK:latest
     container_name: kztek-work-management
     restart: unless-stopped
     ports:
