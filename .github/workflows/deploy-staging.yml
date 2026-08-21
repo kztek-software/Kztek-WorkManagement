@@ -1,0 +1,42 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches:
+      - staging
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: true
+
+jobs:
+  build-and-trigger:
+    name: Build, lint & trigger deploy webhook
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build (sanity check)
+        run: npm run build
+
+      - name: Trigger deploying webhook
+        run: |
+          curl -sSf -X POST \
+            "${{ secrets.WEBHOOK_URL }}" \
+            -H "X-Hub-Signature: ${{ secrets.WEBHOOK_TOKEN }}"
