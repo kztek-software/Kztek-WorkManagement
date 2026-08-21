@@ -1,42 +1,16 @@
 "use client";
 
 import * as React from "react";
-import * as TooltipPrimitive from "@radix-ui/react-tooltip";
+import { Tooltip as PrimeTooltip } from "primereact/tooltip";
 import { cn } from "@/lib/utils";
 
-const TooltipProvider = TooltipPrimitive.Provider;
-
-const TooltipRoot = TooltipPrimitive.Root;
-
-const TooltipTrigger = TooltipPrimitive.Trigger;
-
-const TooltipContent = React.forwardRef<
-  React.ElementRef<typeof TooltipPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
->(({ className, sideOffset = 6, ...props }, ref) => (
-  <TooltipPrimitive.Portal>
-    <TooltipPrimitive.Content
-      ref={ref}
-      sideOffset={sideOffset}
-      className={cn(
-        "z-50 overflow-hidden rounded-xl border border-line bg-surface-3 px-3 py-1.5 text-xs font-semibold text-foreground shadow-2xl animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 drop-shadow-md",
-        className
-      )}
-      {...props}
-    />
-  </TooltipPrimitive.Portal>
-));
-TooltipContent.displayName = TooltipPrimitive.Content.displayName;
-
 /**
- * Convenient wrapper for instant tooltip
+ * Convenient wrapper for PrimeReact tooltip
  */
 export function Tooltip({
   content,
   children,
   side = "top",
-  align = "center",
-  delayDuration = 100,
   className,
 }: {
   content: React.ReactNode;
@@ -46,18 +20,39 @@ export function Tooltip({
   delayDuration?: number;
   className?: string;
 }) {
+  const id = React.useId().replace(/:/g, "");
+  const targetClass = `p-tip-${id}`;
+
   if (!content) return <>{children}</>;
 
   return (
-    <TooltipProvider delayDuration={delayDuration}>
-      <TooltipRoot>
-        <TooltipTrigger asChild>{children}</TooltipTrigger>
-        <TooltipContent side={side} align={align} className={className}>
-          {content}
-        </TooltipContent>
-      </TooltipRoot>
-    </TooltipProvider>
+    <>
+      <PrimeTooltip
+        target={`.${targetClass}`}
+        position={side}
+        className={cn("text-xs font-semibold z-50", className)}
+        showDelay={100}
+      />
+      {React.isValidElement(children) ? (
+        React.cloneElement(children as React.ReactElement<{ className?: string; "data-pr-tooltip"?: string }>, {
+          className: cn(targetClass, (children.props as any).className),
+          "data-pr-tooltip": typeof content === "string" ? content : undefined,
+        })
+      ) : (
+        <span className={targetClass} data-pr-tooltip={typeof content === "string" ? content : undefined}>
+          {children}
+        </span>
+      )}
+    </>
   );
 }
 
-export { TooltipRoot, TooltipTrigger, TooltipContent, TooltipProvider };
+const TooltipProvider = ({ children }: { children: React.ReactNode }) => <>{children}</>;
+const TooltipRoot = ({ children }: { children: React.ReactNode }) => <>{children}</>;
+const TooltipTrigger = ({ children }: { children: React.ReactNode; asChild?: boolean }) => <>{children}</>;
+const TooltipContent = ({ children, className }: { children: React.ReactNode; className?: string; side?: string; align?: string }) => (
+  <span className={cn("p-tooltip-text text-xs", className)}>{children}</span>
+);
+
+export { TooltipRoot, TooltipTrigger, TooltipContent, TooltipProvider, PrimeTooltip };
+

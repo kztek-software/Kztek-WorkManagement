@@ -1,18 +1,20 @@
 import * as React from "react";
+import { InputText, type InputTextProps } from "primereact/inputtext";
 import { cn } from "@/lib/utils";
 
-const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
-  ({ className, type, ...props }, ref) => {
+export type InputProps = React.InputHTMLAttributes<HTMLInputElement> &
+  Partial<Omit<InputTextProps, keyof React.InputHTMLAttributes<HTMLInputElement>>>;
+
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ className, ...props }, ref) => {
     return (
-      <input
-        type={type}
-        suppressHydrationWarning
+      <InputText
         className={cn(
-          "flex h-9 w-full rounded-md border border-line bg-surface px-3 py-1 text-sm text-foreground transition-colors placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-50",
+          "w-full text-sm placeholder:text-muted transition-colors focus-visible:outline-none focus:border-accent disabled:cursor-not-allowed disabled:opacity-50",
           className
         )}
-        ref={ref}
-        {...props}
+        ref={ref as any}
+        {...(props as any)}
       />
     );
   }

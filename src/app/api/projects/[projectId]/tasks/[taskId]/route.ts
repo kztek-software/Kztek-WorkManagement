@@ -36,15 +36,17 @@ export async function PATCH(
   const user = await requireUser();
   const { projectId, taskId } = await params;
 
-  const member = await prisma.projectMember.findUnique({
-    where: { projectId_userId: { projectId, userId: user.id } },
-  });
-  if (!member) return NextResponse.json({ error: "Không có quyền truy cập" }, { status: 403 });
+  const [member, task] = await Promise.all([
+    prisma.projectMember.findUnique({
+      where: { projectId_userId: { projectId, userId: user.id } },
+    }),
+    prisma.task.findFirst({ where: { id: taskId, projectId } }),
+  ]);
 
-  const task = await prisma.task.findFirst({ where: { id: taskId, projectId } });
+  if (!member && user.role !== "ADMIN") return NextResponse.json({ error: "Không có quyền truy cập" }, { status: 403 });
   if (!task) return NextResponse.json({ error: "Không tìm thấy task" }, { status: 404 });
 
-  if (!canEditTask(member.role)) {
+  if (member && !canEditTask(member.role)) {
     return NextResponse.json({ error: "Người xem (Viewer) không có quyền chỉnh sửa task" }, { status: 403 });
   }
 
@@ -136,15 +138,17 @@ export async function DELETE(
   const user = await requireUser();
   const { projectId, taskId } = await params;
 
-  const member = await prisma.projectMember.findUnique({
-    where: { projectId_userId: { projectId, userId: user.id } },
-  });
-  if (!member) return NextResponse.json({ error: "Không có quyền truy cập" }, { status: 403 });
+  const [member, task] = await Promise.all([
+    prisma.projectMember.findUnique({
+      where: { projectId_userId: { projectId, userId: user.id } },
+    }),
+    prisma.task.findFirst({ where: { id: taskId, projectId } }),
+  ]);
 
-  const task = await prisma.task.findFirst({ where: { id: taskId, projectId } });
+  if (!member && user.role !== "ADMIN") return NextResponse.json({ error: "Không có quyền truy cập" }, { status: 403 });
   if (!task) return NextResponse.json({ error: "Không tìm thấy task" }, { status: 404 });
 
-  if (!canDeleteTask(member.role)) {
+  if (member && !canDeleteTask(member.role) && user.role !== "ADMIN" && task.creatorId !== user.id) {
     return NextResponse.json({ error: "Bạn không có quyền xóa task này (chỉ Admin/Owner hoặc Người tạo)" }, { status: 403 });
   }
 

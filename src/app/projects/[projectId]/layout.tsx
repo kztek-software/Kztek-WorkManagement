@@ -37,8 +37,8 @@ export default async function ProjectLayout({
       },
     }),
     prisma.project.findMany({
-      where: { members: { some: { userId: user.id } } },
-      select: { id: true, name: true, key: true },
+      where: user.role === "ADMIN" ? undefined : { members: { some: { userId: user.id } } },
+      select: { id: true, name: true, key: true, status: true },
       orderBy: { createdAt: "asc" },
     }),
   ]);

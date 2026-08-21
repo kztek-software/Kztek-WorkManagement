@@ -52,6 +52,7 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   User: 'User',
+  UserNotificationPreference: 'UserNotificationPreference',
   Team: 'Team',
   RoleDefinition: 'RoleDefinition',
   Notification: 'Notification',
@@ -67,7 +68,9 @@ export const ModelName = {
   CustomerTicket: 'CustomerTicket',
   TicketComment: 'TicketComment',
   Attachment: 'Attachment',
-  SystemSetting: 'SystemSetting'
+  SystemSetting: 'SystemSetting',
+  ZaloMessageLog: 'ZaloMessageLog',
+  ZaloLinkCode: 'ZaloLinkCode'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -96,10 +99,34 @@ export const UserScalarFieldEnum = {
   title: 'title',
   role: 'role',
   teamId: 'teamId',
+  phone: 'phone',
+  zaloUserId: 'zaloUserId',
+  zaloLinkedAt: 'zaloLinkedAt',
   createdAt: 'createdAt'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const UserNotificationPreferenceScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  emailOnAssign: 'emailOnAssign',
+  emailOnStatusChange: 'emailOnStatusChange',
+  emailOnComment: 'emailOnComment',
+  emailOnMention: 'emailOnMention',
+  zaloOnAssign: 'zaloOnAssign',
+  zaloOnStatusChange: 'zaloOnStatusChange',
+  zaloOnComment: 'zaloOnComment',
+  zaloOnMention: 'zaloOnMention',
+  inAppOnAssign: 'inAppOnAssign',
+  inAppOnStatusChange: 'inAppOnStatusChange',
+  inAppOnComment: 'inAppOnComment',
+  inAppOnMention: 'inAppOnMention',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserNotificationPreferenceScalarFieldEnum = (typeof UserNotificationPreferenceScalarFieldEnum)[keyof typeof UserNotificationPreferenceScalarFieldEnum]
 
 
 export const TeamScalarFieldEnum = {
@@ -299,6 +326,7 @@ export type TicketCommentScalarFieldEnum = (typeof TicketCommentScalarFieldEnum)
 
 export const AttachmentScalarFieldEnum = {
   id: 'id',
+  projectId: 'projectId',
   taskId: 'taskId',
   ticketId: 'ticketId',
   uploaderId: 'uploaderId',
@@ -332,11 +360,54 @@ export const SystemSettingScalarFieldEnum = {
   notifyOnStatusChange: 'notifyOnStatusChange',
   notifyOnComment: 'notifyOnComment',
   enableRealtimeSse: 'enableRealtimeSse',
+  enableZaloIntegration: 'enableZaloIntegration',
+  zaloAppId: 'zaloAppId',
+  zaloAppSecret: 'zaloAppSecret',
+  zaloOaId: 'zaloOaId',
+  zaloOaSecretKey: 'zaloOaSecretKey',
+  zaloAccessToken: 'zaloAccessToken',
+  zaloRefreshToken: 'zaloRefreshToken',
+  zaloTokenExpiresAt: 'zaloTokenExpiresAt',
+  zaloZnsTemplateId: 'zaloZnsTemplateId',
+  notifyZaloOnAssign: 'notifyZaloOnAssign',
+  notifyZaloOnStatusChange: 'notifyZaloOnStatusChange',
+  notifyZaloOnComment: 'notifyZaloOnComment',
   updatedAt: 'updatedAt',
   updatedBy: 'updatedBy'
 } as const
 
 export type SystemSettingScalarFieldEnum = (typeof SystemSettingScalarFieldEnum)[keyof typeof SystemSettingScalarFieldEnum]
+
+
+export const ZaloMessageLogScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  zaloUserId: 'zaloUserId',
+  phone: 'phone',
+  channel: 'channel',
+  notificationType: 'notificationType',
+  templateId: 'templateId',
+  content: 'content',
+  status: 'status',
+  providerMsgId: 'providerMsgId',
+  errorMessage: 'errorMessage',
+  createdAt: 'createdAt',
+  sentAt: 'sentAt'
+} as const
+
+export type ZaloMessageLogScalarFieldEnum = (typeof ZaloMessageLogScalarFieldEnum)[keyof typeof ZaloMessageLogScalarFieldEnum]
+
+
+export const ZaloLinkCodeScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  userId: 'userId',
+  expiresAt: 'expiresAt',
+  consumedAt: 'consumedAt',
+  createdAt: 'createdAt'
+} as const
+
+export type ZaloLinkCodeScalarFieldEnum = (typeof ZaloLinkCodeScalarFieldEnum)[keyof typeof ZaloLinkCodeScalarFieldEnum]
 
 
 export const SortOrder = {

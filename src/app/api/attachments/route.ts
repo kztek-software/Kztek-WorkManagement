@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 
 const createAttachmentSchema = z.object({
+  projectId: z.string().optional().nullable(),
   taskId: z.string().optional().nullable(),
   ticketId: z.string().optional().nullable(),
   fileName: z.string().min(1),
@@ -21,16 +22,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Dữ liệu không hợp lệ", details: parsed.error.issues }, { status: 400 });
     }
 
-    const { taskId, ticketId, fileName, fileUrl, fileType, fileSize, mimeType } = parsed.data;
+    const { projectId, taskId, ticketId, fileName, fileUrl, fileType, fileSize, mimeType } = parsed.data;
 
-    if (!taskId && !ticketId) {
-      return NextResponse.json({ error: "Phải chỉ định taskId hoặc ticketId" }, { status: 400 });
+    if (!projectId && !taskId && !ticketId) {
+      return NextResponse.json({ error: "Phải chỉ định projectId, taskId hoặc ticketId" }, { status: 400 });
     }
 
     const user = await getSessionUser();
 
     const attachment = await prisma.attachment.create({
       data: {
+        projectId: projectId || null,
         taskId: taskId || null,
         ticketId: ticketId || null,
         uploaderId: user?.id || null,

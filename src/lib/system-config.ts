@@ -27,6 +27,21 @@ export type SystemNotificationRules = {
   enableRealtimeSse: boolean;
 };
 
+export type ZaloConfig = {
+  enabled: boolean;
+  appId: string;
+  appSecret: string;
+  oaId: string;
+  oaSecretKey: string;
+  accessToken: string;
+  refreshToken: string;
+  tokenExpiresAt: string | null; // ISO string
+  znsTemplateId: string;
+  notifyOnAssign: boolean;
+  notifyOnStatusChange: boolean;
+  notifyOnComment: boolean;
+};
+
 export type SystemConfigData = {
   smtp: {
     host: string;
@@ -39,6 +54,7 @@ export type SystemConfigData = {
   };
   branding: SystemBrandingConfig;
   notifications: SystemNotificationRules;
+  zalo: ZaloConfig;
   updatedAt: string;
   updatedBy?: string;
 };
@@ -69,6 +85,20 @@ function getDefaultSystemConfig(): SystemConfigData {
       notifyOnComment: true,
       enableRealtimeSse: true,
     },
+    zalo: {
+      enabled: false,
+      appId: process.env.ZALO_APP_ID || "",
+      appSecret: process.env.ZALO_APP_SECRET || "",
+      oaId: process.env.ZALO_OA_ID || "",
+      oaSecretKey: process.env.ZALO_OA_SECRET_KEY || "",
+      accessToken: "",
+      refreshToken: "",
+      tokenExpiresAt: null,
+      znsTemplateId: process.env.ZALO_ZNS_TEMPLATE_ID || "",
+      notifyOnAssign: false,
+      notifyOnStatusChange: false,
+      notifyOnComment: false,
+    },
     updatedAt: new Date().toISOString(),
     updatedBy: "Hệ thống (Mặc định)",
   };
@@ -87,6 +117,7 @@ function loadSystemConfigFromDisk(): SystemConfigData {
       smtp: { ...defaults.smtp, ...saved.smtp },
       branding: { ...defaults.branding, ...saved.branding },
       notifications: { ...defaults.notifications, ...saved.notifications },
+      zalo: { ...defaults.zalo, ...saved.zalo },
       updatedAt: saved.updatedAt || defaults.updatedAt,
       updatedBy: saved.updatedBy || defaults.updatedBy,
     };
@@ -129,6 +160,18 @@ function mapDbRecordToConfig(record: {
   notifyOnStatusChange: boolean;
   notifyOnComment: boolean;
   enableRealtimeSse: boolean;
+  enableZaloIntegration: boolean;
+  zaloAppId: string | null;
+  zaloAppSecret: string | null;
+  zaloOaId: string | null;
+  zaloOaSecretKey: string | null;
+  zaloAccessToken: string | null;
+  zaloRefreshToken: string | null;
+  zaloTokenExpiresAt: Date | null;
+  zaloZnsTemplateId: string | null;
+  notifyZaloOnAssign: boolean;
+  notifyZaloOnStatusChange: boolean;
+  notifyZaloOnComment: boolean;
   updatedAt: Date;
   updatedBy: string | null;
 }): SystemConfigData {
@@ -156,6 +199,20 @@ function mapDbRecordToConfig(record: {
       notifyOnStatusChange: record.notifyOnStatusChange ?? defaults.notifications.notifyOnStatusChange,
       notifyOnComment: record.notifyOnComment ?? defaults.notifications.notifyOnComment,
       enableRealtimeSse: record.enableRealtimeSse ?? defaults.notifications.enableRealtimeSse,
+    },
+    zalo: {
+      enabled: record.enableZaloIntegration ?? defaults.zalo.enabled,
+      appId: record.zaloAppId ?? defaults.zalo.appId,
+      appSecret: record.zaloAppSecret ?? defaults.zalo.appSecret,
+      oaId: record.zaloOaId ?? defaults.zalo.oaId,
+      oaSecretKey: record.zaloOaSecretKey ?? defaults.zalo.oaSecretKey,
+      accessToken: record.zaloAccessToken ?? defaults.zalo.accessToken,
+      refreshToken: record.zaloRefreshToken ?? defaults.zalo.refreshToken,
+      tokenExpiresAt: record.zaloTokenExpiresAt ? record.zaloTokenExpiresAt.toISOString() : null,
+      znsTemplateId: record.zaloZnsTemplateId ?? defaults.zalo.znsTemplateId,
+      notifyOnAssign: record.notifyZaloOnAssign ?? defaults.zalo.notifyOnAssign,
+      notifyOnStatusChange: record.notifyZaloOnStatusChange ?? defaults.zalo.notifyOnStatusChange,
+      notifyOnComment: record.notifyZaloOnComment ?? defaults.zalo.notifyOnComment,
     },
     updatedAt: record.updatedAt ? record.updatedAt.toISOString() : defaults.updatedAt,
     updatedBy: record.updatedBy || defaults.updatedBy,
@@ -201,6 +258,15 @@ export async function loadSystemConfigFromDb(): Promise<SystemConfigData> {
         notifyOnStatusChange: initialConfig.notifications.notifyOnStatusChange,
         notifyOnComment: initialConfig.notifications.notifyOnComment,
         enableRealtimeSse: initialConfig.notifications.enableRealtimeSse,
+        enableZaloIntegration: initialConfig.zalo.enabled,
+        zaloAppId: initialConfig.zalo.appId,
+        zaloAppSecret: initialConfig.zalo.appSecret,
+        zaloOaId: initialConfig.zalo.oaId,
+        zaloOaSecretKey: initialConfig.zalo.oaSecretKey,
+        zaloZnsTemplateId: initialConfig.zalo.znsTemplateId,
+        notifyZaloOnAssign: initialConfig.zalo.notifyOnAssign,
+        notifyZaloOnStatusChange: initialConfig.zalo.notifyOnStatusChange,
+        notifyZaloOnComment: initialConfig.zalo.notifyOnComment,
         updatedBy: initialConfig.updatedBy || "Khởi tạo hệ thống",
       },
     });
@@ -261,37 +327,67 @@ export function getEffectiveSmtpConfig(): SmtpConfig {
 }
 
 /**
- * Lấy cấu hình đã được che mật khẩu (bất đồng bộ, nạp từ DB cho UI Admin)
+ * Lấy cấu hình Zalo có hiệu lực (kết hợp cài đặt DB và biến môi trường), dùng cho lib/zalo/* gọi API thật
  */
-export async function getMaskedSystemConfigAsync(): Promise<SystemConfigData> {
-  const cfg = await getSystemConfigAsync();
+export function getEffectiveZaloConfig(): ZaloConfig {
+  const cfg = currentSystemConfig.zalo;
+  return {
+    enabled: cfg.enabled,
+    appId: cfg.appId || process.env.ZALO_APP_ID || "",
+    appSecret: cfg.appSecret || process.env.ZALO_APP_SECRET || "",
+    oaId: cfg.oaId || process.env.ZALO_OA_ID || "",
+    oaSecretKey: cfg.oaSecretKey || process.env.ZALO_OA_SECRET_KEY || "",
+    accessToken: cfg.accessToken,
+    refreshToken: cfg.refreshToken,
+    tokenExpiresAt: cfg.tokenExpiresAt,
+    znsTemplateId: cfg.znsTemplateId || process.env.ZALO_ZNS_TEMPLATE_ID || "",
+    notifyOnAssign: cfg.notifyOnAssign,
+    notifyOnStatusChange: cfg.notifyOnStatusChange,
+    notifyOnComment: cfg.notifyOnComment,
+  };
+}
+
+const MASK = "••••••••••••";
+
+function maskSecrets(cfg: SystemConfigData): SystemConfigData {
   return {
     ...cfg,
     smtp: {
       ...cfg.smtp,
-      pass: cfg.smtp.pass ? "••••••••••••" : "",
+      pass: cfg.smtp.pass ? MASK : "",
+    },
+    zalo: {
+      ...cfg.zalo,
+      appSecret: cfg.zalo.appSecret ? MASK : "",
+      oaSecretKey: cfg.zalo.oaSecretKey ? MASK : "",
+      accessToken: cfg.zalo.accessToken ? MASK : "",
+      refreshToken: cfg.zalo.refreshToken ? MASK : "",
     },
   };
+}
+
+/**
+ * Lấy cấu hình đã được che mật khẩu (bất đồng bộ, nạp từ DB cho UI Admin)
+ */
+export async function getMaskedSystemConfigAsync(): Promise<SystemConfigData> {
+  const cfg = await getSystemConfigAsync();
+  return maskSecrets(cfg);
 }
 
 /**
  * Lấy cấu hình đã được che mật khẩu (đồng bộ)
  */
 export function getMaskedSystemConfig(): SystemConfigData {
-  const cfg = { ...currentSystemConfig };
-  return {
-    ...cfg,
-    smtp: {
-      ...cfg.smtp,
-      pass: cfg.smtp.pass ? "••••••••••••" : "",
-    },
-  };
+  return maskSecrets({ ...currentSystemConfig });
 }
 
 export type SystemConfigUpdateInput = {
   smtp?: Partial<SystemConfigData["smtp"]>;
   branding?: Partial<SystemBrandingConfig>;
   notifications?: Partial<SystemNotificationRules>;
+  // Chỉ các field admin nhập tay qua form Cài đặt; accessToken/refreshToken được ghi riêng
+  // qua updateZaloTokensAsync() (do OAuth callback thực hiện), không đi qua form này.
+  zalo?: Partial<Pick<ZaloConfig, "enabled" | "appId" | "appSecret" | "oaId" | "oaSecretKey" | "znsTemplateId" | "notifyOnAssign" | "notifyOnStatusChange" | "notifyOnComment">>;
 };
 
 /**
@@ -334,6 +430,30 @@ export async function updateSystemConfigAsync(
     ...(updates.notifications || {}),
   };
 
+  const existingZalo = currentSystemConfig.zalo;
+  // Nếu App Secret / OA Secret Key truyền lên là dạng che "••••••••••••" hoặc rỗng -> giữ nguyên giá trị cũ
+  let finalAppSecret = updates.zalo?.appSecret;
+  if (!finalAppSecret || finalAppSecret === "••••••••••••") {
+    finalAppSecret = existingZalo.appSecret;
+  }
+  let finalOaSecretKey = updates.zalo?.oaSecretKey;
+  if (!finalOaSecretKey || finalOaSecretKey === "••••••••••••") {
+    finalOaSecretKey = existingZalo.oaSecretKey;
+  }
+
+  const newZalo: ZaloConfig = {
+    ...existingZalo,
+    enabled: updates.zalo?.enabled !== undefined ? updates.zalo.enabled : existingZalo.enabled,
+    appId: updates.zalo?.appId !== undefined ? updates.zalo.appId : existingZalo.appId,
+    appSecret: finalAppSecret,
+    oaId: updates.zalo?.oaId !== undefined ? updates.zalo.oaId : existingZalo.oaId,
+    oaSecretKey: finalOaSecretKey,
+    znsTemplateId: updates.zalo?.znsTemplateId !== undefined ? updates.zalo.znsTemplateId : existingZalo.znsTemplateId,
+    notifyOnAssign: updates.zalo?.notifyOnAssign !== undefined ? updates.zalo.notifyOnAssign : existingZalo.notifyOnAssign,
+    notifyOnStatusChange: updates.zalo?.notifyOnStatusChange !== undefined ? updates.zalo.notifyOnStatusChange : existingZalo.notifyOnStatusChange,
+    notifyOnComment: updates.zalo?.notifyOnComment !== undefined ? updates.zalo.notifyOnComment : existingZalo.notifyOnComment,
+  };
+
   try {
     const savedSetting = await prisma.systemSetting.upsert({
       where: { id: "default" },
@@ -355,6 +475,15 @@ export async function updateSystemConfigAsync(
         notifyOnStatusChange: newNotifications.notifyOnStatusChange,
         notifyOnComment: newNotifications.notifyOnComment,
         enableRealtimeSse: newNotifications.enableRealtimeSse,
+        enableZaloIntegration: newZalo.enabled,
+        zaloAppId: newZalo.appId,
+        zaloAppSecret: newZalo.appSecret,
+        zaloOaId: newZalo.oaId,
+        zaloOaSecretKey: newZalo.oaSecretKey,
+        zaloZnsTemplateId: newZalo.znsTemplateId,
+        notifyZaloOnAssign: newZalo.notifyOnAssign,
+        notifyZaloOnStatusChange: newZalo.notifyOnStatusChange,
+        notifyZaloOnComment: newZalo.notifyOnComment,
         updatedBy: updaterName,
       },
       create: {
@@ -376,6 +505,15 @@ export async function updateSystemConfigAsync(
         notifyOnStatusChange: newNotifications.notifyOnStatusChange,
         notifyOnComment: newNotifications.notifyOnComment,
         enableRealtimeSse: newNotifications.enableRealtimeSse,
+        enableZaloIntegration: newZalo.enabled,
+        zaloAppId: newZalo.appId,
+        zaloAppSecret: newZalo.appSecret,
+        zaloOaId: newZalo.oaId,
+        zaloOaSecretKey: newZalo.oaSecretKey,
+        zaloZnsTemplateId: newZalo.znsTemplateId,
+        notifyZaloOnAssign: newZalo.notifyOnAssign,
+        notifyZaloOnStatusChange: newZalo.notifyOnStatusChange,
+        notifyZaloOnComment: newZalo.notifyOnComment,
         updatedBy: updaterName,
       },
     });
@@ -388,6 +526,7 @@ export async function updateSystemConfigAsync(
       smtp: newSmtp,
       branding: newBranding,
       notifications: newNotifications,
+      zalo: newZalo,
       updatedAt: new Date().toISOString(),
       updatedBy: updaterName,
     };
@@ -398,6 +537,38 @@ export async function updateSystemConfigAsync(
 
   console.log(`\n⚙️ [SYSTEM CONFIG PERSISTED IN DB] by ${updaterName} at ${currentSystemConfig.updatedAt} (App Base URL: ${getAppBaseUrl()})`);
   return getSystemConfig();
+}
+
+/**
+ * Ghi access_token/refresh_token Zalo OA vào SQL Server (do OAuth callback / cơ chế tự refresh gọi,
+ * KHÔNG đi qua form Cài đặt Admin để tránh việc admin bấm "Lưu" đè mất token vừa lấy được).
+ */
+export async function updateZaloTokensAsync(tokens: {
+  accessToken: string;
+  refreshToken: string;
+  expiresInSeconds: number;
+}): Promise<void> {
+  if (!isDbLoaded) {
+    await loadSystemConfigFromDb();
+  }
+
+  const expiresAt = new Date(Date.now() + tokens.expiresInSeconds * 1000);
+
+  try {
+    const savedSetting = await prisma.systemSetting.update({
+      where: { id: "default" },
+      data: {
+        zaloAccessToken: tokens.accessToken,
+        zaloRefreshToken: tokens.refreshToken,
+        zaloTokenExpiresAt: expiresAt,
+      },
+    });
+    currentSystemConfig = mapDbRecordToConfig(savedSetting);
+    persistSystemConfigToDisk(currentSystemConfig);
+  } catch (error) {
+    console.error("⚠️ Lỗi khi lưu Zalo access token vào SQL Server DB:", error);
+    throw error;
+  }
 }
 
 /**

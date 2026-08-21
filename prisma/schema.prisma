@@ -16,19 +16,57 @@ model User {
   title        String?
   role         String   @default("MEMBER") // ADMIN | MEMBER | VIEWER
   teamId       String?
+  phone        String? // Số điện thoại (dùng để gửi Zalo ZNS) - Admin nhập tay
+  // Zalo OA follower ID - tự liên kết qua mã xác nhận. KHÔNG dùng @unique ở đây: SQL Server coi
+  // nhiều giá trị NULL là trùng nhau trong UNIQUE CONSTRAINT (khác Postgres), sẽ làm `db push` lỗi P2002
+  // ngay khi có >1 user chưa liên kết. Tính duy nhất được đảm bảo ở tầng ứng dụng (xem lib/zalo/link.ts).
+  zaloUserId   String?
+  zaloLinkedAt DateTime? // Thời điểm liên kết Zalo OA thành công
   createdAt    DateTime @default(now())
 
-  team                   Team?           @relation("TeamMembers", fields: [teamId], references: [id], onDelete: SetNull, onUpdate: NoAction)
-  ledTeams               Team[]          @relation("TeamLeader")
-  ownedProjects          Project[]       @relation("ProjectOwner")
+  team                   Team?            @relation("TeamMembers", fields: [teamId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  ledTeams               Team[]           @relation("TeamLeader")
+  ownedProjects          Project[]        @relation("ProjectOwner")
   memberships            ProjectMember[]
-  assignedTasks          Task[]          @relation("TaskAssignee")
-  createdTasks           Task[]          @relation("TaskCreator")
+  assignedTasks          Task[]           @relation("TaskAssignee")
+  createdTasks           Task[]           @relation("TaskCreator")
   comments               Comment[]
   activities             Activity[]
   attachments            Attachment[]
-  receivedNotifications  Notification[]  @relation("UserNotifications")
-  triggeredNotifications Notification[]  @relation("ActorNotifications")
+  receivedNotifications  Notification[]   @relation("UserNotifications")
+  triggeredNotifications Notification[]   @relation("ActorNotifications")
+  zaloMessageLogs        ZaloMessageLog[]
+  zaloLinkCodes          ZaloLinkCode[]
+  notificationPreference UserNotificationPreference?
+
+  @@index([zaloUserId])
+}
+
+// Tùy chọn kênh nhận thông báo CỦA RIÊNG TỪNG USER — lớp lọc thứ 2 sau công tắc tổng ở SystemSetting.
+// 1 dòng / user, không tồn tại nghĩa là user chưa tùy chỉnh -> áp dụng mặc định "nhận tất cả" (true).
+// Quy tắc cuối cùng khi quyết định gửi: SystemSetting.notifyOnX (công tắc tổng) AND UserNotificationPreference.xOnY (tùy chọn cá nhân).
+model UserNotificationPreference {
+  id     String @id @default(cuid())
+  userId String @unique
+
+  emailOnAssign       Boolean @default(true)
+  emailOnStatusChange Boolean @default(true)
+  emailOnComment      Boolean @default(true)
+  emailOnMention      Boolean @default(true)
+
+  zaloOnAssign       Boolean @default(true)
+  zaloOnStatusChange Boolean @default(true)
+  zaloOnComment      Boolean @default(true)
+  zaloOnMention      Boolean @default(true)
+
+  inAppOnAssign       Boolean @default(true)
+  inAppOnStatusChange Boolean @default(true)
+  inAppOnComment      Boolean @default(true)
+  inAppOnMention      Boolean @default(true)
+
+  updatedAt DateTime @default(now()) @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model Team {
@@ -91,6 +129,7 @@ model Project {
   tasks           Task[]
   labels          Label[]
   customerTickets CustomerTicket[]
+  attachments     Attachment[]
 }
 
 model ProjectMember {
@@ -266,6 +305,7 @@ model TicketComment {
 
 model Attachment {
   id         String   @id @default(cuid())
+  projectId  String?
   taskId     String?
   ticketId   String?
   uploaderId String?
@@ -276,10 +316,12 @@ model Attachment {
   mimeType   String?
   createdAt  DateTime @default(now())
 
+  project  Project?        @relation(fields: [projectId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   task     Task?           @relation(fields: [taskId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   ticket   CustomerTicket? @relation(fields: [ticketId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   uploader User?           @relation(fields: [uploaderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
+  @@index([projectId])
   @@index([taskId])
   @@index([ticketId])
 }
@@ -309,7 +351,56 @@ model SystemSetting {
   notifyOnComment      Boolean  @default(true)
   enableRealtimeSse    Boolean  @default(true)
 
+  // Zalo Integration Settings (Official Account + ZNS)
+  enableZaloIntegration    Boolean   @default(false)
+  zaloAppId                String?   @default("")
+  zaloAppSecret            String?   @default("")
+  zaloOaId                 String?   @default("")
+  zaloOaSecretKey          String?   @default("") // OA Secret Key dùng để verify webhook signature
+  zaloAccessToken          String?   @default("")
+  zaloRefreshToken         String?   @default("")
+  zaloTokenExpiresAt       DateTime?
+  zaloZnsTemplateId        String?   @default("")
+  notifyZaloOnAssign       Boolean   @default(false)
+  notifyZaloOnStatusChange Boolean   @default(false)
+  notifyZaloOnComment      Boolean   @default(false)
+
   updatedAt            DateTime @default(now()) @updatedAt
   updatedBy            String?  @default("Hệ thống (Mặc định)")
+}
+
+model ZaloMessageLog {
+  id               String    @id @default(cuid())
+  userId           String?
+  zaloUserId       String? // Zalo OA follower ID nhận tin (kênh OA)
+  phone            String? // Số điện thoại nhận tin (kênh ZNS)
+  channel          String // ZNS | OA
+  notificationType String? // ASSIGNED | STATUS_CHANGED | COMMENTED | MENTIONED | TEST
+  templateId       String?
+  content          String    @db.NVarChar(Max)
+  status           String    @default("PENDING") // PENDING | SENT | FAILED
+  providerMsgId    String?
+  errorMessage     String?   @db.NVarChar(Max)
+  createdAt        DateTime  @default(now())
+  sentAt           DateTime?
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([status])
+}
+
+model ZaloLinkCode {
+  id         String    @id @default(cuid())
+  code       String    @unique
+  userId     String
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([userId])
 }
 

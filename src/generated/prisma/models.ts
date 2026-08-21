@@ -9,6 +9,7 @@
  * 🟢 You can import this file directly.
  */
 export type * from './models/User'
+export type * from './models/UserNotificationPreference'
 export type * from './models/Team'
 export type * from './models/RoleDefinition'
 export type * from './models/Notification'
@@ -25,4 +26,6 @@ export type * from './models/CustomerTicket'
 export type * from './models/TicketComment'
 export type * from './models/Attachment'
 export type * from './models/SystemSetting'
+export type * from './models/ZaloMessageLog'
+export type * from './models/ZaloLinkCode'
 export type * from './commonInputTypes'

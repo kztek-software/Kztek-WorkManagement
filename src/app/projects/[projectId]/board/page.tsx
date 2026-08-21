@@ -45,6 +45,7 @@ import { canCreateTask, isViewer } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Dropdown } from "primereact/dropdown";
 import { BoardColumn } from "@/components/board/board-column";
 import { TaskCard } from "@/components/board/task-card";
 import { useTabCache } from "@/lib/tab-cache";
@@ -230,14 +231,39 @@ export default function BoardPage() {
   const quickAssign = useCallback(
     async (taskId: string, userId: string | null) => {
       if (isViewer(data?.currentRole)) return;
-      await fetch(`/api/projects/${projectId}/tasks/${taskId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ assigneeId: userId }),
+      const targetMember = data?.members.find((m) => m.user.id === userId)?.user || null;
+
+      // Optimistic update tức thì trên UI (< 1ms)
+      setData((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          tasks: prev.tasks.map((t) =>
+            t.id === taskId
+              ? {
+                  ...t,
+                  assigneeId: userId,
+                  assignee: targetMember
+                    ? { id: targetMember.id, name: targetMember.name, avatarColor: targetMember.avatarColor }
+                    : null,
+                }
+              : t
+          ),
+        };
       });
-      loadBoard();
+
+      try {
+        await fetch(`/api/projects/${projectId}/tasks/${taskId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ assigneeId: userId }),
+        });
+      } catch (err) {
+        console.error("Quick assign failed:", err);
+        loadBoard();
+      }
     },
-    [projectId, data?.currentRole, loadBoard]
+    [projectId, data?.currentRole, data?.members, loadBoard, setData]
   );
 
   // Keyboard shortcuts
@@ -610,7 +636,7 @@ export default function BoardPage() {
       )}
 
       {/* Top Header Bar */}
-      <div className="flex h-11 sm:h-14 shrink-0 items-center justify-between border-b border-line px-2.5 sm:px-5 gap-2 sm:gap-3 bg-surface/40 backdrop-blur-md">
+      <div className="flex h-10 sm:h-12 shrink-0 items-center justify-between border-b border-line px-2.5 sm:px-4 gap-2 sm:gap-2.5 bg-surface/40 backdrop-blur-md">
         {/* Breadcrumb & Live Status */}
         <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
           <div className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-muted">
@@ -652,7 +678,7 @@ export default function BoardPage() {
             size="sm"
             variant="outline"
             onClick={() => setMemberOpen(true)}
-            className="h-7 sm:h-8 px-2 sm:px-3 text-[11px] sm:text-xs font-semibold border-line bg-surface hover:bg-surface-2 shadow-sm flex items-center gap-1 sm:gap-1.5"
+            className="h-7 sm:h-7.5 px-2 sm:px-2.5 text-[11px] sm:text-xs font-semibold border-line bg-surface hover:bg-surface-2 shadow-sm flex items-center gap-1 sm:gap-1.5"
             title="Quản lý thành viên"
           >
             <Users className="h-3.5 w-3.5 text-accent" />
@@ -665,7 +691,7 @@ export default function BoardPage() {
             size="sm"
             variant="outline"
             onClick={() => setNotionOpen(true)}
-            className="h-7 sm:h-8 px-2 sm:px-3 text-[11px] sm:text-xs font-semibold border-neutral-700 bg-neutral-900 hover:bg-neutral-800 shadow-sm flex items-center gap-1 sm:gap-1.5 text-white"
+            className="h-7 sm:h-7.5 px-2 sm:px-2.5 text-[11px] sm:text-xs font-semibold border-neutral-700 bg-neutral-900 hover:bg-neutral-800 shadow-sm flex items-center gap-1 sm:gap-1.5 text-white"
             title="Notion Hub"
           >
             <span className="flex h-3.5 w-3.5 sm:h-4 sm:w-4 items-center justify-center rounded bg-neutral-800 text-[9px] sm:text-[10px] font-bold text-white border border-neutral-700">
@@ -682,7 +708,7 @@ export default function BoardPage() {
                 setNewTaskStatus("TODO");
                 setNewTaskOpen(true);
               }}
-              className="h-7 sm:h-8 px-2.5 sm:px-3 text-[11px] sm:text-xs font-bold bg-accent hover:bg-accent/90 text-white shadow-md shadow-accent/25"
+              className="h-7 sm:h-7.5 px-2.5 sm:px-3 text-[11px] sm:text-xs font-bold bg-accent hover:bg-accent/90 text-white shadow-md shadow-accent/25"
             >
               <Plus className="h-3.5 w-3.5 sm:mr-1" />
               <span className="hidden sm:inline">Task mới</span>
@@ -697,126 +723,119 @@ export default function BoardPage() {
       </div>
 
       {/* Filter & Sorting Control Toolbar — Desktop (>= sm) */}
-      <div className="hidden sm:flex items-center justify-between border-b border-line bg-surface/50 px-5 py-2 text-xs gap-3 overflow-x-auto no-scrollbar shrink-0">
+      <div className="hidden sm:flex items-center justify-between border-b border-line bg-surface/50 px-3.5 sm:px-4 py-1.5 text-xs gap-2.5 overflow-x-auto no-scrollbar shrink-0">
         <div className="flex items-center gap-2 flex-nowrap shrink-0">
           {/* Search Box */}
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
+            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted pointer-events-none z-10" />
             <Input
               ref={searchInputRef}
               placeholder="Tìm task... (bấm /)"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="h-7 sm:h-8 w-36 sm:w-56 pl-7 sm:pl-8 text-[11px] sm:text-xs bg-surface border-line focus:border-accent"
+              className="h-7 sm:h-7.5 w-36 sm:w-52 pl-8 text-[11px] sm:text-xs bg-surface border-line focus:border-accent"
             />
           </div>
 
           {/* Sprint Filter */}
-          <select
+          <Dropdown
             value={sprintFilter}
-            onChange={(e) => setSprintFilter(e.target.value)}
-            className="h-7 sm:h-8 rounded-lg border border-line bg-surface px-1.5 sm:px-2 text-[11px] sm:text-xs text-foreground focus:outline-none cursor-pointer hover:border-line-strong transition-colors"
-          >
-            <option value="ALL" className="bg-[#181E2E] text-foreground">🚀 Tất cả Sprint</option>
-            <option value="NONE" className="bg-[#181E2E] text-foreground">Chưa gán Sprint (Backlog)</option>
-            {data.sprints.map((s) => (
-              <option key={s.id} value={s.id} className="bg-[#181E2E] text-foreground">
-                {s.name} ({s.status === "ACTIVE" ? "Đang chạy" : s.status === "COMPLETED" ? "Đã xong" : "Kế hoạch"})
-              </option>
-            ))}
-          </select>
+            options={[
+              { label: "🚀 Tất cả Sprint", value: "ALL" },
+              { label: "Chưa gán Sprint (Backlog)", value: "NONE" },
+              ...data.sprints.map((s) => ({
+                label: `${s.name} (${s.status === "ACTIVE" ? "Đang chạy" : s.status === "COMPLETED" ? "Đã xong" : "Kế hoạch"})`,
+                value: s.id,
+              })),
+            ]}
+            onChange={(e) => setSprintFilter(e.value)}
+            className="p-inputtext-sm h-7 sm:h-7.5 text-[11px] sm:text-xs bg-surface border border-line rounded-lg"
+          />
 
           {/* Assignee Filter */}
-          <select
+          <Dropdown
             value={assigneeFilter}
-            onChange={(e) => setAssigneeFilter(e.target.value)}
-            className="h-7 sm:h-8 rounded-lg border border-line bg-surface px-1.5 sm:px-2 text-[11px] sm:text-xs text-foreground focus:outline-none cursor-pointer hover:border-line-strong transition-colors"
-          >
-            <option value="ALL" className="bg-[#181E2E] text-foreground">👤 Nhân sự</option>
-            <option value="UNASSIGNED" className="bg-[#181E2E] text-foreground">Chưa giao</option>
-            {data.members.map((m) => (
-              <option key={m.user.id} value={m.user.id} className="bg-[#181E2E] text-foreground">
-                {m.user.name}
-              </option>
-            ))}
-          </select>
+            options={[
+              { label: "👤 Tất cả nhân sự", value: "ALL" },
+              { label: "Chưa giao", value: "UNASSIGNED" },
+              ...data.members.map((m) => ({
+                label: m.user.name,
+                value: m.user.id,
+              })),
+            ]}
+            onChange={(e) => setAssigneeFilter(e.value)}
+            className="p-inputtext-sm h-7 sm:h-7.5 text-[11px] sm:text-xs bg-surface border border-line rounded-lg"
+          />
 
           {/* Status Filter */}
-          <select
+          <Dropdown
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-7 sm:h-8 rounded-lg border border-line bg-surface px-1.5 sm:px-2 text-[11px] sm:text-xs text-foreground focus:outline-none cursor-pointer hover:border-line-strong transition-colors"
-          >
-            <option value="ALL" className="bg-[#181E2E] text-foreground">📋 Trạng thái</option>
-            {STATUSES.map((s) => (
-              <option key={s.id} value={s.id} className="bg-[#181E2E] text-foreground">
-                {s.label}
-              </option>
-            ))}
-          </select>
+            options={[
+              { label: "📋 Trạng thái", value: "ALL" },
+              ...STATUSES.map((s) => ({ label: s.label, value: s.id })),
+            ]}
+            onChange={(e) => setStatusFilter(e.value)}
+            className="p-inputtext-sm h-7 sm:h-7.5 text-[11px] sm:text-xs bg-surface border border-line rounded-lg"
+          />
 
           {/* Priority Filter */}
-          <select
+          <Dropdown
             value={priorityFilter}
-            onChange={(e) => setPriorityFilter(e.target.value)}
-            className="h-7 sm:h-8 rounded-lg border border-line bg-surface px-1.5 sm:px-2 text-[11px] sm:text-xs text-foreground focus:outline-none cursor-pointer hover:border-line-strong transition-colors"
-          >
-            <option value="ALL" className="bg-[#181E2E] text-foreground">🔥 Ưu tiên</option>
-            {PRIORITIES.map((p) => (
-              <option key={p.id} value={p.id} className="bg-[#181E2E] text-foreground">
-                {p.label}
-              </option>
-            ))}
-          </select>
+            options={[
+              { label: "🔥 Ưu tiên", value: "ALL" },
+              ...PRIORITIES.map((p) => ({ label: p.label, value: p.id })),
+            ]}
+            onChange={(e) => setPriorityFilter(e.value)}
+            className="p-inputtext-sm h-7 sm:h-7.5 text-[11px] sm:text-xs bg-surface border border-line rounded-lg"
+          />
 
           {/* Time Filter */}
-          <select
+          <Dropdown
             value={timeFilter}
-            onChange={(e) => setTimeFilter(e.target.value)}
-            className="h-7 sm:h-8 rounded-lg border border-line bg-surface px-1.5 sm:px-2 text-[11px] sm:text-xs text-foreground focus:outline-none cursor-pointer hover:border-line-strong transition-colors"
-          >
-            <option value="ALL" className="bg-[#181E2E] text-foreground">⏰ Thời gian</option>
-            <option value="TODAY" className="bg-[#181E2E] text-foreground">Hôm nay</option>
-            <option value="THIS_WEEK" className="bg-[#181E2E] text-foreground">Tuần này</option>
-            <option value="OVERDUE" className="bg-[#181E2E] text-foreground">⚠️ Quá hạn</option>
-            <option value="NO_DUE_DATE" className="bg-[#181E2E] text-foreground">Không hạn</option>
-          </select>
+            options={[
+              { label: "⏰ Thời gian", value: "ALL" },
+              { label: "Hôm nay", value: "TODAY" },
+              { label: "Tuần này", value: "THIS_WEEK" },
+              { label: "⚠️ Quá hạn", value: "OVERDUE" },
+              { label: "Không hạn", value: "NO_DUE_DATE" },
+            ]}
+            onChange={(e) => setTimeFilter(e.value)}
+            className="p-inputtext-sm h-7 sm:h-7.5 text-[11px] sm:text-xs bg-surface border border-line rounded-lg"
+          />
 
           {/* Type Filter */}
-          <select
+          <Dropdown
             value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="h-7 sm:h-8 rounded-lg border border-line bg-surface px-1.5 sm:px-2 text-[11px] sm:text-xs text-foreground focus:outline-none cursor-pointer hover:border-line-strong transition-colors"
-          >
-            <option value="ALL" className="bg-[#181E2E] text-foreground">🏷️ Loại task</option>
-            {TASK_TYPES.map((t) => (
-              <option key={t.id} value={t.id} className="bg-[#181E2E] text-foreground">
-                {t.label}
-              </option>
-            ))}
-          </select>
+            options={[
+              { label: "🏷️ Loại task", value: "ALL" },
+              ...TASK_TYPES.map((t) => ({ label: t.label, value: t.id })),
+            ]}
+            onChange={(e) => setTypeFilter(e.value)}
+            className="p-inputtext-sm h-7 sm:h-7.5 text-[11px] sm:text-xs bg-surface border border-line rounded-lg"
+          />
         </div>
 
         {/* Sorting & Clear Controls */}
         <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
           <div className="flex items-center gap-1 rounded-lg border border-line bg-surface p-0.5">
-            <select
+            <Dropdown
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="h-6 sm:h-7 border-none bg-surface px-1 sm:px-1.5 text-[11px] sm:text-xs text-foreground focus:outline-none cursor-pointer font-medium"
-            >
-              <option value="MANUAL" className="bg-[#181E2E] text-foreground">Kéo thả</option>
-              <option value="PRIORITY" className="bg-[#181E2E] text-foreground">Ưu tiên</option>
-              <option value="DUE_DATE" className="bg-[#181E2E] text-foreground">Hạn chót</option>
-              <option value="CREATED_AT" className="bg-[#181E2E] text-foreground">Mới nhất</option>
-              <option value="STORY_POINTS" className="bg-[#181E2E] text-foreground">Points</option>
-              <option value="TITLE" className="bg-[#181E2E] text-foreground">Tên A-Z</option>
-            </select>
+              options={[
+                { label: "Kéo thả", value: "MANUAL" },
+                { label: "Ưu tiên", value: "PRIORITY" },
+                { label: "Hạn chót", value: "DUE_DATE" },
+                { label: "Mới nhất", value: "CREATED_AT" },
+                { label: "Points", value: "STORY_POINTS" },
+                { label: "Tên A-Z", value: "TITLE" },
+              ]}
+              onChange={(e) => setSortBy(e.value)}
+              className="p-inputtext-sm h-6 sm:h-6.5 text-[11px] sm:text-xs bg-surface border-none rounded"
+            />
 
             {sortBy !== "MANUAL" && (
               <button
                 onClick={() => setSortOrder((o) => (o === "asc" ? "desc" : "asc"))}
-                className="h-6 sm:h-7 px-1 sm:px-1.5 rounded hover:bg-surface-2 text-muted hover:text-foreground cursor-pointer flex items-center text-[11px]"
+                className="h-6 sm:h-6.5 px-1 sm:px-1.5 rounded hover:bg-surface-2 text-muted hover:text-foreground cursor-pointer flex items-center text-[11px]"
                 title={sortOrder === "asc" ? "Tăng dần" : "Giảm dần"}
               >
                 <ArrowUpDown className="h-3 w-3" />
@@ -829,7 +848,7 @@ export default function BoardPage() {
               size="sm"
               variant="ghost"
               onClick={resetFilters}
-              className="h-7 sm:h-8 px-1.5 sm:px-2 text-[11px] sm:text-xs text-amber-600 hover:text-amber-700 hover:bg-amber-500/15 flex items-center gap-1 font-semibold"
+              className="h-7 sm:h-7.5 px-1.5 sm:px-2 text-[11px] sm:text-xs text-amber-600 hover:text-amber-700 hover:bg-amber-500/15 flex items-center gap-1 font-semibold"
             >
               <RotateCcw className="h-3 w-3" />
               <span className="hidden sm:inline">Xóa lọc ({activeFilterCount})</span>
@@ -842,12 +861,12 @@ export default function BoardPage() {
       {/* Filter & Sorting Control Toolbar — Mobile compact trigger (< sm) */}
       <div className="flex sm:hidden items-center gap-2 border-b border-line bg-surface/50 px-2.5 py-1.5 shrink-0">
         <div className="relative flex-1 min-w-0">
-          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
+          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted pointer-events-none z-10" />
           <Input
             placeholder="Tìm task..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-8 w-full pl-7 text-[11px] bg-surface border-line focus:border-accent"
+            className="h-8 w-full pl-8 text-[11px] bg-surface border-line focus:border-accent"
           />
         </div>
         <button
@@ -887,101 +906,94 @@ export default function BoardPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-2.5">
-              <select
+              <Dropdown
                 value={sprintFilter}
-                onChange={(e) => setSprintFilter(e.target.value)}
-                className="col-span-2 h-10 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none focus:border-accent"
-              >
-                <option value="ALL" className="bg-[#181E2E] text-foreground">🚀 Tất cả Sprint</option>
-                <option value="NONE" className="bg-[#181E2E] text-foreground">Chưa gán Sprint (Backlog)</option>
-                {data.sprints.map((s) => (
-                  <option key={s.id} value={s.id} className="bg-[#181E2E] text-foreground">
-                    {s.name} ({s.status === "ACTIVE" ? "Đang chạy" : s.status === "COMPLETED" ? "Đã xong" : "Kế hoạch"})
-                  </option>
-                ))}
-              </select>
+                options={[
+                  { label: "🚀 Tất cả Sprint", value: "ALL" },
+                  { label: "Chưa gán Sprint (Backlog)", value: "NONE" },
+                  ...data.sprints.map((s) => ({
+                    label: `${s.name} (${s.status === "ACTIVE" ? "Đang chạy" : s.status === "COMPLETED" ? "Đã xong" : "Kế hoạch"})`,
+                    value: s.id,
+                  })),
+                ]}
+                onChange={(e) => setSprintFilter(e.value)}
+                className="col-span-2 h-10 text-xs bg-surface border border-line rounded-lg"
+              />
 
-              <select
+              <Dropdown
                 value={assigneeFilter}
-                onChange={(e) => setAssigneeFilter(e.target.value)}
-                className="h-10 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none focus:border-accent"
-              >
-                <option value="ALL" className="bg-[#181E2E] text-foreground">👤 Nhân sự</option>
-                <option value="UNASSIGNED" className="bg-[#181E2E] text-foreground">Chưa giao</option>
-                {data.members.map((m) => (
-                  <option key={m.user.id} value={m.user.id} className="bg-[#181E2E] text-foreground">
-                    {m.user.name}
-                  </option>
-                ))}
-              </select>
+                options={[
+                  { label: "👤 Tất cả nhân sự", value: "ALL" },
+                  { label: "Chưa giao", value: "UNASSIGNED" },
+                  ...data.members.map((m) => ({
+                    label: m.user.name,
+                    value: m.user.id,
+                  })),
+                ]}
+                onChange={(e) => setAssigneeFilter(e.value)}
+                className="h-10 text-xs bg-surface border border-line rounded-lg"
+              />
 
-              <select
+              <Dropdown
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="h-10 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none focus:border-accent"
-              >
-                <option value="ALL" className="bg-[#181E2E] text-foreground">📋 Trạng thái</option>
-                {STATUSES.map((s) => (
-                  <option key={s.id} value={s.id} className="bg-[#181E2E] text-foreground">
-                    {s.label}
-                  </option>
-                ))}
-              </select>
+                options={[
+                  { label: "📋 Trạng thái", value: "ALL" },
+                  ...STATUSES.map((s) => ({ label: s.label, value: s.id })),
+                ]}
+                onChange={(e) => setStatusFilter(e.value)}
+                className="h-10 text-xs bg-surface border border-line rounded-lg"
+              />
 
-              <select
+              <Dropdown
                 value={priorityFilter}
-                onChange={(e) => setPriorityFilter(e.target.value)}
-                className="h-10 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none focus:border-accent"
-              >
-                <option value="ALL" className="bg-[#181E2E] text-foreground">🔥 Ưu tiên</option>
-                {PRIORITIES.map((p) => (
-                  <option key={p.id} value={p.id} className="bg-[#181E2E] text-foreground">
-                    {p.label}
-                  </option>
-                ))}
-              </select>
+                options={[
+                  { label: "🔥 Ưu tiên", value: "ALL" },
+                  ...PRIORITIES.map((p) => ({ label: p.label, value: p.id })),
+                ]}
+                onChange={(e) => setPriorityFilter(e.value)}
+                className="h-10 text-xs bg-surface border border-line rounded-lg"
+              />
 
-              <select
+              <Dropdown
                 value={timeFilter}
-                onChange={(e) => setTimeFilter(e.target.value)}
-                className="h-10 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none focus:border-accent"
-              >
-                <option value="ALL" className="bg-[#181E2E] text-foreground">⏰ Thời gian</option>
-                <option value="TODAY" className="bg-[#181E2E] text-foreground">Hôm nay</option>
-                <option value="THIS_WEEK" className="bg-[#181E2E] text-foreground">Tuần này</option>
-                <option value="OVERDUE" className="bg-[#181E2E] text-foreground">⚠️ Quá hạn</option>
-                <option value="NO_DUE_DATE" className="bg-[#181E2E] text-foreground">Không hạn</option>
-              </select>
+                options={[
+                  { label: "⏰ Thời gian", value: "ALL" },
+                  { label: "Hôm nay", value: "TODAY" },
+                  { label: "Tuần này", value: "THIS_WEEK" },
+                  { label: "⚠️ Quá hạn", value: "OVERDUE" },
+                  { label: "Không hạn", value: "NO_DUE_DATE" },
+                ]}
+                onChange={(e) => setTimeFilter(e.value)}
+                className="h-10 text-xs bg-surface border border-line rounded-lg"
+              />
 
-              <select
+              <Dropdown
                 value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                className="h-10 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none focus:border-accent"
-              >
-                <option value="ALL" className="bg-[#181E2E] text-foreground">🏷️ Loại task</option>
-                {TASK_TYPES.map((t) => (
-                  <option key={t.id} value={t.id} className="bg-[#181E2E] text-foreground">
-                    {t.label}
-                  </option>
-                ))}
-              </select>
+                options={[
+                  { label: "🏷️ Loại task", value: "ALL" },
+                  ...TASK_TYPES.map((t) => ({ label: t.label, value: t.id })),
+                ]}
+                onChange={(e) => setTypeFilter(e.value)}
+                className="h-10 text-xs bg-surface border border-line rounded-lg"
+              />
             </div>
 
             <div className="space-y-1.5">
               <span className="text-[11px] font-semibold text-muted">Sắp xếp theo</span>
               <div className="flex items-center gap-2">
-                <select
+                <Dropdown
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="h-10 flex-1 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none focus:border-accent"
-                >
-                  <option value="MANUAL" className="bg-[#181E2E] text-foreground">Kéo thả</option>
-                  <option value="PRIORITY" className="bg-[#181E2E] text-foreground">Ưu tiên</option>
-                  <option value="DUE_DATE" className="bg-[#181E2E] text-foreground">Hạn chót</option>
-                  <option value="CREATED_AT" className="bg-[#181E2E] text-foreground">Mới nhất</option>
-                  <option value="STORY_POINTS" className="bg-[#181E2E] text-foreground">Points</option>
-                  <option value="TITLE" className="bg-[#181E2E] text-foreground">Tên A-Z</option>
-                </select>
+                  options={[
+                    { label: "Kéo thả", value: "MANUAL" },
+                    { label: "Ưu tiên", value: "PRIORITY" },
+                    { label: "Hạn chót", value: "DUE_DATE" },
+                    { label: "Mới nhất", value: "CREATED_AT" },
+                    { label: "Points", value: "STORY_POINTS" },
+                    { label: "Tên A-Z", value: "TITLE" },
+                  ]}
+                  onChange={(e) => setSortBy(e.value)}
+                  className="h-10 flex-1 text-xs bg-surface border border-line rounded-lg"
+                />
 
                 {sortBy !== "MANUAL" && (
                   <button
@@ -1055,7 +1067,7 @@ export default function BoardPage() {
         <div
           ref={boardContainerRef}
           onScroll={handleBoardScroll}
-          className="flex flex-1 min-h-0 w-full gap-3 sm:gap-3.5 md:gap-4 overflow-x-auto p-2.5 sm:p-4 px-3 sm:px-4 md:px-5 snap-x snap-mandatory touch-pan-x no-scrollbar overflow-y-hidden select-none pb-3"
+          className="flex flex-1 min-h-0 w-full gap-2.5 sm:gap-3 md:gap-3.5 overflow-x-auto p-2 sm:p-3 md:p-3.5 px-2.5 sm:px-3.5 md:px-4 snap-x snap-mandatory touch-pan-x no-scrollbar overflow-y-hidden select-none pb-2.5"
         >
           {STATUSES.map((status) => (
             <BoardColumn

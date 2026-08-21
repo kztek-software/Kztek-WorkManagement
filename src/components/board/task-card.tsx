@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { PriorityIcon } from "./priority-icon";
 import { TypeIcon } from "./type-icon";
+import { AssigneeQuickSelect } from "./assignee-quick-select";
 
 function TaskCardComponent({
   task,
@@ -51,14 +52,14 @@ function TaskCardComponent({
 
   return (
     <div
-      className={`group relative rounded-xl border p-2.5 sm:p-3 overflow-hidden transition-all duration-200 ${
+      className={`group relative rounded-xl border p-2.5 sm:p-3 transition-all duration-200 ${
         overlay
-          ? "rotate-2 scale-[1.03] shadow-2xl shadow-black/80 ring-2 ring-accent border-accent bg-surface/95 backdrop-blur-xl cursor-grabbing z-50"
+          ? "rotate-2 scale-[1.03] shadow-2xl shadow-black/80 ring-2 ring-accent border-accent bg-surface/95 backdrop-blur-xl cursor-grabbing z-50 overflow-hidden"
           : "border-line bg-surface/80 hover:bg-surface hover:border-line-strong hover:shadow-md shadow-sm cursor-grab active:cursor-grabbing active:scale-[0.98]"
       }`}
     >
       {/* Priority strip — the single strong color cue on the card */}
-      <span className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ backgroundColor: priority.color }} />
+      <span className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl" style={{ backgroundColor: priority.color }} />
 
       {/* Drag affordance — purely visual, the whole card stays draggable */}
       <div className="pointer-events-none absolute left-2.5 top-2.5 flex gap-0.5 opacity-0 group-hover:opacity-40 transition-opacity">
@@ -150,39 +151,13 @@ function TaskCardComponent({
         </div>
 
         {members && onAssign ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                onClick={(e) => e.stopPropagation()}
-                onPointerDown={(e) => e.stopPropagation()}
-                className="rounded-full shrink-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent"
-                title={task.assignee ? `Phụ trách: ${task.assignee.name} — bấm để đổi` : "Bấm để gán người phụ trách"}
-              >
-                {assigneeSlot}
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
-              <DropdownMenuItem onClick={() => onAssign(task.id, null)}>
-                <span className="h-4 w-4 flex items-center justify-center">
-                  {!task.assigneeId && <Check className="h-3 w-3" />}
-                </span>
-                Chưa giao
-              </DropdownMenuItem>
-              {members.map((m) => (
-                <DropdownMenuItem key={m.user.id} onClick={() => onAssign(task.id, m.user.id)}>
-                  <span className="h-4 w-4 flex items-center justify-center shrink-0">
-                    {task.assigneeId === m.user.id && <Check className="h-3 w-3" />}
-                  </span>
-                  <Avatar className="h-4 w-4 shrink-0">
-                    <AvatarFallback color={m.user.avatarColor} className="text-[7px] font-bold">
-                      {initials(m.user.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="truncate">{m.user.name}</span>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <AssigneeQuickSelect
+            taskId={task.id}
+            currentAssigneeId={task.assigneeId ?? null}
+            currentAssignee={task.assignee ?? null}
+            members={members}
+            onAssign={onAssign}
+          />
         ) : (
           assigneeSlot
         )}

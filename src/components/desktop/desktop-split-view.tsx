@@ -21,6 +21,7 @@ import {
   Eye,
   Activity,
 } from "lucide-react";
+import { Dropdown } from "primereact/dropdown";
 
 interface DesktopSplitViewProps {
   project: any;
@@ -249,7 +250,7 @@ export function DesktopSplitView({
             <div className="p-3 border-b border-border/60 bg-muted/20 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2 flex-1 max-w-sm">
                 <div className="relative w-full">
-                  <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none z-10" />
                   <input
                     type="text"
                     value={boardSearch}
@@ -258,17 +259,18 @@ export function DesktopSplitView({
                     className="w-full pl-8 pr-3 py-1 text-xs bg-background border border-border/80 rounded-lg focus:outline-none focus:border-primary"
                   />
                 </div>
-                <select
+                <Dropdown
                   value={boardPriority}
-                  onChange={(e) => setBoardPriority(e.target.value)}
-                  className="px-2 py-1 text-xs bg-background border border-border/80 rounded-lg focus:outline-none text-foreground"
-                >
-                  <option value="ALL">Độ ưu tiên</option>
-                  <option value="URGENT">Khẩn cấp</option>
-                  <option value="HIGH">Cao</option>
-                  <option value="MEDIUM">Trung bình</option>
-                  <option value="LOW">Thấp</option>
-                </select>
+                  options={[
+                    { label: "Độ ưu tiên", value: "ALL" },
+                    { label: "Khẩn cấp", value: "URGENT" },
+                    { label: "Cao", value: "HIGH" },
+                    { label: "Trung bình", value: "MEDIUM" },
+                    { label: "Thấp", value: "LOW" },
+                  ]}
+                  onChange={(e) => setBoardPriority(e.value)}
+                  className="p-inputtext-sm h-7 text-xs bg-background border border-border/80 rounded-lg"
+                />
               </div>
 
               <button
@@ -481,16 +483,17 @@ export function DesktopSplitView({
                     Chi Tiết Công Việc (Inspector)
                   </span>
                   {selectedTask && (
-                    <select
+                    <Dropdown
                       value={selectedTask.status}
-                      onChange={(e) => onUpdateTaskStatus(selectedTask.id, e.target.value)}
-                      className="px-2 py-0.5 text-xs bg-background border border-border/80 rounded-lg text-foreground font-medium"
-                    >
-                      <option value="TODO">Cần làm</option>
-                      <option value="IN_PROGRESS">Đang làm</option>
-                      <option value="REVIEW">Kiểm tra</option>
-                      <option value="DONE">Hoàn thành</option>
-                    </select>
+                      options={[
+                        { label: "Cần làm", value: "TODO" },
+                        { label: "Đang làm", value: "IN_PROGRESS" },
+                        { label: "Kiểm tra", value: "REVIEW" },
+                        { label: "Hoàn thành", value: "DONE" },
+                      ]}
+                      onChange={(e) => onUpdateTaskStatus(selectedTask.id, e.value)}
+                      className="p-inputtext-sm h-7 text-xs bg-background border border-border/80 rounded-lg font-medium"
+                    />
                   )}
                 </div>
 

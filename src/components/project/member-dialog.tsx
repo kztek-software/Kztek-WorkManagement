@@ -13,12 +13,8 @@ import {
   Plus,
   Loader2,
 } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog } from "primereact/dialog";
+import { Dropdown } from "primereact/dropdown";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, initials } from "@/components/ui/avatar";
 import { PROJECT_ROLES, type ProjectRole, canManageMembers } from "@/lib/permissions";
@@ -122,6 +118,58 @@ export function MemberDialog({
     }
   }, [open, projectId]);
 
+  const selectedTeamData = teams.find((t) => t.id === selectedTeamId);
+  const selectedTeamAvailableCount = selectedTeamData
+    ? selectedTeamData.members.filter((tm) => nonMembers.some((nm) => nm.id === tm.id)).length
+    : 0;
+
+  // Keyboard shortcuts listener for MemberDialog
+  useEffect(() => {
+    if (!open) return;
+
+    function handleMemberDialogKeyDown(e: KeyboardEvent) {
+      // Ctrl + Enter / Cmd + Enter: Add team or individual
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        e.preventDefault();
+        if (addMode === "team") {
+          if (selectedTeamId && selectedTeamAvailableCount > 0 && !adding) {
+            handleAddTeamMembers();
+          }
+        } else {
+          if (selectedUserId && !adding) {
+            handleAddIndividualMember();
+          }
+        }
+        return;
+      }
+
+      // Alt + 1 or Alt + T: Mode theo phòng ban
+      if (e.altKey && (e.key === "1" || e.key.toLowerCase() === "t")) {
+        e.preventDefault();
+        setAddMode("team");
+        return;
+      }
+
+      // Alt + 2 or Alt + I: Mode từng người
+      if (e.altKey && (e.key === "2" || e.key.toLowerCase() === "i")) {
+        e.preventDefault();
+        setAddMode("individual");
+        return;
+      }
+    }
+
+    window.addEventListener("keydown", handleMemberDialogKeyDown);
+    return () => window.removeEventListener("keydown", handleMemberDialogKeyDown);
+  }, [
+    open,
+    addMode,
+    selectedTeamId,
+    selectedTeamAvailableCount,
+    selectedUserId,
+    adding,
+    selectedRole,
+  ]);
+
   const hasManageRight = canManageMembers(currentRole);
 
   // Thêm cá nhân
@@ -187,6 +235,16 @@ export function MemberDialog({
   async function handleUpdateRole(userId: string, newRole: ProjectRole) {
     setError(null);
     setSuccess(null);
+    // Optimistic update tức thì trên UI (< 1ms)
+    setMembers((prev) =>
+      prev.map((m) => (m.user.id === userId ? { ...m, role: newRole } : m))
+    );
+    setSuccess("Đã cập nhật phân quyền thành công!");
+    onMembersChanged?.();
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("permissions-updated"));
+    }
+
     try {
       const res = await fetch(`/api/projects/${projectId}/members`, {
         method: "PATCH",
@@ -196,16 +254,11 @@ export function MemberDialog({
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || "Đổi vai trò thất bại");
-        return;
-      }
-      setSuccess("Đã cập nhật phân quyền thành công!");
-      loadData();
-      onMembersChanged?.();
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("permissions-updated"));
+        loadData();
       }
     } catch {
       setError("Lỗi kết nối máy chủ");
+      loadData();
     }
   }
 
@@ -213,6 +266,14 @@ export function MemberDialog({
     if (!confirm(`Bạn có chắc chắn muốn xóa "${name}" khỏi dự án?`)) return;
     setError(null);
     setSuccess(null);
+    // Optimistic remove tức thì trên UI (< 1ms)
+    setMembers((prev) => prev.filter((m) => m.user.id !== userId));
+    setSuccess(`Đã xóa "${name}" khỏi dự án`);
+    onMembersChanged?.();
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("permissions-updated"));
+    }
+
     try {
       const res = await fetch(`/api/projects/${projectId}/members?userId=${userId}`, {
         method: "DELETE",
@@ -220,16 +281,11 @@ export function MemberDialog({
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || "Xóa thành viên thất bại");
-        return;
-      }
-      setSuccess(`Đã xóa "${name}" khỏi dự án`);
-      loadData();
-      onMembersChanged?.();
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("permissions-updated"));
+        loadData();
       }
     } catch {
       setError("Lỗi kết nối máy chủ");
+      loadData();
     }
   }
 
@@ -244,20 +300,20 @@ export function MemberDialog({
         { key: "VIEWER", name: "Người xem (Viewer)" },
       ];
 
-  const selectedTeamData = teams.find((t) => t.id === selectedTeamId);
-  const selectedTeamAvailableCount = selectedTeamData
-    ? selectedTeamData.members.filter((tm) => nonMembers.some((nm) => nm.id === tm.id)).length
-    : 0;
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-base font-bold">
-            <Users className="h-5 w-5 text-accent" />
-            Thành viên & Phân quyền Dự án
-          </DialogTitle>
-        </DialogHeader>
+    <Dialog
+      visible={open}
+      onHide={() => onOpenChange(false)}
+      header={
+        <div className="flex items-center gap-2 text-base font-bold text-foreground">
+          <Users className="h-5 w-5 text-accent" />
+          <span>Thành viên & Phân quyền Dự án</span>
+        </div>
+      }
+      className="w-full max-w-2xl border border-line bg-surface rounded-2xl shadow-2xl overflow-hidden"
+      contentClassName="p-5 max-h-[80vh] overflow-y-auto"
+    >
+      <div className="space-y-4">
 
         {error && (
           <div className="flex items-center gap-2 rounded-xl bg-accent/10 p-2.5 text-xs text-accent border border-accent/30">
@@ -287,21 +343,27 @@ export function MemberDialog({
                 <div className="flex items-center rounded-lg bg-surface-2 p-0.5 border border-line">
                   <button
                     type="button"
+                    title="Chế độ theo phòng ban (Alt+1 / Alt+T)"
                     onClick={() => setAddMode("team")}
                     className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold transition-colors cursor-pointer ${
                       addMode === "team" ? "bg-accent text-white shadow-sm" : "text-muted hover:text-foreground"
                     }`}
                   >
-                    <Building2 className="h-3 w-3" /> Theo Phòng Ban
+                    <Building2 className="h-3 w-3" />
+                    <span>Theo Phòng Ban</span>
+                    <kbd className="hidden sm:inline-block text-[9px] font-mono opacity-70 ml-0.5">Alt+1</kbd>
                   </button>
                   <button
                     type="button"
+                    title="Chế độ từng người (Alt+2 / Alt+I)"
                     onClick={() => setAddMode("individual")}
                     className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold transition-colors cursor-pointer ${
                       addMode === "individual" ? "bg-accent text-white shadow-sm" : "text-muted hover:text-foreground"
                     }`}
                   >
-                    <Users className="h-3 w-3" /> Từng người
+                    <Users className="h-3 w-3" />
+                    <span>Từng người</span>
+                    <kbd className="hidden sm:inline-block text-[9px] font-mono opacity-70 ml-0.5">Alt+2</kbd>
                   </button>
                 </div>
               </div>
@@ -310,38 +372,37 @@ export function MemberDialog({
               {addMode === "team" && (
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <select
+                    <Dropdown
                       value={selectedTeamId}
-                      onChange={(e) => setSelectedTeamId(e.target.value)}
-                      className="flex-1 min-w-[200px] h-8.5 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none cursor-pointer"
-                    >
-                      {teams.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          🏢 {t.name} ({t.members.length} nhân sự)
-                        </option>
-                      ))}
-                    </select>
+                      options={teams.map((t) => ({
+                        label: `🏢 ${t.name} (${t.members.length} nhân sự)`,
+                        value: t.id,
+                      }))}
+                      onChange={(e) => setSelectedTeamId(e.value)}
+                      className="flex-1 min-w-[200px] h-8.5 text-xs bg-surface border border-line rounded-lg"
+                    />
 
-                    <select
+                    <Dropdown
                       value={selectedRole}
-                      onChange={(e) => setSelectedRole(e.target.value as ProjectRole)}
-                      className="h-8.5 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none cursor-pointer"
-                    >
-                      {roleOptions.map((r) => (
-                        <option key={r.key} value={r.key}>
-                          {r.name}
-                        </option>
-                      ))}
-                    </select>
+                      options={roleOptions.map((r) => ({
+                        label: r.name,
+                        value: r.key,
+                      }))}
+                      onChange={(e) => setSelectedRole(e.value as ProjectRole)}
+                      className="w-36 h-8.5 text-xs bg-surface border border-line rounded-lg"
+                    />
 
                     <Button
                       size="sm"
                       onClick={handleAddTeamMembers}
                       disabled={adding || selectedTeamAvailableCount === 0}
-                      className="h-8.5 text-xs px-3 font-bold bg-accent hover:bg-accent/90 text-white shadow-sm shrink-0"
+                      className="h-8.5 text-xs px-3 font-bold bg-accent hover:bg-accent/90 text-white shadow-sm shrink-0 cursor-pointer gap-1.5"
                     >
-                      {adding ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Plus className="h-3.5 w-3.5 mr-1" />}
-                      Thêm cả phòng ban ({selectedTeamAvailableCount} người)
+                      {adding ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Plus className="h-3.5 w-3.5 mr-0.5" />}
+                      <span>Thêm cả phòng ban ({selectedTeamAvailableCount} người)</span>
+                      <kbd className="hidden sm:inline-block px-1.5 py-0.2 text-[9px] font-mono font-bold bg-white/20 text-white rounded border border-white/30">
+                        Ctrl+Enter
+                      </kbd>
                     </Button>
                   </div>
 
@@ -362,38 +423,37 @@ export function MemberDialog({
                 <div>
                   {nonMembers.length > 0 ? (
                     <div className="flex items-center gap-2 flex-wrap">
-                      <select
+                      <Dropdown
                         value={selectedUserId}
-                        onChange={(e) => setSelectedUserId(e.target.value)}
-                        className="flex-1 min-w-[200px] h-8.5 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none cursor-pointer"
-                      >
-                        {nonMembers.map((u) => (
-                          <option key={u.id} value={u.id}>
-                            {u.name} ({u.email}) {u.team ? `— [${u.team.name}]` : ""} {u.title ? `• ${u.title}` : ""}
-                          </option>
-                        ))}
-                      </select>
+                        options={nonMembers.map((u) => ({
+                          label: `${u.name} (${u.email})${u.team ? ` — [${u.team.name}]` : ""}${u.title ? ` • ${u.title}` : ""}`,
+                          value: u.id,
+                        }))}
+                        onChange={(e) => setSelectedUserId(e.value)}
+                        className="flex-1 min-w-[200px] h-8.5 text-xs bg-surface border border-line rounded-lg"
+                      />
 
-                      <select
+                      <Dropdown
                         value={selectedRole}
-                        onChange={(e) => setSelectedRole(e.target.value as ProjectRole)}
-                        className="h-8.5 rounded-lg border border-line bg-surface px-2.5 text-xs text-foreground focus:outline-none cursor-pointer"
-                      >
-                        {roleOptions.map((r) => (
-                          <option key={r.key} value={r.key}>
-                            {r.name}
-                          </option>
-                        ))}
-                      </select>
+                        options={roleOptions.map((r) => ({
+                          label: r.name,
+                          value: r.key,
+                        }))}
+                        onChange={(e) => setSelectedRole(e.value as ProjectRole)}
+                        className="w-36 h-8.5 text-xs bg-surface border border-line rounded-lg"
+                      />
 
                       <Button
                         size="sm"
                         onClick={handleAddIndividualMember}
                         disabled={adding}
-                        className="h-8.5 text-xs px-3 font-bold bg-accent hover:bg-accent/90 text-white shadow-sm shrink-0"
+                        className="h-8.5 text-xs px-3 font-bold bg-accent hover:bg-accent/90 text-white shadow-sm shrink-0 cursor-pointer gap-1.5"
                       >
-                        {adding ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Plus className="h-3.5 w-3.5 mr-1" />}
-                        Thêm vào dự án
+                        {adding ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Plus className="h-3.5 w-3.5 mr-0.5" />}
+                        <span>Thêm vào dự án</span>
+                        <kbd className="hidden sm:inline-block px-1.5 py-0.2 text-[9px] font-mono font-bold bg-white/20 text-white rounded border border-white/30">
+                          Ctrl+Enter
+                        </kbd>
                       </Button>
                     </div>
                   ) : (
@@ -460,17 +520,15 @@ export function MemberDialog({
 
                     <div className="flex items-center gap-2 shrink-0">
                       {hasManageRight && !isOwner ? (
-                        <select
+                        <Dropdown
                           value={m.role}
-                          onChange={(e) => handleUpdateRole(m.userId, e.target.value as ProjectRole)}
-                          className="h-7.5 rounded-lg border border-line bg-surface-2 px-2 text-xs font-medium text-foreground focus:outline-none cursor-pointer"
-                        >
-                          {roleOptions.map((r) => (
-                            <option key={r.key} value={r.key}>
-                              {r.name}
-                            </option>
-                          ))}
-                        </select>
+                          options={roleOptions.map((r) => ({
+                            label: r.name,
+                            value: r.key,
+                          }))}
+                          onChange={(e) => handleUpdateRole(m.userId, e.value as ProjectRole)}
+                          className="w-32 h-7.5 text-xs bg-surface-2 border border-line rounded-lg"
+                        />
                       ) : (
                         <span className="rounded-full bg-surface-2 px-2.5 py-1 text-xs font-medium text-muted flex items-center gap-1 border border-line">
                           <Shield className="h-3 w-3" />
@@ -502,7 +560,7 @@ export function MemberDialog({
             <div>• <strong className="text-slate-600">VIEWER</strong>: Chỉ xem dữ liệu, không được tạo mới, sửa đổi hoặc kéo thả task.</div>
           </div>
         </div>
-      </DialogContent>
+      </div>
     </Dialog>
   );
 }

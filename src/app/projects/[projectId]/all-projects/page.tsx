@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { getTabCache, setTabCache } from "@/lib/tab-cache";
 import {
   FolderKanban,
   Plus,
@@ -38,9 +39,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog } from "primereact/dialog";
 import { Toast } from "primereact/toast";
+import { Dropdown } from "primereact/dropdown";
 import { PROJECT_STATUSES, projectStatusMeta } from "@/lib/constants";
 import { MemberDialog } from "@/components/project/member-dialog";
 import { Tooltip } from "@/components/ui/tooltip";
+import { ProjectAttachmentGallery } from "@/components/project/project-attachment-gallery";
 
 type AdminProjectItem = {
   id: string;
@@ -96,6 +99,13 @@ type UserLiteItem = {
   role: string;
 };
 
+interface AllProjectsCacheData {
+  projects: AdminProjectItem[];
+  allUsers: UserLiteItem[];
+}
+
+const ALL_PROJECTS_CACHE_KEY = "kztek_all_projects_cache";
+
 const PROJECT_GRADIENTS = [
   "from-orange-500 to-amber-600",
   "from-blue-600 to-indigo-600",
@@ -120,10 +130,12 @@ export default function AllProjectsManagementPage() {
   const currentProjectId = params.projectId;
   const toast = useRef<Toast>(null);
 
-  const [projects, setProjects] = useState<AdminProjectItem[]>([]);
-  const [allUsers, setAllUsers] = useState<UserLiteItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const cached = getTabCache<AllProjectsCacheData>(ALL_PROJECTS_CACHE_KEY);
+
+  const [projects, setProjects] = useState<AdminProjectItem[]>(cached?.projects || []);
+  const [allUsers, setAllUsers] = useState<UserLiteItem[]>(cached?.allUsers || []);
+  const [loading, setLoading] = useState(!cached);
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(cached ? true : null);
 
   // Filter & Search State
   const [searchQuery, setSearchQuery] = useState("");
@@ -133,7 +145,6 @@ export default function AllProjectsManagementPage() {
 
   // Status changing state per project
   const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
-  const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
 
   // Edit Modal State
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -156,7 +167,6 @@ export default function AllProjectsManagementPage() {
   const [memberDialogProjectId, setMemberDialogProjectId] = useState<string | null>(null);
 
   async function loadProjectsData() {
-    setLoading(true);
     try {
       const [resProjects, resUsers] = await Promise.all([
         fetch("/api/admin/projects"),
@@ -169,9 +179,13 @@ export default function AllProjectsManagementPage() {
         return;
       }
 
+      let nextProjects = projects;
+      let nextUsers = allUsers;
+
       if (resProjects.ok) {
         const data = await resProjects.json();
-        setProjects(data.projects || []);
+        nextProjects = data.projects || [];
+        setProjects(nextProjects);
         setIsAuthorized(true);
       } else {
         setIsAuthorized(false);
@@ -179,8 +193,14 @@ export default function AllProjectsManagementPage() {
 
       if (resUsers.ok) {
         const uData = await resUsers.json();
-        setAllUsers(uData.users || []);
+        nextUsers = uData.users || [];
+        setAllUsers(nextUsers);
       }
+
+      setTabCache(ALL_PROJECTS_CACHE_KEY, {
+        projects: nextProjects,
+        allUsers: nextUsers,
+      });
     } catch {
       setIsAuthorized(false);
     } finally {
@@ -194,7 +214,7 @@ export default function AllProjectsManagementPage() {
 
   // Thay đổi trạng thái nhanh trực tiếp
   async function handleQuickStatusChange(projectId: string, newStatus: string) {
-    setActiveDropdownId(null);
+    if (!newStatus) return;
     setUpdatingStatusId(projectId);
     try {
       const res = await fetch(`/api/projects/${projectId}`, {
@@ -221,6 +241,13 @@ export default function AllProjectsManagementPage() {
           life: 3000,
         });
       }
+    } catch {
+      toast.current?.show({
+        severity: "error",
+        summary: "Lỗi",
+        detail: "Lỗi kết nối máy chủ khi cập nhật trạng thái",
+        life: 3000,
+      });
     } finally {
       setUpdatingStatusId(null);
     }
@@ -244,6 +271,26 @@ export default function AllProjectsManagementPage() {
     setSavingEdit(true);
     setEditError("");
 
+    const updatedProjObj: AdminProjectItem = {
+      ...editingProject,
+      name: editName.trim(),
+      key: editKey.trim().toUpperCase(),
+      description: editDesc.trim() || null,
+      status: editStatus,
+      ownerId: editOwnerId,
+      owner: editOwnerId ? (allUsers.find((u) => u.id === editOwnerId) as any) : null,
+    };
+
+    // Optimistic update tức thì trên UI (< 1ms)
+    setProjects((prev) => prev.map((p) => (p.id === editingProject.id ? updatedProjObj : p)));
+    setEditModalOpen(false);
+    toast.current?.show({
+      severity: "success",
+      summary: "Thành công",
+      detail: "Đã cập nhật thông tin dự án thành công",
+      life: 2500,
+    });
+
     try {
       const res = await fetch(`/api/projects/${editingProject.id}`, {
         method: "PATCH",
@@ -260,20 +307,11 @@ export default function AllProjectsManagementPage() {
       const data = await res.json();
       if (!res.ok) {
         setEditError(data.error || "Không thể lưu thông tin dự án");
-        return;
+        loadProjectsData();
       }
-
-      toast.current?.show({
-        severity: "success",
-        summary: "Thành công",
-        detail: "Đã cập nhật thông tin dự án thành công",
-        life: 2500,
-      });
-
-      setEditModalOpen(false);
-      loadProjectsData();
     } catch {
       setEditError("Lỗi kết nối máy chủ");
+      loadProjectsData();
     } finally {
       setSavingEdit(false);
     }
@@ -290,27 +328,30 @@ export default function AllProjectsManagementPage() {
     if (!deletingProject) return;
     if (confirmKeyInput !== deletingProject.key) return;
 
+    const targetId = deletingProject.id;
+    const targetName = deletingProject.name;
+
+    // Optimistic delete tức thì trên UI (< 1ms)
+    setDeleteModalOpen(false);
+    setProjects((prev) => prev.filter((p) => p.id !== targetId));
+    toast.current?.show({
+      severity: "success",
+      summary: "Đã xóa dự án",
+      detail: `Dự án ${targetName} đã được xóa vĩnh viễn`,
+      life: 3000,
+    });
+
+    if (targetId === currentProjectId) {
+      router.push("/");
+    }
+
     setDeleting(true);
     try {
-      const res = await fetch(`/api/projects/${deletingProject.id}`, {
+      const res = await fetch(`/api/projects/${targetId}`, {
         method: "DELETE",
       });
 
-      if (res.ok) {
-        toast.current?.show({
-          severity: "success",
-          summary: "Đã xóa dự án",
-          detail: `Dự án ${deletingProject.name} đã được xóa vĩnh viễn`,
-          life: 3000,
-        });
-        setDeleteModalOpen(false);
-        setProjects((prev) => prev.filter((p) => p.id !== deletingProject.id));
-
-        // Nếu xóa đúng project đang active thì chuyển về home
-        if (deletingProject.id === currentProjectId) {
-          router.push("/");
-        }
-      } else {
+      if (!res.ok) {
         const err = await res.json().catch(() => null);
         toast.current?.show({
           severity: "error",
@@ -318,7 +359,16 @@ export default function AllProjectsManagementPage() {
           detail: err?.error || "Không thể xóa dự án",
           life: 3000,
         });
+        loadProjectsData();
       }
+    } catch {
+      toast.current?.show({
+        severity: "error",
+        summary: "Lỗi kết nối",
+        detail: "Không thể kết nối đến máy chủ",
+        life: 3000,
+      });
+      loadProjectsData();
     } finally {
       setDeleting(false);
     }
@@ -380,12 +430,52 @@ export default function AllProjectsManagementPage() {
     return { total, inProgress, planning, onHold, completed, totalMembers, totalTasks };
   }, [projects]);
 
-  if (loading) {
+  if (loading && projects.length === 0) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center bg-background gap-3">
-        <div className="h-6 w-6 rounded-full border-2 border-accent border-t-transparent animate-spin" />
-        <div className="text-xs font-semibold text-muted">
-          Đang tải danh mục tất cả dự án hệ thống...
+      <div className="flex flex-1 flex-col overflow-hidden bg-background animate-pulse p-4 sm:p-6 space-y-5">
+        {/* Header skeleton */}
+        <div className="flex items-center justify-between pb-4 border-b border-line">
+          <div className="flex items-center gap-3">
+            <div className="h-6 w-44 bg-surface-2 rounded-lg" />
+            <div className="h-5 w-24 bg-surface-2/60 rounded-full" />
+          </div>
+          <div className="h-9 w-32 bg-surface-2 rounded-xl" />
+        </div>
+
+        {/* 4 Stats Cards skeleton */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-20 rounded-2xl border border-line bg-surface p-4 flex justify-between items-center">
+              <div className="space-y-1.5">
+                <div className="h-3 w-16 bg-surface-2 rounded" />
+                <div className="h-6 w-10 bg-surface-2 rounded-lg" />
+              </div>
+              <div className="h-9 w-9 rounded-xl bg-surface-2" />
+            </div>
+          ))}
+        </div>
+
+        {/* Search & Filter Bar skeleton */}
+        <div className="h-12 rounded-2xl border border-line bg-surface p-3 flex items-center justify-between">
+          <div className="h-7 w-64 bg-surface-2 rounded-xl" />
+          <div className="h-7 w-32 bg-surface-2 rounded-xl" />
+        </div>
+
+        {/* Projects Cards Grid skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="h-52 rounded-3xl border border-line bg-surface p-5 space-y-4 flex flex-col justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-2xl bg-surface-2" />
+                <div className="space-y-1.5 flex-1">
+                  <div className="h-4 w-32 bg-surface-2 rounded" />
+                  <div className="h-3 w-20 bg-surface-2 rounded" />
+                </div>
+              </div>
+              <div className="h-12 bg-surface-2/40 rounded-xl" />
+              <div className="h-4 w-24 bg-surface-2 rounded" />
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -532,76 +622,65 @@ export default function AllProjectsManagementPage() {
           <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
             {/* Search Box */}
             <div className="relative flex-1 min-w-[240px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted" />
-              <input
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted pointer-events-none z-10" />
+              <Input
                 type="text"
                 placeholder="Tìm kiếm dự án theo tên, mã key, mô tả hoặc chủ dự án..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-9 rounded-xl border border-line bg-surface-2 pl-9 pr-3 text-xs text-foreground placeholder:text-muted/60 focus:outline-none focus:border-accent"
+                className="w-full h-9 rounded-xl border border-line bg-surface-2 pl-9 pr-8 text-xs text-foreground placeholder:text-muted/60 focus:outline-none focus:border-accent"
               />
               {searchQuery && (
-                <Tooltip content="Xóa từ khóa tìm kiếm" side="left">
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-foreground cursor-pointer"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </Tooltip>
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-foreground cursor-pointer"
+                  title="Xóa từ khóa tìm kiếm"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
               )}
             </div>
 
             {/* Filter Controls */}
             <div className="flex items-center gap-2 flex-wrap">
               {/* Status Filter */}
-              <div className="flex items-center gap-1.5 bg-surface-2 rounded-xl border border-line px-2.5 py-1">
-                <span className="text-[10px] text-muted font-bold uppercase">Trạng thái:</span>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="bg-transparent text-xs font-semibold text-foreground focus:outline-none cursor-pointer"
-                >
-                  <option value="ALL">Tất cả ({projects.length})</option>
-                  {PROJECT_STATUSES.map((st) => (
-                    <option key={st.id} value={st.id}>
-                      {st.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <Dropdown
+                value={statusFilter}
+                options={[
+                  { label: `Tất cả trạng thái (${projects.length})`, value: "ALL" },
+                  ...PROJECT_STATUSES.map((st) => ({ label: st.label, value: st.id })),
+                ]}
+                onChange={(e) => setStatusFilter(e.value)}
+                placeholder="Trạng thái"
+                className="p-inputtext-sm h-8 text-xs font-semibold bg-surface-2 border border-line rounded-xl"
+              />
 
               {/* Department Filter */}
-              <div className="flex items-center gap-1.5 bg-surface-2 rounded-xl border border-line px-2.5 py-1">
-                <span className="text-[10px] text-muted font-bold uppercase">Phòng ban:</span>
-                <select
-                  value={teamFilter}
-                  onChange={(e) => setTeamFilter(e.target.value)}
-                  className="bg-transparent text-xs font-semibold text-foreground focus:outline-none cursor-pointer"
-                >
-                  <option value="ALL">Tất cả phòng ban</option>
-                  {allAvailableTeams.map((tm) => (
-                    <option key={tm.id} value={tm.id}>
-                      {tm.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <Dropdown
+                value={teamFilter}
+                options={[
+                  { label: "Tất cả phòng ban", value: "ALL" },
+                  ...allAvailableTeams.map((tm) => ({ label: tm.name, value: tm.id })),
+                ]}
+                onChange={(e) => setTeamFilter(e.value)}
+                placeholder="Phòng ban"
+                className="p-inputtext-sm h-8 text-xs font-semibold bg-surface-2 border border-line rounded-xl"
+              />
 
               {/* Sorting */}
-              <div className="flex items-center gap-1.5 bg-surface-2 rounded-xl border border-line px-2.5 py-1">
-                <span className="text-[10px] text-muted font-bold uppercase">Sắp xếp:</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as any)}
-                  className="bg-transparent text-xs font-semibold text-foreground focus:outline-none cursor-pointer"
-                >
-                  <option value="createdAt_desc">Mới nhất trước</option>
-                  <option value="createdAt_asc">Cũ nhất trước</option>
-                  <option value="name_asc">Tên A-Z</option>
-                  <option value="tasks_desc">Nhiều task nhất</option>
-                </select>
-              </div>
+              <Dropdown
+                value={sortBy}
+                options={[
+                  { label: "Mới nhất trước", value: "createdAt_desc" },
+                  { label: "Cũ nhất trước", value: "createdAt_asc" },
+                  { label: "Tên A-Z", value: "name_asc" },
+                  { label: "Nhiều task nhất", value: "tasks_desc" },
+                ]}
+                onChange={(e) => setSortBy(e.value)}
+                placeholder="Sắp xếp"
+                className="p-inputtext-sm h-8 text-xs font-semibold bg-surface-2 border border-line rounded-xl"
+              />
             </div>
           </div>
         </div>
@@ -620,7 +699,7 @@ export default function AllProjectsManagementPage() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+            <table className="w-full text-left text-xs min-w-[960px]">
               <thead className="border-b border-line bg-surface-2/60 text-muted uppercase tracking-wider text-[10px]">
                 <tr>
                   <th className="px-5 py-3.5">Thông tin dự án</th>
@@ -628,13 +707,12 @@ export default function AllProjectsManagementPage() {
                   <th className="px-4 py-3.5">Chủ dự án (Owner)</th>
                   <th className="px-4 py-3.5">Phòng ban & Nhân sự</th>
                   <th className="px-4 py-3.5 text-center">Tiến độ & Task</th>
-                  <th className="px-5 py-3.5 text-right">Hành động quản trị</th>
+                  <th className="px-5 py-3.5 text-right whitespace-nowrap min-w-[200px]">Hành động quản trị</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
                 {filteredProjects.map((p) => {
                   const sMeta = projectStatusMeta(p.status);
-                  const isDropdownOpen = activeDropdownId === p.id;
                   const isUpdatingStatus = updatingStatusId === p.id;
 
                   return (
@@ -666,53 +744,46 @@ export default function AllProjectsManagementPage() {
                         </div>
                       </td>
 
-                      {/* Column 2: Status with Inline Dropdown Switcher */}
-                      <td className="px-4 py-4">
-                        <div className="relative inline-block">
-                          <button
-                            type="button"
-                            onClick={() => setActiveDropdownId(isDropdownOpen ? null : p.id)}
-                            disabled={isUpdatingStatus}
-                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer hover:opacity-90 border"
-                            style={{
-                              backgroundColor: sMeta.bg,
-                              color: sMeta.color,
-                              borderColor: sMeta.border,
-                            }}
-                          >
-                            {isUpdatingStatus ? (
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                            ) : (
-                              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: sMeta.color }} />
-                            )}
-                            <span>{sMeta.label}</span>
-                            <ChevronDown className="h-3 w-3 opacity-70" />
-                          </button>
-
-                          {isDropdownOpen && (
-                            <div className="absolute left-0 top-[calc(100%+4px)] z-50 w-48 rounded-2xl border border-line bg-surface p-1.5 shadow-2xl backdrop-blur-2xl animate-fade-in-up ring-1 ring-line">
-                              <div className="px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-muted border-b border-line/50 mb-1">
-                                Đổi trạng thái
+                      {/* Column 2: Status with PrimeReact Dropdown (Never Clipped) */}
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <Dropdown
+                          value={p.status}
+                          options={[...PROJECT_STATUSES]}
+                          optionLabel="label"
+                          optionValue="id"
+                          onChange={(e) => handleQuickStatusChange(p.id, e.value)}
+                          disabled={isUpdatingStatus}
+                          appendTo={typeof document !== "undefined" ? document.body : undefined}
+                          className="h-8 text-xs font-bold rounded-xl border shadow-sm transition-all"
+                          style={{
+                            backgroundColor: sMeta.bg,
+                            color: sMeta.color,
+                            borderColor: sMeta.border,
+                          }}
+                          valueTemplate={(option) => {
+                            const meta = option ? projectStatusMeta(option.id) : sMeta;
+                            return (
+                              <div className="flex items-center gap-1.5 text-xs font-bold" style={{ color: meta.color }}>
+                                {isUpdatingStatus ? (
+                                  <Loader2 className="h-3 w-3 animate-spin shrink-0" />
+                                ) : (
+                                  <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: meta.color }} />
+                                )}
+                                <span>{meta.label}</span>
                               </div>
-                              {PROJECT_STATUSES.map((st) => (
-                                <button
-                                  key={st.id}
-                                  type="button"
-                                  onClick={() => handleQuickStatusChange(p.id, st.id)}
-                                  className={`flex w-full items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition-colors cursor-pointer ${
-                                    p.status === st.id ? "bg-surface-2 font-bold" : "hover:bg-surface-2/60 text-muted hover:text-foreground"
-                                  }`}
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: st.color }} />
-                                    <span style={{ color: st.color }}>{st.label}</span>
-                                  </div>
-                                  {p.status === st.id && <Check className="h-3.5 w-3.5 text-accent" />}
-                                </button>
-                              ))}
+                            );
+                          }}
+                          itemTemplate={(option) => (
+                            <div className="flex items-center justify-between gap-3 text-xs py-0.5">
+                              <div className="flex items-center gap-2">
+                                <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: option.color }} />
+                                <span style={{ color: option.color }} className="font-semibold">{option.label}</span>
+                              </div>
+                              {p.status === option.id && <Check className="h-3.5 w-3.5 text-accent" />}
                             </div>
                           )}
-                        </div>
+                          panelClassName="border border-line bg-surface rounded-2xl shadow-2xl p-1 text-xs"
+                        />
                       </td>
 
                       {/* Column 3: Owner */}
@@ -790,69 +861,60 @@ export default function AllProjectsManagementPage() {
                         </div>
                       </td>
 
-                      {/* Column 6: Admin Action Buttons */}
-                      <td className="px-5 py-4 text-right">
-                        <div className="flex items-center justify-end gap-1">
+                      {/* Column 6: Admin Action Buttons (Clean Horizontal Row, No Outer Border, Spacious Gap) */}
+                      <td className="px-5 py-4 text-right whitespace-nowrap min-w-[220px]">
+                        <div className="inline-flex items-center justify-end gap-3.5 shrink-0 flex-nowrap">
                           {/* Dashboard Link */}
                           <Tooltip content="Mở Dashboard phân tích & chỉ số" side="top">
-                            <Link href={`/projects/${p.id}/dashboard`}>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-7.5 w-7.5 p-0 text-muted hover:text-accent hover:bg-accent/15 cursor-pointer"
-                              >
-                                <LayoutDashboard className="h-3.5 w-3.5" />
-                              </Button>
+                            <Link
+                              href={`/projects/${p.id}/dashboard`}
+                              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted hover:text-accent hover:bg-accent/10 transition-all cursor-pointer shrink-0"
+                            >
+                              <LayoutDashboard className="h-4 w-4" />
                             </Link>
                           </Tooltip>
 
                           {/* Board Link */}
                           <Tooltip content="Mở bảng công việc (Board Kanban)" side="top">
-                            <Link href={`/projects/${p.id}/board`}>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-7.5 w-7.5 p-0 text-muted hover:text-accent hover:bg-accent/15 cursor-pointer"
-                              >
-                                <KanbanSquare className="h-3.5 w-3.5" />
-                              </Button>
+                            <Link
+                              href={`/projects/${p.id}/board`}
+                              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted hover:text-accent hover:bg-accent/10 transition-all cursor-pointer shrink-0"
+                            >
+                              <KanbanSquare className="h-4 w-4" />
                             </Link>
                           </Tooltip>
 
                           {/* Manage Members Modal Button */}
                           <Tooltip content="Quản lý thành viên & phân quyền" side="top">
-                            <Button
-                              size="sm"
-                              variant="ghost"
+                            <button
+                              type="button"
                               onClick={() => setMemberDialogProjectId(p.id)}
-                              className="h-7.5 w-7.5 p-0 text-muted hover:text-emerald-600 hover:bg-emerald-500/15 cursor-pointer"
+                              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted hover:text-emerald-600 hover:bg-emerald-500/10 transition-all cursor-pointer shrink-0"
                             >
-                              <Users className="h-3.5 w-3.5" />
-                            </Button>
+                              <Users className="h-4 w-4" />
+                            </button>
                           </Tooltip>
 
                           {/* Edit Project Button */}
                           <Tooltip content="Chỉnh sửa thông tin & chuyển giao chủ dự án" side="top">
-                            <Button
-                              size="sm"
-                              variant="ghost"
+                            <button
+                              type="button"
                               onClick={() => openEditModal(p)}
-                              className="h-7.5 w-7.5 p-0 text-muted hover:text-blue-600 hover:bg-blue-500/15 cursor-pointer"
+                              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted hover:text-blue-600 hover:bg-blue-500/10 transition-all cursor-pointer shrink-0"
                             >
-                              <Edit2 className="h-3.5 w-3.5" />
-                            </Button>
+                              <Edit2 className="h-4 w-4" />
+                            </button>
                           </Tooltip>
 
                           {/* Delete Project Button */}
                           <Tooltip content="Xóa dự án khỏi hệ thống" side="top">
-                            <Button
-                              size="sm"
-                              variant="ghost"
+                            <button
+                              type="button"
                               onClick={() => openDeleteModal(p)}
-                              className="h-7.5 w-7.5 p-0 text-muted hover:text-accent hover:bg-accent-subtle cursor-pointer"
+                              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted hover:text-accent hover:bg-accent/10 transition-all cursor-pointer shrink-0"
                             >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
+                              <Trash2 className="h-4 w-4" />
+                            </button>
                           </Tooltip>
                         </div>
                       </td>
@@ -915,17 +977,15 @@ export default function AllProjectsManagementPage() {
 
             <div className="space-y-1">
               <Label className="text-xs font-semibold">Trạng thái dự án</Label>
-              <select
+              <Dropdown
                 value={editStatus}
-                onChange={(e) => setEditStatus(e.target.value)}
-                className="w-full h-9 rounded-xl border border-line bg-surface-2 px-3 text-xs text-foreground focus:outline-none"
-              >
-                {PROJECT_STATUSES.map((st) => (
-                  <option key={st.id} value={st.id}>
-                    {st.label}
-                  </option>
-                ))}
-              </select>
+                options={PROJECT_STATUSES.map((st) => ({
+                  label: st.label,
+                  value: st.id,
+                }))}
+                onChange={(e) => setEditStatus(e.value)}
+                className="w-full h-9 text-xs bg-surface-2 border border-line rounded-xl"
+              />
             </div>
           </div>
 
@@ -935,17 +995,15 @@ export default function AllProjectsManagementPage() {
               <Label className="text-xs font-semibold">Chủ dự án (Owner)</Label>
               <span className="text-[10px] text-amber-600 font-medium">Toàn quyền quản trị dự án</span>
             </div>
-            <select
+            <Dropdown
               value={editOwnerId}
-              onChange={(e) => setEditOwnerId(e.target.value)}
-              className="w-full h-9 rounded-xl border border-line bg-surface-2 px-3 text-xs text-foreground focus:outline-none cursor-pointer"
-            >
-              {allUsers.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.name} ({u.email}) {u.title ? `— ${u.title}` : ""}
-                </option>
-              ))}
-            </select>
+              options={allUsers.map((u) => ({
+                label: `${u.name} (${u.email})${u.title ? ` — ${u.title}` : ""}`,
+                value: u.id,
+              }))}
+              onChange={(e) => setEditOwnerId(e.value)}
+              className="w-full h-9 text-xs bg-surface-2 border border-line rounded-xl"
+            />
           </div>
 
           <div className="space-y-1">
@@ -958,6 +1016,16 @@ export default function AllProjectsManagementPage() {
               placeholder="Mô tả phạm vi và mục tiêu triển khai..."
             />
           </div>
+
+          {/* Quản lý tệp tài liệu dự án */}
+          {editingProject && (
+            <div className="rounded-xl border border-line bg-surface-2/40 p-3 space-y-2">
+              <ProjectAttachmentGallery
+                projectId={editingProject.id}
+                compact={true}
+              />
+            </div>
+          )}
 
           {/* Danger Zone: Xóa dự án */}
           <div className="rounded-xl border border-accent/30 bg-accent-subtle p-3 space-y-2 mt-2">

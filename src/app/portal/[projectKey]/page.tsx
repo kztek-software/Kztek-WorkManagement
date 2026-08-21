@@ -10,5 +10,5 @@ export default function ProjectSpecificPortalPage({
 }) {
   const resolvedParams = use(params);
 
-  return <CustomerPortalPage />;
+  return <CustomerPortalPage initialProjectKey={resolvedParams.projectKey} />;
 }

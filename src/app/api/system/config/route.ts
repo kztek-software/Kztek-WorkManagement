@@ -56,6 +56,19 @@ const updateConfigSchema = z.object({
       enableRealtimeSse: z.boolean().optional(),
     })
     .optional(),
+  zalo: z
+    .object({
+      enabled: z.boolean().optional(),
+      appId: z.string().optional(),
+      appSecret: z.string().optional(),
+      oaId: z.string().optional(),
+      oaSecretKey: z.string().optional(),
+      znsTemplateId: z.string().optional(),
+      notifyOnAssign: z.boolean().optional(),
+      notifyOnStatusChange: z.boolean().optional(),
+      notifyOnComment: z.boolean().optional(),
+    })
+    .optional(),
 });
 
 export async function POST(req: NextRequest) {

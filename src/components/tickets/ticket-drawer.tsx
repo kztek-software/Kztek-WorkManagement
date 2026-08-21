@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   X,
@@ -32,6 +32,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { Dialog } from "primereact/dialog";
+import { Dropdown } from "primereact/dropdown";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,6 +40,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { MediaGallery } from "@/components/ui/media-gallery";
 import { FileUploadZone, type UploadedFileItem } from "@/components/ui/file-upload-zone";
+import { RichMarkdown } from "@/components/ui/rich-markdown";
+import { RichTextToolbar, handleRichTextKeyDown } from "@/components/ui/rich-text-toolbar";
+import { WysiwygEditor } from "@/components/ui/wysiwyg-editor";
 import type { CustomerTicketDto, SprintDto, MemberDto, AttachmentDto } from "@/lib/types";
 
 interface TicketDrawerProps {
@@ -75,6 +79,10 @@ export function TicketDrawer({
   const [newComment, setNewComment] = useState("");
   const [isInternalOnly, setIsInternalOnly] = useState(false);
   const [sendingComment, setSendingComment] = useState(false);
+
+  const internalNotesRef = useRef<HTMLTextAreaElement | null>(null);
+  const resolutionNotesRef = useRef<HTMLTextAreaElement | null>(null);
+  const newCommentRef = useRef<HTMLTextAreaElement | null>(null);
 
   // Dispatch state
   const [dispatchModalOpen, setDispatchModalOpen] = useState(false);
@@ -276,6 +284,66 @@ export function TicketDrawer({
     setTimeout(() => setCopiedCode(false), 2000);
   }
 
+  // Keyboard shortcuts listener for TicketDrawer
+  useEffect(() => {
+    if (!isOpen) return;
+
+    function handleTicketDrawerKeyDown(e: KeyboardEvent) {
+      // Ctrl + Enter / Cmd + Enter
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        if (convertModalOpen && !converting) {
+          e.preventDefault();
+          handleConvert();
+          return;
+        }
+        if (dispatchModalOpen && !dispatching) {
+          e.preventDefault();
+          handleDispatch();
+          return;
+        }
+        if (newComment.trim() && !sendingComment) {
+          e.preventDefault();
+          handleAddComment(e as unknown as React.FormEvent);
+          return;
+        }
+      }
+
+      // Alt + C: Chuyển đổi thành Task trên Board
+      if (e.altKey && e.key.toLowerCase() === "c" && !ticket?.convertedTaskId) {
+        e.preventDefault();
+        setConvertModalOpen(true);
+        return;
+      }
+
+      // Alt + D: Điều phối dự án
+      if (e.altKey && e.key.toLowerCase() === "d" && allProjects && allProjects.length > 0) {
+        e.preventDefault();
+        setDispatchModalOpen(true);
+        return;
+      }
+
+      // Alt + L: Sao chép mã theo dõi ticket
+      if (e.altKey && e.key.toLowerCase() === "l") {
+        e.preventDefault();
+        copyTracking();
+        return;
+      }
+    }
+
+    window.addEventListener("keydown", handleTicketDrawerKeyDown);
+    return () => window.removeEventListener("keydown", handleTicketDrawerKeyDown);
+  }, [
+    isOpen,
+    convertModalOpen,
+    dispatchModalOpen,
+    converting,
+    dispatching,
+    newComment,
+    sendingComment,
+    ticket,
+    allProjects,
+  ]);
+
   const statusList = [
     { id: "OPEN", label: "Mới tiếp nhận (OPEN)", color: "text-blue-400" },
     { id: "TRIAGED", label: "Đã phân loại (TRIAGED)", color: "text-purple-400" },
@@ -333,39 +401,29 @@ export function TicketDrawer({
               {/* Status Selector */}
               <div className="space-y-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted block">Trạng thái</span>
-                <select
+                <Dropdown
                   value={status}
+                  options={statusList.map((s) => ({ label: s.label, value: s.id }))}
                   onChange={(e) => {
-                    setStatus(e.target.value);
-                    handleQuickUpdate(e.target.value);
+                    setStatus(e.value);
+                    handleQuickUpdate(e.value);
                   }}
-                  className="h-8 px-2.5 rounded-lg border border-line bg-surface-3 text-xs font-bold text-foreground focus:border-accent focus:outline-none"
-                >
-                  {statusList.map((s) => (
-                    <option key={s.id} value={s.id} className={s.color}>
-                      {s.label}
-                    </option>
-                  ))}
-                </select>
+                  className="h-8 text-xs font-bold bg-surface-3 border border-line rounded-lg"
+                />
               </div>
 
               {/* Priority Selector */}
               <div className="space-y-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted block">Ưu tiên</span>
-                <select
+                <Dropdown
                   value={priority}
+                  options={priorityList.map((p) => ({ label: p.label, value: p.id }))}
                   onChange={(e) => {
-                    setPriority(e.target.value);
-                    handleQuickUpdate(undefined, e.target.value);
+                    setPriority(e.value);
+                    handleQuickUpdate(undefined, e.value);
                   }}
-                  className="h-8 px-2.5 rounded-lg border border-line bg-surface-3 text-xs font-bold text-foreground focus:border-accent focus:outline-none"
-                >
-                  {priorityList.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.label}
-                    </option>
-                  ))}
-                </select>
+                  className="h-8 text-xs font-bold bg-surface-3 border border-line rounded-lg"
+                />
               </div>
 
               {/* Project Assignment & Dispatch Badge */}
@@ -390,11 +448,14 @@ export function TicketDrawer({
                       variant="outline"
                       size="sm"
                       onClick={() => setDispatchModalOpen(true)}
-                      className="h-8 px-2.5 text-xs border-line hover:border-accent text-muted hover:text-white cursor-pointer flex items-center gap-1"
-                      title="Điều phối ticket tới dự án cụ thể"
+                      className="h-8 px-2.5 text-xs border-line hover:border-accent text-muted hover:text-white cursor-pointer flex items-center gap-1.5"
+                      title="Điều phối ticket tới dự án cụ thể (Alt+D)"
                     >
                       <ArrowRightLeft className="w-3.5 h-3.5 text-accent" />
                       <span>{ticket.projectId ? "Chuyển dự án" : "Điều phối dự án"}</span>
+                      <kbd className="hidden sm:inline-block px-1 py-0.2 text-[9px] font-mono font-bold bg-surface-3 text-muted rounded border border-line">
+                        Alt+D
+                      </kbd>
                     </Button>
                   )}
                 </div>
@@ -419,11 +480,15 @@ export function TicketDrawer({
               ) : (
                 <Button
                   type="button"
+                  title="Chuyển thành Task/Bug trên Board (Alt+C)"
                   onClick={() => setConvertModalOpen(true)}
                   className="h-9 px-4 bg-gradient-to-r from-[#F05922] to-[#FF8C00] hover:from-[#FF6B35] hover:to-[#FFA500] text-white font-bold text-xs rounded-xl shadow-md shadow-accent/25 cursor-pointer flex items-center gap-1.5"
                 >
                   <KanbanSquare className="w-4 h-4" />
                   <span>Chuyển thành Task/Bug trên Board</span>
+                  <kbd className="hidden sm:inline-block px-1.5 py-0.2 text-[9px] font-mono font-bold bg-white/20 text-white rounded border border-white/30">
+                    Alt+C
+                  </kbd>
                 </Button>
               )}
             </div>
@@ -464,8 +529,8 @@ export function TicketDrawer({
               {/* Issue Description */}
               <div className="space-y-2">
                 <span className="text-xs font-bold text-white block">Chi tiết sự cố:</span>
-                <div className="p-4 rounded-xl bg-surface-2 border border-line text-xs sm:text-sm text-foreground leading-relaxed whitespace-pre-wrap">
-                  {ticket.description}
+                <div className="p-4 rounded-xl bg-surface-2 border border-line text-xs sm:text-sm text-foreground leading-relaxed">
+                  <RichMarkdown content={ticket.description} />
                 </div>
                 {ticket.environment && (
                   <div className="flex items-center gap-2 text-xs text-muted pt-1">
@@ -506,27 +571,29 @@ export function TicketDrawer({
                       <Lock className="w-3.5 h-3.5" />
                       <span>Ghi chú nội bộ (Chỉ nhân viên thấy)</span>
                     </Label>
+                    <span className="text-[10px] text-muted">1. 2. 3., in đậm, màu trực quan</span>
                   </div>
-                  <Textarea
+                  <WysiwygEditor
                     value={internalNotes}
-                    onChange={(e) => setInternalNotes(e.target.value)}
-                    placeholder="Ghi chú kỹ thuật, nguyên nhân gốc rễ, phân công nội bộ..."
-                    rows={2}
-                    className="bg-surface-2 border-amber-500/20 text-xs"
+                    onChange={setInternalNotes}
+                    placeholder="Ghi chú kỹ thuật, nguyên nhân gốc rễ, phân công nội bộ... (in đậm, màu, 1. 2. 3.)"
+                    minHeight="70px"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Ghi chú kết quả xử lý (Hiển thị cho khách hàng trên Portal)</span>
-                  </Label>
-                  <Textarea
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Ghi chú kết quả xử lý (Hiển thị cho khách hàng trên Portal)</span>
+                    </Label>
+                    <span className="text-[10px] text-muted">1. 2. 3., in đậm, màu trực quan</span>
+                  </div>
+                  <WysiwygEditor
                     value={resolutionNotes}
-                    onChange={(e) => setResolutionNotes(e.target.value)}
-                    placeholder="Mô tả hướng dẫn hoặc kết quả khắc phục sự cố cho khách hàng..."
-                    rows={3}
-                    className="bg-surface-2 border-emerald-500/20 text-xs"
+                    onChange={setResolutionNotes}
+                    placeholder="Mô tả hướng dẫn hoặc kết quả khắc phục sự cố cho khách hàng... (in đậm, màu, 1. 2. 3.)"
+                    minHeight="90px"
                   />
                 </div>
 
@@ -589,7 +656,9 @@ export function TicketDrawer({
                           {format(new Date(c.createdAt), "HH:mm dd/MM")}
                         </span>
                       </div>
-                      <p className="whitespace-pre-wrap text-[11px]">{c.message}</p>
+                      <div className="text-[11px]">
+                        <RichMarkdown content={c.message} members={members} />
+                      </div>
                     </div>
                   ))
                 )}
@@ -597,12 +666,34 @@ export function TicketDrawer({
 
               {/* Send Comment Input */}
               <form onSubmit={handleAddComment} className="pt-2 border-t border-line/60 space-y-2">
+                <RichTextToolbar
+                  textareaRef={newCommentRef}
+                  value={newComment}
+                  onChange={setNewComment}
+                  compact
+                  disabled={sendingComment}
+                  className="border-none bg-transparent p-0 mb-1"
+                />
+
                 <Textarea
+                  ref={newCommentRef}
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
+                  onKeyDown={(e) => {
+                    handleRichTextKeyDown(
+                      e as any,
+                      newCommentRef,
+                      newComment,
+                      setNewComment
+                    );
+                    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddComment(e);
+                    }
+                  }}
                   placeholder="Nhập phản hồi gửi khách hàng hoặc ghi chú..."
                   rows={2}
-                  className="bg-surface-3 border-line text-xs"
+                  className="bg-surface-3 border-line text-xs font-sans"
                 />
 
                 <div className="flex items-center justify-between">
@@ -619,10 +710,13 @@ export function TicketDrawer({
                   <Button
                     type="submit"
                     disabled={sendingComment || !newComment.trim()}
-                    className="h-7 px-3 bg-accent hover:bg-accent-hover text-white text-xs font-bold rounded-lg cursor-pointer"
+                    className="h-7 px-3 bg-accent hover:bg-accent-hover text-white text-xs font-bold rounded-lg cursor-pointer gap-1"
                   >
-                    {sendingComment ? <RefreshCw className="w-3 h-3 animate-spin mr-1" /> : <Send className="w-3 h-3 mr-1" />}
+                    {sendingComment ? <RefreshCw className="w-3 h-3 animate-spin mr-0.5" /> : <Send className="w-3 h-3 mr-0.5" />}
                     <span>Gửi</span>
+                    <kbd className="hidden sm:inline-block px-1 py-0.2 text-[9px] font-mono font-bold bg-white/20 text-white rounded border border-white/30">
+                      Ctrl+Enter
+                    </kbd>
                   </Button>
                 </div>
               </form>
@@ -659,47 +753,42 @@ export function TicketDrawer({
 
           <div className="space-y-1">
             <Label className="text-xs font-bold">Cột trạng thái ban đầu</Label>
-            <select
+            <Dropdown
               value={convertStatus}
-              onChange={(e) => setConvertStatus(e.target.value as any)}
-              className="w-full h-9 px-3 rounded-xl border border-line bg-surface-2 text-xs font-medium focus:border-accent"
-            >
-              <option value="TODO">Cần làm (To do)</option>
-              <option value="BACKLOG">Tồn đọng (Backlog)</option>
-              <option value="IN_PROGRESS">Đang thực hiện (In progress)</option>
-            </select>
+              options={[
+                { label: "Cần làm (To do)", value: "TODO" },
+                { label: "Tồn đọng (Backlog)", value: "BACKLOG" },
+                { label: "Đang thực hiện (In progress)", value: "IN_PROGRESS" },
+              ]}
+              onChange={(e) => setConvertStatus(e.value)}
+              className="w-full h-9 text-xs font-medium bg-surface-2 border border-line rounded-xl"
+            />
           </div>
 
           <div className="space-y-1">
             <Label className="text-xs font-bold">Gán vào Sprint (Tùy chọn)</Label>
-            <select
+            <Dropdown
               value={convertSprintId}
-              onChange={(e) => setConvertSprintId(e.target.value)}
-              className="w-full h-9 px-3 rounded-xl border border-line bg-surface-2 text-xs font-medium focus:border-accent"
-            >
-              <option value="">-- Không gán sprint (Product Backlog) --</option>
-              {sprints.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name} ({s.status})
-                </option>
-              ))}
-            </select>
+              options={[
+                { label: "-- Không gán sprint (Product Backlog) --", value: "" },
+                ...sprints.map((s) => ({ label: `${s.name} (${s.status})`, value: s.id })),
+              ]}
+              onChange={(e) => setConvertSprintId(e.value)}
+              className="w-full h-9 text-xs font-medium bg-surface-2 border border-line rounded-xl"
+            />
           </div>
 
           <div className="space-y-1">
             <Label className="text-xs font-bold">Người phụ trách xử lý</Label>
-            <select
+            <Dropdown
               value={convertAssigneeId}
-              onChange={(e) => setConvertAssigneeId(e.target.value)}
-              className="w-full h-9 px-3 rounded-xl border border-line bg-surface-2 text-xs font-medium focus:border-accent"
-            >
-              <option value="">-- Chưa chỉ định --</option>
-              {members.map((m) => (
-                <option key={m.user.id} value={m.user.id}>
-                  {m.user.name} ({m.user.title || m.role})
-                </option>
-              ))}
-            </select>
+              options={[
+                { label: "-- Chưa chỉ định --", value: "" },
+                ...members.map((m) => ({ label: `${m.user.name} (${m.user.title || m.role})`, value: m.user.id })),
+              ]}
+              onChange={(e) => setConvertAssigneeId(e.value)}
+              className="w-full h-9 text-xs font-medium bg-surface-2 border border-line rounded-xl"
+            />
           </div>
 
           <div className="pt-3 border-t border-line flex justify-end gap-2">
@@ -716,10 +805,13 @@ export function TicketDrawer({
               size="sm"
               disabled={converting}
               onClick={handleConvert}
-              className="bg-accent hover:bg-accent-hover text-white font-bold cursor-pointer"
+              className="bg-accent hover:bg-accent-hover text-white font-bold cursor-pointer gap-1.5"
             >
-              {converting ? <RefreshCw className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <KanbanSquare className="w-3.5 h-3.5 mr-1.5" />}
+              {converting ? <RefreshCw className="w-3.5 h-3.5 animate-spin mr-1" /> : <KanbanSquare className="w-3.5 h-3.5 mr-1" />}
               <span>Tạo Task & Chuyển Đổi</span>
+              <kbd className="hidden sm:inline-block px-1.5 py-0.2 text-[9px] font-mono font-bold bg-white/20 text-white rounded border border-white/30">
+                Ctrl+Enter
+              </kbd>
             </Button>
           </div>
         </div>
@@ -754,17 +846,12 @@ export function TicketDrawer({
 
           <div className="space-y-1.5">
             <Label className="text-xs font-bold text-foreground">Chọn Dự án phụ trách xử lý sự cố này:</Label>
-            <select
+            <Dropdown
               value={targetProjectId}
-              onChange={(e) => setTargetProjectId(e.target.value)}
-              className="w-full h-10 px-3 rounded-xl border border-line bg-surface-2 text-xs font-semibold text-foreground focus:border-accent focus:outline-none"
-            >
-              {allProjects.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name} ({p.key})
-                </option>
-              ))}
-            </select>
+              options={allProjects.map((p) => ({ label: `${p.name} (${p.key})`, value: p.id }))}
+              onChange={(e) => setTargetProjectId(e.value)}
+              className="w-full h-10 text-xs font-semibold bg-surface-2 border border-line rounded-xl"
+            />
           </div>
 
           <div className="p-3 rounded-xl bg-accent/10 border border-accent/20 text-[11px] text-muted-light space-y-1">

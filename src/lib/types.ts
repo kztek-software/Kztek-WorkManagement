@@ -5,6 +5,7 @@ export type UserLite = {
   avatarColor: string;
   title?: string | null;
   role?: string;
+  team?: { id: string; name: string; code?: string; color: string } | null;
 };
 
 export type LabelDto = {
@@ -21,6 +22,7 @@ export type SubtaskDto = {
 
 export type AttachmentDto = {
   id: string;
+  projectId?: string | null;
   taskId?: string | null;
   ticketId?: string | null;
   uploaderId?: string | null;
@@ -85,10 +87,12 @@ export type ProjectDto = {
   owner?: UserLite;
   createdAt?: string;
   updatedAt?: string;
+  attachments?: AttachmentDto[];
   _count?: {
     tasks?: number;
     members?: number;
     customerTickets?: number;
+    attachments?: number;
   };
 };
 
@@ -208,10 +212,12 @@ export type CommentDto = {
 
 export type ActivityDto = {
   id: string;
-  action: string;
-  detail: string | null;
+  action?: string;
+  detail?: string | null;
+  content?: string;
   createdAt: string;
-  actor: UserLite;
+  actor?: UserLite;
+  user?: UserLite;
 };
 
 export type TicketCommentDto = {

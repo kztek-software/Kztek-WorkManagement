@@ -398,6 +398,7 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 export const ModelName = {
   User: 'User',
+  UserNotificationPreference: 'UserNotificationPreference',
   Team: 'Team',
   RoleDefinition: 'RoleDefinition',
   Notification: 'Notification',
@@ -413,7 +414,9 @@ export const ModelName = {
   CustomerTicket: 'CustomerTicket',
   TicketComment: 'TicketComment',
   Attachment: 'Attachment',
-  SystemSetting: 'SystemSetting'
+  SystemSetting: 'SystemSetting',
+  ZaloMessageLog: 'ZaloMessageLog',
+  ZaloLinkCode: 'ZaloLinkCode'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -429,7 +432,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "team" | "roleDefinition" | "notification" | "project" | "projectMember" | "sprint" | "task" | "label" | "taskLabel" | "subtask" | "comment" | "activity" | "customerTicket" | "ticketComment" | "attachment" | "systemSetting"
+    modelProps: "user" | "userNotificationPreference" | "team" | "roleDefinition" | "notification" | "project" | "projectMember" | "sprint" | "task" | "label" | "taskLabel" | "subtask" | "comment" | "activity" | "customerTicket" | "ticketComment" | "attachment" | "systemSetting" | "zaloMessageLog" | "zaloLinkCode"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -496,6 +499,72 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.UserCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.UserCountAggregateOutputType> | number
+        }
+      }
+    }
+    UserNotificationPreference: {
+      payload: Prisma.$UserNotificationPreferencePayload<ExtArgs>
+      fields: Prisma.UserNotificationPreferenceFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.UserNotificationPreferenceFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserNotificationPreferencePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.UserNotificationPreferenceFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserNotificationPreferencePayload>
+        }
+        findFirst: {
+          args: Prisma.UserNotificationPreferenceFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserNotificationPreferencePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.UserNotificationPreferenceFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserNotificationPreferencePayload>
+        }
+        findMany: {
+          args: Prisma.UserNotificationPreferenceFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserNotificationPreferencePayload>[]
+        }
+        create: {
+          args: Prisma.UserNotificationPreferenceCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserNotificationPreferencePayload>
+        }
+        createMany: {
+          args: Prisma.UserNotificationPreferenceCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.UserNotificationPreferenceDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserNotificationPreferencePayload>
+        }
+        update: {
+          args: Prisma.UserNotificationPreferenceUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserNotificationPreferencePayload>
+        }
+        deleteMany: {
+          args: Prisma.UserNotificationPreferenceDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.UserNotificationPreferenceUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.UserNotificationPreferenceUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserNotificationPreferencePayload>
+        }
+        aggregate: {
+          args: Prisma.UserNotificationPreferenceAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateUserNotificationPreference>
+        }
+        groupBy: {
+          args: Prisma.UserNotificationPreferenceGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserNotificationPreferenceGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.UserNotificationPreferenceCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserNotificationPreferenceCountAggregateOutputType> | number
         }
       }
     }
@@ -1555,6 +1624,138 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    ZaloMessageLog: {
+      payload: Prisma.$ZaloMessageLogPayload<ExtArgs>
+      fields: Prisma.ZaloMessageLogFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ZaloMessageLogFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ZaloMessageLogPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ZaloMessageLogFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ZaloMessageLogPayload>
+        }
+        findFirst: {
+          args: Prisma.ZaloMessageLogFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ZaloMessageLogPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ZaloMessageLogFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ZaloMessageLogPayload>
+        }
+        findMany: {
+          args: Prisma.ZaloMessageLogFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ZaloMessageLogPayload>[]
+        }
+        create: {
+          args: Prisma.ZaloMessageLogCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ZaloMessageLogPayload>
+        }
+        createMany: {
+          args: Prisma.ZaloMessageLogCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.ZaloMessageLogDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ZaloMessageLogPayload>
+        }
+        update: {
+          args: Prisma.ZaloMessageLogUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ZaloMessageLogPayload>
+        }
+        deleteMany: {
+          args: Prisma.ZaloMessageLogDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ZaloMessageLogUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.ZaloMessageLogUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ZaloMessageLogPayload>
+        }
+        aggregate: {
+          args: Prisma.ZaloMessageLogAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateZaloMessageLog>
+        }
+        groupBy: {
+          args: Prisma.ZaloMessageLogGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ZaloMessageLogGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ZaloMessageLogCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ZaloMessageLogCountAggregateOutputType> | number
+        }
+      }
+    }
+    ZaloLinkCode: {
+      payload: Prisma.$ZaloLinkCodePayload<ExtArgs>
+      fields: Prisma.ZaloLinkCodeFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ZaloLinkCodeFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ZaloLinkCodePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ZaloLinkCodeFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ZaloLinkCodePayload>
+        }
+        findFirst: {
+          args: Prisma.ZaloLinkCodeFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ZaloLinkCodePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ZaloLinkCodeFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ZaloLinkCodePayload>
+        }
+        findMany: {
+          args: Prisma.ZaloLinkCodeFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ZaloLinkCodePayload>[]
+        }
+        create: {
+          args: Prisma.ZaloLinkCodeCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ZaloLinkCodePayload>
+        }
+        createMany: {
+          args: Prisma.ZaloLinkCodeCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        delete: {
+          args: Prisma.ZaloLinkCodeDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ZaloLinkCodePayload>
+        }
+        update: {
+          args: Prisma.ZaloLinkCodeUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ZaloLinkCodePayload>
+        }
+        deleteMany: {
+          args: Prisma.ZaloLinkCodeDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ZaloLinkCodeUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        upsert: {
+          args: Prisma.ZaloLinkCodeUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ZaloLinkCodePayload>
+        }
+        aggregate: {
+          args: Prisma.ZaloLinkCodeAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateZaloLinkCode>
+        }
+        groupBy: {
+          args: Prisma.ZaloLinkCodeGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ZaloLinkCodeGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ZaloLinkCodeCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ZaloLinkCodeCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1604,10 +1805,34 @@ export const UserScalarFieldEnum = {
   title: 'title',
   role: 'role',
   teamId: 'teamId',
+  phone: 'phone',
+  zaloUserId: 'zaloUserId',
+  zaloLinkedAt: 'zaloLinkedAt',
   createdAt: 'createdAt'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const UserNotificationPreferenceScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  emailOnAssign: 'emailOnAssign',
+  emailOnStatusChange: 'emailOnStatusChange',
+  emailOnComment: 'emailOnComment',
+  emailOnMention: 'emailOnMention',
+  zaloOnAssign: 'zaloOnAssign',
+  zaloOnStatusChange: 'zaloOnStatusChange',
+  zaloOnComment: 'zaloOnComment',
+  zaloOnMention: 'zaloOnMention',
+  inAppOnAssign: 'inAppOnAssign',
+  inAppOnStatusChange: 'inAppOnStatusChange',
+  inAppOnComment: 'inAppOnComment',
+  inAppOnMention: 'inAppOnMention',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserNotificationPreferenceScalarFieldEnum = (typeof UserNotificationPreferenceScalarFieldEnum)[keyof typeof UserNotificationPreferenceScalarFieldEnum]
 
 
 export const TeamScalarFieldEnum = {
@@ -1807,6 +2032,7 @@ export type TicketCommentScalarFieldEnum = (typeof TicketCommentScalarFieldEnum)
 
 export const AttachmentScalarFieldEnum = {
   id: 'id',
+  projectId: 'projectId',
   taskId: 'taskId',
   ticketId: 'ticketId',
   uploaderId: 'uploaderId',
@@ -1840,11 +2066,54 @@ export const SystemSettingScalarFieldEnum = {
   notifyOnStatusChange: 'notifyOnStatusChange',
   notifyOnComment: 'notifyOnComment',
   enableRealtimeSse: 'enableRealtimeSse',
+  enableZaloIntegration: 'enableZaloIntegration',
+  zaloAppId: 'zaloAppId',
+  zaloAppSecret: 'zaloAppSecret',
+  zaloOaId: 'zaloOaId',
+  zaloOaSecretKey: 'zaloOaSecretKey',
+  zaloAccessToken: 'zaloAccessToken',
+  zaloRefreshToken: 'zaloRefreshToken',
+  zaloTokenExpiresAt: 'zaloTokenExpiresAt',
+  zaloZnsTemplateId: 'zaloZnsTemplateId',
+  notifyZaloOnAssign: 'notifyZaloOnAssign',
+  notifyZaloOnStatusChange: 'notifyZaloOnStatusChange',
+  notifyZaloOnComment: 'notifyZaloOnComment',
   updatedAt: 'updatedAt',
   updatedBy: 'updatedBy'
 } as const
 
 export type SystemSettingScalarFieldEnum = (typeof SystemSettingScalarFieldEnum)[keyof typeof SystemSettingScalarFieldEnum]
+
+
+export const ZaloMessageLogScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  zaloUserId: 'zaloUserId',
+  phone: 'phone',
+  channel: 'channel',
+  notificationType: 'notificationType',
+  templateId: 'templateId',
+  content: 'content',
+  status: 'status',
+  providerMsgId: 'providerMsgId',
+  errorMessage: 'errorMessage',
+  createdAt: 'createdAt',
+  sentAt: 'sentAt'
+} as const
+
+export type ZaloMessageLogScalarFieldEnum = (typeof ZaloMessageLogScalarFieldEnum)[keyof typeof ZaloMessageLogScalarFieldEnum]
+
+
+export const ZaloLinkCodeScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  userId: 'userId',
+  expiresAt: 'expiresAt',
+  consumedAt: 'consumedAt',
+  createdAt: 'createdAt'
+} as const
+
+export type ZaloLinkCodeScalarFieldEnum = (typeof ZaloLinkCodeScalarFieldEnum)[keyof typeof ZaloLinkCodeScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -2055,6 +2324,7 @@ export interface PrismaClientOptionsWithAdapter extends PrismaClientBaseOptions 
 export type PrismaClientOptions = PrismaClientOptionsWithAccelerateUrl | PrismaClientOptionsWithAdapter
 export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
+  userNotificationPreference?: Prisma.UserNotificationPreferenceOmit
   team?: Prisma.TeamOmit
   roleDefinition?: Prisma.RoleDefinitionOmit
   notification?: Prisma.NotificationOmit
@@ -2071,6 +2341,8 @@ export type GlobalOmitConfig = {
   ticketComment?: Prisma.TicketCommentOmit
   attachment?: Prisma.AttachmentOmit
   systemSetting?: Prisma.SystemSettingOmit
+  zaloMessageLog?: Prisma.ZaloMessageLogOmit
+  zaloLinkCode?: Prisma.ZaloLinkCodeOmit
 }
 
 /* Types for Logging */

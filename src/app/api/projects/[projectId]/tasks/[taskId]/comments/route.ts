@@ -97,10 +97,9 @@ export async function POST(
 
   publish(projectId, { type: "TASK_CHANGED", taskId, actorId: user.id });
 
-  // 1. Gửi thông báo & Email trực tiếp cho những người được tag (@mention)
-  let notifiedMentionUserIds: string[] = [];
+  // 1. Gửi thông báo & Email trực tiếp cho những người được tag (@mention) (Async Queue, non-blocking)
   if (mentionedUserIds.length > 0) {
-    notifiedMentionUserIds = await notifyTaskMention({
+    notifyTaskMention({
       taskId,
       authorId: user.id,
       commentBody: commentText,
@@ -109,13 +108,13 @@ export async function POST(
     });
   }
 
-  // 2. Gửi thông báo & Email bình luận thông thường cho Assignee/Creator (loại trừ người đã được notify ở bước mention)
+  // 2. Gửi thông báo & Email bình luận thông thường cho Assignee/Creator (Async Queue, non-blocking)
   notifyTaskComment({
     taskId,
     authorId: user.id,
     commentBody: commentText,
     projectId,
-    excludeUserIds: notifiedMentionUserIds,
+    excludeUserIds: mentionedUserIds,
   });
 
   return NextResponse.json({ comment }, { status: 201 });

@@ -22,6 +22,7 @@ import {
   Smartphone,
   Check,
 } from "lucide-react";
+import { Dropdown } from "primereact/dropdown";
 
 export default function MobileSimulatorPage() {
   const [token, setToken] = useState<string | null>(null);
@@ -161,6 +162,15 @@ export default function MobileSimulatorPage() {
     } catch (err) {
       console.error("Error updating status:", err);
     }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch (e) {
+      console.error("Logout error:", e);
+    }
+    window.location.href = "/login";
   };
 
   const handleCreateTask = async (e: React.FormEvent) => {
@@ -427,7 +437,7 @@ export default function MobileSimulatorPage() {
               
               {/* VIEW 1: DASHBOARD */}
               {activeTab === "DASHBOARD" && (
-                <div className="p-4 space-y-4">
+                <div key="DASHBOARD" className="p-4 space-y-4 animate-tab-fade">
                   {/* Current Project Banner */}
                   <div className="bg-gradient-to-br from-[#251C53] to-[#3B2F73] text-white p-4 rounded-2xl shadow-sm">
                     <div className="flex items-center justify-between mb-1">
@@ -515,7 +525,7 @@ export default function MobileSimulatorPage() {
 
               {/* VIEW 2: KANBAN BOARD */}
               {activeTab === "BOARD" && (
-                <div className="p-3 space-y-3">
+                <div key="BOARD" className="p-3 space-y-3 animate-tab-fade">
                   {/* Action bar */}
                   <div className="flex items-center gap-2">
                     <div className="flex-1 relative">
@@ -641,7 +651,7 @@ export default function MobileSimulatorPage() {
 
               {/* VIEW 3: TICKETS */}
               {activeTab === "TICKETS" && (
-                <div className="p-3 space-y-3">
+                <div key="TICKETS" className="p-3 space-y-3 animate-tab-fade">
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-bold text-slate-800">Phiếu Báo Lỗi Khách Hàng</h3>
                     <span className="text-xs text-slate-500 font-semibold">{tickets.length} tickets</span>
@@ -687,7 +697,7 @@ export default function MobileSimulatorPage() {
 
               {/* VIEW 4: NOTIFICATIONS */}
               {activeTab === "NOTIFICATIONS" && (
-                <div className="p-3 space-y-3">
+                <div key="NOTIFICATIONS" className="p-3 space-y-3 animate-tab-fade">
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-bold text-slate-800">Trung tâm Thông báo</h3>
                     <span className="text-xs font-bold text-[#F05922]">{unreadCount} chưa đọc</span>
@@ -726,7 +736,7 @@ export default function MobileSimulatorPage() {
 
               {/* VIEW 5: SETTINGS */}
               {activeTab === "SETTINGS" && (
-                <div className="p-4 space-y-4">
+                <div key="SETTINGS" className="p-4 space-y-4 animate-tab-fade">
                   {/* Profile Card */}
                   <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full bg-[#251C53] text-white font-black text-lg flex items-center justify-center shadow">
@@ -741,45 +751,23 @@ export default function MobileSimulatorPage() {
                     </div>
                   </div>
 
-                  {/* Server Connection */}
-                  <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2">
-                    <h4 className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                      <Server size={14} className="text-[#251C53]" /> Cấu hình API Server
-                    </h4>
-                    <input
-                      type="text"
-                      value={serverUrl}
-                      onChange={(e) => setServerUrl(e.target.value)}
-                      className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl"
-                    />
-                    <div className="text-[11px] text-emerald-600 font-semibold">● Đang kết nối bình thường</div>
-                  </div>
-
-                  {/* App Info */}
-                  <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2 text-xs">
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Framework</span>
-                      <span className="font-bold text-slate-800">C# Avalonia UI / .NET 8</span>
+                  <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                    <h4 className="text-xs font-bold text-slate-400 uppercase">Hệ thống</h4>
+                    <div className="flex items-center justify-between text-xs py-1">
+                      <span className="text-slate-600">Phiên bản Web Mobile</span>
+                      <span className="font-bold text-[#251C53]">v2.4.0-prime</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Phiên bản</span>
-                      <span className="font-bold text-slate-800">3.0.0 (Cross-Platform)</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Nhà phát triển</span>
-                      <span className="font-bold text-[#251C53]">KZTEK Engineering</span>
+                    <div className="flex items-center justify-between text-xs py-1">
+                      <span className="text-slate-600">API Status</span>
+                      <span className="font-bold text-emerald-600">Online 🟢</span>
                     </div>
                   </div>
 
-                  {/* Logout Button */}
                   <button
-                    onClick={() => {
-                      setToken(null);
-                      setCurrentUser(null);
-                    }}
-                    className="w-full py-3 bg-orange-50 hover:bg-orange-100 text-orange-600 font-bold text-xs rounded-2xl border border-orange-200 transition flex items-center justify-center gap-1.5"
+                    onClick={handleLogout}
+                    className="w-full py-3 bg-red-50 text-red-600 border border-red-200 font-bold rounded-2xl text-xs hover:bg-red-100 transition shadow-sm"
                   >
-                    <LogOut size={14} /> Đăng xuất tài khoản
+                    Đăng xuất
                   </button>
                 </div>
               )}
@@ -790,7 +778,7 @@ export default function MobileSimulatorPage() {
             <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-2 py-2 flex items-center justify-around shadow-lg z-20">
               <button
                 onClick={() => setActiveTab("DASHBOARD")}
-                className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition ${
+                className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all duration-200 active:scale-90 cursor-pointer ${
                   activeTab === "DASHBOARD" ? "text-[#251C53] font-bold" : "text-slate-400"
                 }`}
               >
@@ -800,7 +788,7 @@ export default function MobileSimulatorPage() {
 
               <button
                 onClick={() => setActiveTab("BOARD")}
-                className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition ${
+                className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all duration-200 active:scale-90 cursor-pointer ${
                   activeTab === "BOARD" ? "text-[#251C53] font-bold" : "text-slate-400"
                 }`}
               >
@@ -810,7 +798,7 @@ export default function MobileSimulatorPage() {
 
               <button
                 onClick={() => setActiveTab("TICKETS")}
-                className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition ${
+                className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all duration-200 active:scale-90 cursor-pointer ${
                   activeTab === "TICKETS" ? "text-[#251C53] font-bold" : "text-slate-400"
                 }`}
               >
@@ -820,7 +808,7 @@ export default function MobileSimulatorPage() {
 
               <button
                 onClick={() => setActiveTab("NOTIFICATIONS")}
-                className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition relative ${
+                className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all duration-200 active:scale-90 cursor-pointer relative ${
                   activeTab === "NOTIFICATIONS" ? "text-[#251C53] font-bold" : "text-slate-400"
                 }`}
               >
@@ -835,7 +823,7 @@ export default function MobileSimulatorPage() {
 
               <button
                 onClick={() => setActiveTab("SETTINGS")}
-                className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition ${
+                className={`flex flex-col items-center gap-1 py-1 px-3 rounded-xl transition-all duration-200 active:scale-90 cursor-pointer ${
                   activeTab === "SETTINGS" ? "text-[#251C53] font-bold" : "text-slate-400"
                 }`}
               >
@@ -954,16 +942,17 @@ export default function MobileSimulatorPage() {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Mức độ ưu tiên</label>
-                <select
+                <Dropdown
                   value={newTaskPriority}
-                  onChange={(e) => setNewTaskPriority(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none"
-                >
-                  <option value="LOW">LOW (Thấp)</option>
-                  <option value="MEDIUM">MEDIUM (Trung bình)</option>
-                  <option value="HIGH">HIGH (Cao)</option>
-                  <option value="URGENT">URGENT (Khẩn cấp)</option>
-                </select>
+                  options={[
+                    { label: "LOW (Thấp)", value: "LOW" },
+                    { label: "MEDIUM (Trung bình)", value: "MEDIUM" },
+                    { label: "HIGH (Cao)", value: "HIGH" },
+                    { label: "URGENT (Khẩn cấp)", value: "URGENT" },
+                  ]}
+                  onChange={(e) => setNewTaskPriority(e.value)}
+                  className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl"
+                />
               </div>
 
               <button

@@ -11,6 +11,7 @@ const createUserSchema = z.object({
   avatarColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#6366f1"),
   role: z.string().default("MEMBER"),
   teamId: z.string().optional().nullable(),
+  phone: z.string().max(20).optional().nullable(),
 });
 
 export async function GET() {
@@ -28,6 +29,9 @@ export async function GET() {
       avatarColor: true,
       role: true,
       teamId: true,
+      phone: true,
+      zaloUserId: true,
+      zaloLinkedAt: true,
       team: {
         select: {
           id: true,
@@ -63,7 +67,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Thông tin người dùng không hợp lệ" }, { status: 400 });
   }
 
-  const { name, email, password, title, avatarColor, role, teamId } = parsed.data;
+  const { name, email, password, title, avatarColor, role, teamId, phone } = parsed.data;
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
@@ -81,6 +85,7 @@ export async function POST(req: NextRequest) {
       avatarColor,
       role,
       teamId: teamId || null,
+      phone: phone || null,
     },
     select: {
       id: true,
@@ -90,6 +95,7 @@ export async function POST(req: NextRequest) {
       avatarColor: true,
       role: true,
       teamId: true,
+      phone: true,
       team: {
         select: {
           id: true,

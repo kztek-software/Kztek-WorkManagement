@@ -6,6 +6,7 @@ import "primeicons/primeicons.css";
 import { NativeNotificationBridge } from "@/components/desktop/native-notification-bridge";
 import { LegacyPolyfills } from "@/components/legacy-polyfills";
 import { ThemeProvider } from "@/lib/theme-context";
+import { TopProgressBar } from "@/components/top-progress-bar";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -58,6 +59,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
         <ThemeProvider>
+          <TopProgressBar />
           <LegacyPolyfills />
           <NativeNotificationBridge />
           {children}

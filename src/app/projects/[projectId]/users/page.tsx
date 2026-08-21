@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { getTabCache, setTabCache } from "@/lib/tab-cache";
 import {
   Users,
   UserPlus,
@@ -38,12 +39,29 @@ import {
   Layers,
   Filter,
   ArrowUpDown,
+  Phone,
+  Building,
+  Hash,
+  ShieldCheck,
+  HelpCircle,
+  RefreshCw,
+  ExternalLink,
+  ChevronDown,
+  CheckCircle,
+  XCircle,
+  Clock,
+  BriefcaseIcon,
+  Tag,
+  AtSign,
+  User,
+  MessageCircle,
 } from "lucide-react";
 
 // PrimeReact UI Components (LTS 10.9.3)
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Dialog } from "primereact/dialog";
+import { Dropdown } from "primereact/dropdown";
 import { Toast } from "primereact/toast";
 
 import { Avatar, AvatarFallback, initials } from "@/components/ui/avatar";
@@ -88,6 +106,9 @@ type UserItem = {
   avatarColor: string;
   role: string;
   teamId: string | null;
+  phone: string | null;
+  zaloUserId?: string | null;
+  zaloLinkedAt?: string | null;
   team: {
     id: string;
     name: string;
@@ -113,6 +134,17 @@ type RoleItem = {
   userCount: number;
 };
 
+interface UsersCacheData {
+  users: UserItem[];
+  teams: TeamItem[];
+  roles: RoleItem[];
+  categories: PermissionCategory[];
+  currentUserId: string;
+  currentUserRole: string;
+}
+
+const USERS_CACHE_KEY = "kztek_users_page_data";
+
 const AVATAR_COLORS = [
   "#F05922",
   "#3B82F6",
@@ -128,14 +160,15 @@ const AVATAR_COLORS = [
 
 export default function UsersManagementPage() {
   const toast = useRef<Toast>(null);
+  const cached = getTabCache<UsersCacheData>(USERS_CACHE_KEY);
 
-  const [users, setUsers] = useState<UserItem[]>([]);
-  const [teams, setTeams] = useState<TeamItem[]>([]);
-  const [roles, setRoles] = useState<RoleItem[]>([]);
-  const [categories, setCategories] = useState<PermissionCategory[]>([]);
-  const [currentUserId, setCurrentUserId] = useState<string>("");
-  const [currentUserRole, setCurrentUserRole] = useState<string>("MEMBER");
-  const [loading, setLoading] = useState(true);
+  const [users, setUsers] = useState<UserItem[]>(cached?.users || []);
+  const [teams, setTeams] = useState<TeamItem[]>(cached?.teams || []);
+  const [roles, setRoles] = useState<RoleItem[]>(cached?.roles || []);
+  const [categories, setCategories] = useState<PermissionCategory[]>(cached?.categories || []);
+  const [currentUserId, setCurrentUserId] = useState<string>(cached?.currentUserId || "");
+  const [currentUserRole, setCurrentUserRole] = useState<string>(cached?.currentUserRole || "MEMBER");
+  const [loading, setLoading] = useState(!cached);
 
   const [globalFilter, setGlobalFilter] = useState("");
   const [teamFilter, setTeamFilter] = useState<string>("ALL");
@@ -168,6 +201,7 @@ export default function UsersManagementPage() {
   const [createRole, setCreateRole] = useState("MEMBER");
   const [createTeamId, setCreateTeamId] = useState<string | null>(null);
   const [createColor, setCreateColor] = useState("#F05922");
+  const [createPhone, setCreatePhone] = useState("");
   const [creatingUser, setCreatingUser] = useState(false);
 
   const [editUserOpen, setEditUserOpen] = useState(false);
@@ -179,6 +213,7 @@ export default function UsersManagementPage() {
   const [editRole, setEditRole] = useState("MEMBER");
   const [editTeamId, setEditTeamId] = useState<string | null>(null);
   const [editColor, setEditColor] = useState("#F05922");
+  const [editPhone, setEditPhone] = useState("");
   const [updatingUser, setUpdatingUser] = useState(false);
 
   // ==========================================
@@ -206,6 +241,10 @@ export default function UsersManagementPage() {
   const [updatingRole, setUpdatingRole] = useState(false);
   const [deletingRole, setDeletingRole] = useState(false);
 
+  // Modal Xác nhận Xóa vai trò
+  const [deleteRoleConfirmOpen, setDeleteRoleConfirmOpen] = useState(false);
+  const [roleToDelete, setRoleToDelete] = useState<RoleItem | null>(null);
+
 
 
   // Load Initial Data
@@ -218,28 +257,50 @@ export default function UsersManagementPage() {
         fetch("/api/auth/me"),
       ]);
 
+      let nextUsers = users;
+      let nextTeams = teams;
+      let nextRoles = roles;
+      let nextCats = categories;
+      let nextUid = currentUserId;
+      let nextRole = currentUserRole;
+
       if (resUsers.ok) {
         const d = await resUsers.json();
-        setUsers(d.users || []);
+        nextUsers = d.users || [];
+        setUsers(nextUsers);
       }
       if (resTeams.ok) {
         const d = await resTeams.json();
-        setTeams(d.teams || []);
+        nextTeams = d.teams || [];
+        setTeams(nextTeams);
       }
       if (resRoles.ok) {
         const d = await resRoles.json();
-        setRoles(d.roles || []);
-        setCategories(d.categories || []);
-        if (d.roles?.length > 0 && !selectedRoleKey) {
-          setSelectedRoleKey(d.roles[0].key);
-          setActivePermissions(d.roles[0].permissions);
+        nextRoles = d.roles || [];
+        nextCats = d.categories || [];
+        setRoles(nextRoles);
+        setCategories(nextCats);
+        if (nextRoles?.length > 0 && !selectedRoleKey) {
+          setSelectedRoleKey(nextRoles[0].key);
+          setActivePermissions(nextRoles[0].permissions);
         }
       }
       if (resMe.ok) {
         const d = await resMe.json();
-        setCurrentUserId(d.user?.id || "");
-        setCurrentUserRole(d.user?.role || "MEMBER");
+        nextUid = d.user?.id || "";
+        nextRole = d.user?.role || "MEMBER";
+        setCurrentUserId(nextUid);
+        setCurrentUserRole(nextRole);
       }
+
+      setTabCache(USERS_CACHE_KEY, {
+        users: nextUsers,
+        teams: nextTeams,
+        roles: nextRoles,
+        categories: nextCats,
+        currentUserId: nextUid,
+        currentUserRole: nextRole,
+      });
     } finally {
       setLoading(false);
     }
@@ -313,6 +374,22 @@ export default function UsersManagementPage() {
     if (!editingTeam) return;
     setSavingTeam(true);
 
+    const updatedTeamObj: TeamItem = {
+      ...editingTeam,
+      name: teamName.trim(),
+      code: teamCode.trim().toUpperCase(),
+      description: teamDesc.trim() || null,
+      color: teamColor,
+      leaderId: teamLeaderId,
+      leader: teamLeaderId ? (users.find((u) => u.id === teamLeaderId) as any) : null,
+      members: users.filter((u) => teamMemberIds.includes(u.id)) as any,
+    };
+
+    // Cập nhật UI tức thì
+    setTeams((prev) => prev.map((t) => (t.id === editingTeam.id ? updatedTeamObj : t)));
+    setEditTeamOpen(false);
+    toast.current?.show({ severity: "success", summary: "Thành công", detail: "Đã cập nhật thông tin nhóm" });
+
     try {
       const res = await fetch(`/api/teams/${editingTeam.id}`, {
         method: "PATCH",
@@ -330,14 +407,11 @@ export default function UsersManagementPage() {
       const data = await res.json();
       if (!res.ok) {
         toast.current?.show({ severity: "error", summary: "Lỗi", detail: data.error ?? "Không cập nhật được nhóm" });
-        return;
+        loadAllData();
       }
-
-      toast.current?.show({ severity: "success", summary: "Thành công", detail: "Đã cập nhật thông tin nhóm" });
-      setEditTeamOpen(false);
-      loadAllData();
     } catch {
       toast.current?.show({ severity: "error", summary: "Lỗi", detail: "Lỗi kết nối máy chủ" });
+      loadAllData();
     } finally {
       setSavingTeam(false);
     }
@@ -346,18 +420,20 @@ export default function UsersManagementPage() {
   async function handleDeleteTeam(t: TeamItem) {
     if (!confirm(`Bạn có chắc muốn xóa nhóm "${t.name}"? Các thành viên sẽ tự động được gỡ khỏi nhóm.`)) return;
 
+    // Optimistic delete tức thì trên UI
+    setTeams((prev) => prev.filter((item) => item.id !== t.id));
+    toast.current?.show({ severity: "success", summary: "Thành công", detail: "Đã xóa nhóm thành công" });
+
     try {
       const res = await fetch(`/api/teams/${t.id}`, { method: "DELETE" });
       if (!res.ok) {
         const d = await res.json();
         toast.current?.show({ severity: "error", summary: "Lỗi", detail: d.error ?? "Không xóa được nhóm" });
-        return;
+        loadAllData();
       }
-
-      toast.current?.show({ severity: "success", summary: "Thành công", detail: "Đã xóa nhóm thành công" });
-      loadAllData();
     } catch {
       toast.current?.show({ severity: "error", summary: "Lỗi", detail: "Lỗi kết nối máy chủ" });
+      loadAllData();
     }
   }
 
@@ -380,6 +456,7 @@ export default function UsersManagementPage() {
           role: createRole,
           teamId: createTeamId || undefined,
           avatarColor: createColor,
+          phone: createPhone.trim() || undefined,
         }),
       });
 
@@ -396,6 +473,7 @@ export default function UsersManagementPage() {
       setCreatePassword("");
       setCreateTitle("");
       setCreateTeamId(null);
+      setCreatePhone("");
       loadAllData();
     } catch {
       toast.current?.show({ severity: "error", summary: "Lỗi", detail: "Lỗi kết nối máy chủ" });
@@ -413,6 +491,7 @@ export default function UsersManagementPage() {
     setEditRole(u.role);
     setEditTeamId(u.teamId);
     setEditColor(u.avatarColor);
+    setEditPhone(u.phone || "");
     setEditUserOpen(true);
   }
 
@@ -420,6 +499,22 @@ export default function UsersManagementPage() {
     e.preventDefault();
     if (!editingUser) return;
     setUpdatingUser(true);
+
+    const updatedUserObj: UserItem = {
+      ...editingUser,
+      name: editName.trim(),
+      email: editEmail.trim(),
+      title: editTitle.trim() || null,
+      role: editRole,
+      teamId: editTeamId,
+      avatarColor: editColor,
+      phone: editPhone.trim() || null,
+    };
+
+    // Optimistic update tức thì trên UI
+    setUsers((prev) => prev.map((u) => (u.id === editingUser.id ? updatedUserObj : u)));
+    setEditUserOpen(false);
+    toast.current?.show({ severity: "success", summary: "Thành công", detail: "Cập nhật tài khoản thành công" });
 
     try {
       const res = await fetch(`/api/users/${editingUser.id}`, {
@@ -433,20 +528,18 @@ export default function UsersManagementPage() {
           role: editRole,
           teamId: editTeamId,
           avatarColor: editColor,
+          phone: editPhone.trim() || null,
         }),
       });
 
       const data = await res.json();
       if (!res.ok) {
         toast.current?.show({ severity: "error", summary: "Lỗi", detail: data.error ?? "Không cập nhật được tài khoản" });
-        return;
+        loadAllData();
       }
-
-      toast.current?.show({ severity: "success", summary: "Thành công", detail: "Cập nhật tài khoản thành công" });
-      setEditUserOpen(false);
-      loadAllData();
     } catch {
       toast.current?.show({ severity: "error", summary: "Lỗi", detail: "Lỗi kết nối máy chủ" });
+      loadAllData();
     } finally {
       setUpdatingUser(false);
     }
@@ -459,17 +552,20 @@ export default function UsersManagementPage() {
     }
     if (!confirm(`Bạn có chắc muốn xóa tài khoản "${u.name}"?`)) return;
 
+    // Optimistic delete tức thì trên UI
+    setUsers((prev) => prev.filter((item) => item.id !== u.id));
+    toast.current?.show({ severity: "success", summary: "Thành công", detail: "Đã xóa tài khoản" });
+
     try {
       const res = await fetch(`/api/users/${u.id}`, { method: "DELETE" });
       if (!res.ok) {
         const d = await res.json();
         toast.current?.show({ severity: "error", summary: "Lỗi", detail: d.error ?? "Không xóa được tài khoản" });
-        return;
+        loadAllData();
       }
-      toast.current?.show({ severity: "success", summary: "Thành công", detail: "Đã xóa tài khoản" });
-      loadAllData();
     } catch {
       toast.current?.show({ severity: "error", summary: "Lỗi", detail: "Lỗi kết nối máy chủ" });
+      loadAllData();
     }
   }
 
@@ -492,6 +588,18 @@ export default function UsersManagementPage() {
   function handleDeselectAllPermissions() {
     if (selectedRoleKey === "ADMIN") return;
     setActivePermissions([]);
+  }
+
+  function handleSelectCategoryPermissions(cat: PermissionCategory) {
+    if (selectedRoleKey === "ADMIN") return;
+    const catKeys = cat.permissions.map((p) => p.key);
+    setActivePermissions((prev) => Array.from(new Set([...prev, ...catKeys])));
+  }
+
+  function handleDeselectCategoryPermissions(cat: PermissionCategory) {
+    if (selectedRoleKey === "ADMIN") return;
+    const catKeys = new Set(cat.permissions.map((p) => p.key));
+    setActivePermissions((prev) => prev.filter((k) => !catKeys.has(k)));
   }
 
   function handleToggleCategoryPermissions(cat: PermissionCategory) {
@@ -615,6 +723,21 @@ export default function UsersManagementPage() {
     if (!editingRoleItem) return;
     setUpdatingRole(true);
 
+    const updatedRoleItem: RoleItem = {
+      ...editingRoleItem,
+      name: editRoleName.trim(),
+      description: editRoleDesc.trim() || null,
+      color: editRoleColor,
+    };
+
+    // Optimistic update tức thì trên UI
+    setRoles((prev) => prev.map((r) => (r.key === editingRoleItem.key ? updatedRoleItem : r)));
+    setEditRoleOpen(false);
+    toast.current?.show({ severity: "success", summary: "Thành công", detail: "Đã cập nhật thông tin vai trò" });
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("permissions-updated"));
+    }
+
     try {
       const res = await fetch(`/api/roles/${editingRoleItem.key}`, {
         method: "PATCH",
@@ -629,60 +752,68 @@ export default function UsersManagementPage() {
       const data = await res.json();
       if (!res.ok) {
         toast.current?.show({ severity: "error", summary: "Lỗi", detail: data.error ?? "Không cập nhật được vai trò" });
-        return;
-      }
-
-      toast.current?.show({ severity: "success", summary: "Thành công", detail: "Đã cập nhật thông tin vai trò" });
-      setEditRoleOpen(false);
-      await loadAllData();
-
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("permissions-updated"));
+        loadAllData();
       }
     } catch {
       toast.current?.show({ severity: "error", summary: "Lỗi", detail: "Lỗi kết nối máy chủ" });
+      loadAllData();
     } finally {
       setUpdatingRole(false);
     }
   }
 
-  async function handleDeleteRole(r: RoleItem) {
+  function confirmDeleteRole(r: RoleItem) {
     if (r.isSystem) {
-      toast.current?.show({ severity: "warn", summary: "Cảnh báo", detail: "Không thể xóa vai trò hệ thống mặc định!" });
+      toast.current?.show({
+        severity: "warn",
+        summary: "Cảnh báo",
+        detail: `Không thể xóa vai trò hệ thống mặc định ("${r.name}")!`,
+      });
       return;
     }
+    setRoleToDelete(r);
+    setDeleteRoleConfirmOpen(true);
+  }
 
-    if (
-      !confirm(
-        `Bạn có chắc chắn muốn xóa vai trò "${r.name}" (${r.key})?\nCác tài khoản đang giữ vai trò này sẽ tự động chuyển về Thành viên (Member).`
-      )
-    ) {
-      return;
+  async function executeDeleteRole() {
+    if (!roleToDelete) return;
+    const targetKey = roleToDelete.key;
+    const targetName = roleToDelete.name;
+
+    // Optimistic delete tức thì trên UI
+    setRoles((prev) => prev.filter((r) => r.key !== targetKey));
+    setDeleteRoleConfirmOpen(false);
+    if (selectedRoleKey === targetKey) {
+      setSelectedRoleKey("MEMBER");
+    }
+    toast.current?.show({
+      severity: "success",
+      summary: "Thành công",
+      detail: `Đã xóa vai trò "${targetName}". Các tài khoản liên quan đã được chuyển về vai trò "Thành viên (Member)".`,
+    });
+    setRoleToDelete(null);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("permissions-updated"));
     }
 
     setDeletingRole(true);
     try {
-      const res = await fetch(`/api/roles/${r.key}`, { method: "DELETE" });
+      const res = await fetch(`/api/roles/${targetKey}`, { method: "DELETE" });
       const data = await res.json();
       if (!res.ok) {
         toast.current?.show({ severity: "error", summary: "Lỗi", detail: data.error ?? "Không xóa được vai trò" });
-        return;
-      }
-
-      toast.current?.show({ severity: "success", summary: "Thành công", detail: `Đã xóa vai trò "${r.name}"` });
-      if (selectedRoleKey === r.key) {
-        setSelectedRoleKey("MEMBER");
-      }
-      await loadAllData();
-
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("permissions-updated"));
+        loadAllData();
       }
     } catch {
       toast.current?.show({ severity: "error", summary: "Lỗi", detail: "Lỗi kết nối máy chủ" });
+      loadAllData();
     } finally {
       setDeletingRole(false);
     }
+  }
+
+  async function handleDeleteRole(r: RoleItem) {
+    confirmDeleteRole(r);
   }
 
   const filteredUsers = users.filter((u) => {
@@ -804,17 +935,6 @@ export default function UsersManagementPage() {
     </div>
   );
 
-  if (loading) {
-    return (
-      <div className="flex flex-1 items-center justify-center bg-background">
-        <div className="text-xs font-semibold text-muted flex items-center gap-2">
-          <Loader2 className="h-5 w-5 animate-spin text-accent" />
-          Đang tải dữ liệu cơ cấu nhân sự & phòng ban...
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-1 flex-col overflow-hidden bg-background">
       <Toast ref={toast} />
@@ -835,10 +955,10 @@ export default function UsersManagementPage() {
           <div className="flex items-center overflow-x-auto no-scrollbar rounded-xl bg-surface-2 p-1 border border-line shrink-0">
             <button
               onClick={() => setActiveTab("users")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all duration-200 active:scale-95 cursor-pointer ${
                 activeTab === "users"
                   ? "bg-accent text-white shadow-sm shadow-accent/25"
-                  : "text-muted hover:text-foreground"
+                  : "text-muted hover:text-foreground hover:bg-surface-3/60"
               }`}
             >
               <Users className="h-3.5 w-3.5" />
@@ -847,10 +967,10 @@ export default function UsersManagementPage() {
 
             <button
               onClick={() => setActiveTab("teams")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all duration-200 active:scale-95 cursor-pointer ${
                 activeTab === "teams"
                   ? "bg-accent text-white shadow-sm shadow-accent/25"
-                  : "text-muted hover:text-foreground"
+                  : "text-muted hover:text-foreground hover:bg-surface-3/60"
               }`}
             >
               <Building2 className="h-3.5 w-3.5" />
@@ -859,10 +979,10 @@ export default function UsersManagementPage() {
 
             <button
               onClick={() => setActiveTab("roles")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all duration-200 active:scale-95 cursor-pointer ${
                 activeTab === "roles"
                   ? "bg-accent text-white shadow-sm shadow-accent/25"
-                  : "text-muted hover:text-foreground"
+                  : "text-muted hover:text-foreground hover:bg-surface-3/60"
               }`}
             >
               <Lock className="h-3.5 w-3.5" />
@@ -915,7 +1035,7 @@ export default function UsersManagementPage() {
       {/* TAB 1: DANH SÁCH TÀI KHOẢN (PRIMEREACT DATATABLE) */}
       {/* ========================================================================= */}
       {activeTab === "users" && (
-        <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-5 w-full max-w-[1600px] mx-auto">
+        <div key="users" className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-5 w-full max-w-[1600px] mx-auto animate-tab-fade">
           {/* KPI Summary Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             <div className="rounded-2xl border border-line bg-surface p-4 flex items-center justify-between shadow-sm">
@@ -964,7 +1084,7 @@ export default function UsersManagementPage() {
             <div className="flex items-center gap-3 flex-wrap flex-1">
               {/* Search Box */}
               <div className="relative min-w-[260px] flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted pointer-events-none z-10" />
                 <Input
                   value={globalFilter}
                   onChange={(e) => setGlobalFilter(e.target.value)}
@@ -976,36 +1096,30 @@ export default function UsersManagementPage() {
               {/* Team Filter */}
               <div className="flex items-center gap-1.5">
                 <Building2 className="h-4 w-4 text-muted" />
-                <select
+                <Dropdown
                   value={teamFilter}
-                  onChange={(e) => setTeamFilter(e.target.value)}
-                  className="h-9 rounded-xl border border-line bg-surface-2 px-3 text-xs text-foreground focus:outline-none cursor-pointer"
-                >
-                  <option value="ALL">Tất cả phòng ban ({users.length})</option>
-                  <option value="NO_TEAM">Chưa phân nhóm</option>
-                  {teams.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name} ({t.memberCount})
-                    </option>
-                  ))}
-                </select>
+                  options={[
+                    { label: `Tất cả phòng ban (${users.length})`, value: "ALL" },
+                    { label: "Chưa phân nhóm", value: "NO_TEAM" },
+                    ...teams.map((t) => ({ label: `${t.name} (${t.memberCount})`, value: t.id })),
+                  ]}
+                  onChange={(e) => setTeamFilter(e.value)}
+                  className="p-inputtext-sm h-9 text-xs bg-surface-2 border border-line rounded-xl"
+                />
               </div>
 
               {/* Role Filter */}
               <div className="flex items-center gap-1.5">
                 <Shield className="h-4 w-4 text-muted" />
-                <select
+                <Dropdown
                   value={roleFilter}
-                  onChange={(e) => setRoleFilter(e.target.value)}
-                  className="h-9 rounded-xl border border-line bg-surface-2 px-3 text-xs text-foreground focus:outline-none cursor-pointer"
-                >
-                  <option value="ALL">Tất cả vai trò ({users.length})</option>
-                  {roles.map((r) => (
-                    <option key={r.key} value={r.key}>
-                      {r.name}
-                    </option>
-                  ))}
-                </select>
+                  options={[
+                    { label: `Tất cả vai trò (${users.length})`, value: "ALL" },
+                    ...roles.map((r) => ({ label: r.name, value: r.key })),
+                  ]}
+                  onChange={(e) => setRoleFilter(e.value)}
+                  className="p-inputtext-sm h-9 text-xs bg-surface-2 border border-line rounded-xl"
+                />
               </div>
             </div>
 
@@ -1042,7 +1156,7 @@ export default function UsersManagementPage() {
       {/* TAB 2: QUẢN LÝ NHÓM / PHÒNG BAN (TEAMS & DEPARTMENTS) */}
       {/* ========================================================================= */}
       {activeTab === "teams" && (
-        <div className="flex-1 space-y-4 sm:space-y-6 overflow-y-auto p-3 sm:p-6 w-full max-w-[1600px] mx-auto">
+        <div key="teams" className="flex-1 space-y-4 sm:space-y-6 overflow-y-auto p-3 sm:p-6 w-full max-w-[1600px] mx-auto animate-tab-fade">
           {/* Teams Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {teams.map((team) => (
@@ -1161,7 +1275,7 @@ export default function UsersManagementPage() {
       {/* TAB 3: MA TRẬN PHÂN QUYỀN (ROLES & RBAC) */}
       {/* ========================================================================= */}
       {activeTab === "roles" && (
-        <div className="flex-1 overflow-y-auto lg:overflow-hidden grid grid-cols-1 lg:grid-cols-[320px_1fr] divide-y lg:divide-y-0 lg:divide-x divide-line">
+        <div key="roles" className="flex-1 overflow-y-auto lg:overflow-hidden grid grid-cols-1 lg:grid-cols-[320px_1fr] divide-y lg:divide-y-0 lg:divide-x divide-line animate-tab-fade">
           {/* Left Column: Roles Selector List */}
           <div className="p-4 space-y-3 overflow-y-auto bg-surface/30 flex flex-col h-full">
             <div className="flex items-center justify-between px-1 pb-1">
@@ -1224,21 +1338,21 @@ export default function UsersManagementPage() {
                               e.stopPropagation();
                               openEditRole(r);
                             }}
-                            className="p-1 rounded text-muted hover:text-foreground hover:bg-surface-3 cursor-pointer"
+                            className="p-1.5 rounded text-muted hover:text-foreground hover:bg-surface-3 cursor-pointer transition-colors"
                             title="Sửa thông tin vai trò"
                           >
-                            <Edit2 className="h-3 w-3" />
+                            <Edit2 className="h-3.5 w-3.5" />
                           </button>
                           <button
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDeleteRole(r);
+                              confirmDeleteRole(r);
                             }}
-                            className="p-1 rounded text-muted hover:text-accent hover:bg-accent-subtle cursor-pointer"
-                            title="Xóa vai trò"
+                            className="p-1.5 rounded text-muted hover:text-red-500 hover:bg-red-500/10 cursor-pointer transition-colors"
+                            title="Xóa vai trò này"
                           >
-                            <Trash2 className="h-3 w-3" />
+                            <Trash2 className="h-3.5 w-3.5" />
                           </button>
                         </div>
                       )}
@@ -1307,7 +1421,7 @@ export default function UsersManagementPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => openEditRole(selectedRole)}
-                    className="h-8 text-xs font-semibold"
+                    className="h-8 text-xs font-semibold cursor-pointer"
                     title="Chỉnh sửa tên, màu sắc, mô tả vai trò"
                   >
                     <Edit2 className="h-3.5 w-3.5 mr-1" /> Sửa thông tin
@@ -1318,20 +1432,29 @@ export default function UsersManagementPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleDeleteRole(selectedRole)}
+                    onClick={() => confirmDeleteRole(selectedRole)}
                     disabled={deletingRole}
-                    className="h-8 text-xs font-semibold text-accent border-accent/40 hover:bg-accent-subtle hover:text-accent"
-                    title="Xóa vai trò tùy chỉnh này"
+                    className="h-8 text-xs font-bold text-red-500 border-red-500/30 hover:bg-red-500/10 hover:text-red-600 hover:border-red-500/50 cursor-pointer shadow-sm"
+                    title="Xóa vai trò tùy chỉnh này khỏi hệ thống"
                   >
                     <Trash2 className="h-3.5 w-3.5 mr-1" /> Xóa vai trò
                   </Button>
+                )}
+
+                {selectedRole && selectedRole.isSystem && (
+                  <span
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-2 border border-line text-[11px] font-semibold text-muted"
+                    title="Vai trò hệ thống mặc định được bảo vệ để đảm bảo an toàn vận hành"
+                  >
+                    <Lock className="h-3 w-3 text-muted/70" /> Vai trò hệ thống
+                  </span>
                 )}
 
                 <Button
                   size="sm"
                   onClick={savePermissions}
                   disabled={savingPermissions || selectedRole?.key === "ADMIN"}
-                  className="h-8 text-xs font-bold bg-accent hover:bg-accent/90 text-white shadow-md shadow-accent/25"
+                  className="h-8 text-xs font-bold bg-accent hover:bg-accent/90 text-white shadow-md shadow-accent/25 cursor-pointer"
                 >
                   {savingPermissions ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
@@ -1364,44 +1487,40 @@ export default function UsersManagementPage() {
 
               {selectedRole?.key !== "ADMIN" && (
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[11px] text-muted">Thao tác nhanh:</span>
+                  <span className="text-[11px] text-muted font-medium">Thao tác nhanh:</span>
                   <button
                     type="button"
                     onClick={handleSelectAllPermissions}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface-2 hover:bg-surface border border-line text-[11px] font-semibold text-foreground cursor-pointer transition-colors"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-surface-2 hover:bg-surface border border-line text-[11px] font-bold text-foreground cursor-pointer transition-colors"
                   >
                     <CheckSquare className="h-3 w-3 text-emerald-600" /> Chọn tất cả
                   </button>
                   <button
                     type="button"
                     onClick={handleDeselectAllPermissions}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface-2 hover:bg-surface border border-line text-[11px] font-semibold text-foreground cursor-pointer transition-colors"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-[11px] font-bold text-red-500 cursor-pointer transition-colors"
+                    title="Xóa toàn bộ quyền đã chọn của vai trò này"
                   >
-                    <RotateCcw className="h-3 w-3 text-accent" /> Bỏ chọn tất cả
+                    <Trash2 className="h-3 w-3" /> Xóa toàn bộ quyền
                   </button>
 
                   <div className="h-3.5 w-[1px] bg-line mx-1" />
 
                   <span className="text-[11px] text-muted">Sao chép mẫu từ:</span>
-                  <select
+                  <Dropdown
+                    value=""
+                    options={[
+                      { label: "-- Chọn vai trò mẫu --", value: "", disabled: true },
+                      ...roles.map((r) => ({ label: `${r.name} (${r.permissions.length} quyền)`, value: r.key })),
+                    ]}
                     onChange={(e) => {
-                      if (e.target.value) {
-                        handleApplyPreset(e.target.value);
-                        e.target.value = "";
+                      if (e.value) {
+                        handleApplyPreset(e.value);
                       }
                     }}
-                    defaultValue=""
-                    className="h-6.5 rounded-md border border-line bg-surface px-2 text-[11px] text-foreground focus:outline-none cursor-pointer"
-                  >
-                    <option value="" disabled>
-                      -- Chọn vai trò mẫu --
-                    </option>
-                    {roles.map((r) => (
-                      <option key={r.key} value={r.key}>
-                        {r.name} ({r.permissions.length} quyền)
-                      </option>
-                    ))}
-                  </select>
+                    placeholder="-- Chọn vai trò mẫu --"
+                    className="p-inputtext-sm h-6.5 text-[11px] bg-surface border border-line rounded-md"
+                  />
                 </div>
               )}
             </div>
@@ -1431,13 +1550,27 @@ export default function UsersManagementPage() {
                           {selectedInCat}/{catKeys.length}
                         </span>
                         {selectedRole?.key !== "ADMIN" && (
-                          <button
-                            type="button"
-                            onClick={() => handleToggleCategoryPermissions(cat)}
-                            className="text-[10px] font-bold text-muted hover:text-accent underline cursor-pointer"
-                          >
-                            {isAllSelectedInCat ? "Bỏ chọn" : "Chọn cả mục"}
-                          </button>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleSelectCategoryPermissions(cat)}
+                              disabled={isAllSelectedInCat}
+                              className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10 px-1.5 py-0.5 rounded cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                              title="Cấp toàn bộ quyền trong mục này"
+                            >
+                              + Cấp cả mục
+                            </button>
+                            <span className="text-muted/30">|</span>
+                            <button
+                              type="button"
+                              onClick={() => handleDeselectCategoryPermissions(cat)}
+                              disabled={selectedInCat === 0}
+                              className="text-[10px] font-bold text-red-500 hover:text-red-600 hover:bg-red-500/10 px-1.5 py-0.5 rounded cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                              title="Xóa/Bỏ chọn toàn bộ quyền trong mục này"
+                            >
+                              ✕ Xóa quyền mục này
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -1521,18 +1654,15 @@ export default function UsersManagementPage() {
 
             <div className="space-y-1">
               <Label className="text-xs font-semibold">Trưởng nhóm (Leader)</Label>
-              <select
+              <Dropdown
                 value={teamLeaderId || ""}
-                onChange={(e) => setTeamLeaderId(e.target.value || null)}
-                className="h-9 w-full rounded-lg border border-line bg-surface-2 px-2 text-xs text-foreground focus:outline-none"
-              >
-                <option value="">Chưa chỉ định trưởng nhóm</option>
-                {users.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.name} ({u.title || u.role})
-                  </option>
-                ))}
-              </select>
+                options={[
+                  { label: "Chưa chỉ định trưởng nhóm", value: "" },
+                  ...users.map((u) => ({ label: `${u.name} (${u.title || u.role})`, value: u.id })),
+                ]}
+                onChange={(e) => setTeamLeaderId(e.value || null)}
+                className="h-9 w-full text-xs bg-surface-2 border border-line rounded-lg"
+              />
             </div>
           </div>
 
@@ -1692,39 +1822,49 @@ export default function UsersManagementPage() {
 
             <div className="space-y-1">
               <Label className="text-xs font-semibold">Vai trò hệ thống</Label>
-              <select
+              <Dropdown
                 value={editingUser ? editRole : createRole}
-                onChange={(e) => (editingUser ? setEditRole(e.target.value) : setCreateRole(e.target.value))}
-                className="h-9 w-full rounded-lg border border-line bg-surface-2 px-2 text-xs text-foreground focus:outline-none"
-              >
-                {roles.map((r) => (
-                  <option key={r.key} value={r.key}>
-                    {r.name}
-                  </option>
-                ))}
-              </select>
+                options={roles.map((r) => ({ label: r.name, value: r.key }))}
+                onChange={(e) => (editingUser ? setEditRole(e.value) : setCreateRole(e.value))}
+                className="h-9 w-full text-xs bg-surface-2 border border-line rounded-lg"
+              />
             </div>
+          </div>
+
+          <div className="space-y-1">
+            <Label className="text-xs font-semibold flex items-center gap-1">
+              Số điện thoại
+              <span className="text-[10px] text-muted font-normal normal-case">(dùng gửi thông báo Zalo ZNS)</span>
+            </Label>
+            <Input
+              value={editingUser ? editPhone : createPhone}
+              onChange={(e) => (editingUser ? setEditPhone(e.target.value) : setCreatePhone(e.target.value))}
+              placeholder="VD: 0983090189"
+              className="text-xs h-9 bg-surface-2 font-mono"
+            />
+            {editingUser?.zaloUserId && (
+              <p className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1 pt-0.5">
+                <MessageCircle className="h-3 w-3" /> User đã tự liên kết Zalo (nhận thông báo qua OA miễn phí)
+              </p>
+            )}
           </div>
 
           {/* Team / Department Assignment */}
           <div className="space-y-1">
             <Label className="text-xs font-semibold">Thuộc Nhóm / Phòng ban</Label>
-            <select
+            <Dropdown
               value={editingUser ? editTeamId || "" : createTeamId || ""}
+              options={[
+                { label: "Chưa phân nhóm", value: "" },
+                ...teams.map((t) => ({ label: `🏢 ${t.name} (${t.code})`, value: t.id })),
+              ]}
               onChange={(e) =>
                 editingUser
-                  ? setEditTeamId(e.target.value || null)
-                  : setCreateTeamId(e.target.value || null)
+                  ? setEditTeamId(e.value || null)
+                  : setCreateTeamId(e.value || null)
               }
-              className="h-9 w-full rounded-lg border border-line bg-surface-2 px-2.5 text-xs text-foreground focus:outline-none cursor-pointer"
-            >
-              <option value="">Chưa phân nhóm</option>
-              {teams.map((t) => (
-                <option key={t.id} value={t.id}>
-                  🏢 {t.name} ({t.code})
-                </option>
-              ))}
-            </select>
+              className="h-9 w-full text-xs bg-surface-2 border border-line rounded-lg"
+            />
           </div>
 
           {/* Avatar Color */}
@@ -1839,17 +1979,12 @@ export default function UsersManagementPage() {
           {/* Sao chép mẫu quyền */}
           <div className="space-y-1">
             <Label className="text-xs font-semibold">Sao chép mẫu quyền hạn ban đầu từ</Label>
-            <select
+            <Dropdown
               value={newRolePreset}
-              onChange={(e) => setNewRolePreset(e.target.value)}
-              className="h-9 w-full rounded-lg border border-line bg-surface-2 px-2.5 text-xs text-foreground focus:outline-none cursor-pointer"
-            >
-              {roles.map((r) => (
-                <option key={r.key} value={r.key}>
-                  {r.name} ({r.permissions.length} quyền)
-                </option>
-              ))}
-            </select>
+              options={roles.map((r) => ({ label: `${r.name} (${r.permissions.length} quyền)`, value: r.key }))}
+              onChange={(e) => setNewRolePreset(e.value)}
+              className="h-9 w-full text-xs bg-surface-2 border border-line rounded-lg"
+            />
           </div>
 
           {/* Màu đại diện vai trò */}
@@ -1958,26 +2093,104 @@ export default function UsersManagementPage() {
             </div>
           </div>
 
+          <div className="flex items-center justify-between gap-2 pt-3 border-t border-line">
+            {!editingRoleItem?.isSystem ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setEditRoleOpen(false);
+                  if (editingRoleItem) confirmDeleteRole(editingRoleItem);
+                }}
+                className="text-xs font-bold text-red-500 border-red-500/30 hover:bg-red-500/10 hover:text-red-600 hover:border-red-500/50 cursor-pointer mr-auto"
+                title="Xóa vai trò này"
+              >
+                <Trash2 className="h-3.5 w-3.5 mr-1" /> Xóa vai trò
+              </Button>
+            ) : (
+              <div />
+            )}
+
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setEditRoleOpen(false)}
+              >
+                Hủy
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={updatingRole}
+                className="font-bold bg-accent hover:bg-accent/90 text-white cursor-pointer"
+              >
+                {updatingRole ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Save className="h-3.5 w-3.5 mr-1" />}
+                Lưu thay đổi
+              </Button>
+            </div>
+          </div>
+        </form>
+      </Dialog>
+
+      {/* ========================================================================= */}
+      {/* MODAL: XÁC NHẬN XÓA VAI TRÒ (CONFIRM DELETE ROLE DIALOG) */}
+      {/* ========================================================================= */}
+      <Dialog
+        header="Xác Nhận Xóa Vai Trò"
+        visible={deleteRoleConfirmOpen}
+        onHide={() => setDeleteRoleConfirmOpen(false)}
+        className="w-full max-w-md border border-red-500/30 bg-surface rounded-2xl shadow-2xl"
+      >
+        <div className="space-y-4 pt-2">
+          <div className="flex items-start gap-3 p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600">
+            <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+            <div className="space-y-1 text-xs">
+              <div className="font-bold">Hành động này sẽ xóa vĩnh viễn cấu hình vai trò!</div>
+              <div className="text-muted leading-relaxed">
+                Bạn đang chuẩn bị xóa vai trò <strong className="text-foreground">{roleToDelete?.name}</strong> (Mã key: <code className="font-mono text-[11px] bg-surface-2 px-1 py-0.5 rounded">{roleToDelete?.key}</code>).
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-line bg-surface-2/60 p-3.5 space-y-2 text-xs">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-muted">Tác động nhân sự:</div>
+            <div className="font-semibold text-foreground flex items-center gap-2">
+              <Users className="h-4 w-4 text-accent" />
+              <span>{roleToDelete?.userCount || 0} tài khoản đang được gán vai trò này</span>
+            </div>
+            <p className="text-[11px] text-muted leading-relaxed">
+              Sau khi xóa, tất cả các tài khoản nhân sự và thành viên dự án đang giữ vai trò này sẽ tự động được chuyển về vai trò <strong>&quot;Thành viên (Member)&quot;</strong> để đảm bảo hệ thống không bị gián đoạn.
+            </p>
+          </div>
+
           <div className="flex justify-end gap-2 pt-3 border-t border-line">
             <Button
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => setEditRoleOpen(false)}
+              onClick={() => setDeleteRoleConfirmOpen(false)}
             >
-              Hủy
+              Hủy bỏ
             </Button>
             <Button
-              type="submit"
+              type="button"
               size="sm"
-              disabled={updatingRole}
-              className="font-bold bg-accent hover:bg-accent/90 text-white"
+              disabled={deletingRole}
+              onClick={executeDeleteRole}
+              className="font-bold bg-red-600 hover:bg-red-700 text-white shadow-md shadow-red-600/25 cursor-pointer"
             >
-              {updatingRole ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Save className="h-3.5 w-3.5 mr-1" />}
-              Lưu thay đổi
+              {deletingRole ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
+              ) : (
+                <Trash2 className="h-3.5 w-3.5 mr-1" />
+              )}
+              Xác nhận xóa vai trò
             </Button>
           </div>
-        </form>
+        </div>
       </Dialog>
     </div>
   );
