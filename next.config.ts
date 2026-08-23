@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Bắt buộc cho Docker image: sinh ra .next/standalone (server.js + node_modules
+  // đã được trace) mà Dockerfile stage `runner` copy vào image production.
+  output: "standalone",
+
   // Ẩn dev indicator badge (nút tròn N) để không che khuất bottom navigation trên mobile
   devIndicators: false,
 

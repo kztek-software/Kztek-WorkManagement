@@ -3,7 +3,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: kztek/OneMoreK:latest
+    # Tên Docker repository bắt buộc chữ thường — `kztek/OneMoreK` gây lỗi
+    # "invalid reference format: repository name must be lowercase".
+    image: ${APP_IMAGE:-kztek/kztek-workmanagement:latest}
     container_name: kztek-work-management
     restart: unless-stopped
     ports:
