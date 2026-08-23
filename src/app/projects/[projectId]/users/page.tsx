@@ -315,10 +315,15 @@ export default function UsersManagementPage() {
     loadAllData();
   }, []);
 
-  useEffect(() => {
-    const r = roles.find((r) => r.key === selectedRoleKey);
+  // Nạp lại danh sách quyền khi đổi vai trò đang chọn (hoặc khi `roles` vừa
+  // được tải). `activePermissions` vẫn là state vì người dùng tick/untick được,
+  // nên dùng pattern điều chỉnh state trong lúc render thay vì useEffect.
+  const [prevRoleSync, setPrevRoleSync] = useState({ key: selectedRoleKey, roles });
+  if (prevRoleSync.key !== selectedRoleKey || prevRoleSync.roles !== roles) {
+    setPrevRoleSync({ key: selectedRoleKey, roles });
+    const r = roles.find((role) => role.key === selectedRoleKey);
     if (r) setActivePermissions(r.permissions);
-  }, [selectedRoleKey, roles]);
+  }
 
   // ==========================================
   // TEAM HANDLERS

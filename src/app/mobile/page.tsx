@@ -101,7 +101,7 @@ export default function MobileSimulatorPage() {
       const projList = projData.projects || [];
       setProjects(projList);
 
-      let selectedProj = projList[0] || null;
+      const selectedProj = projList[0] || null;
       setCurrentProject(selectedProj);
 
       // 2. Tasks

@@ -203,6 +203,7 @@ export default function AdminSettingsPage() {
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount: setState chỉ chạy sau await, rule không phân tích được biên async
     fetchConfig();
 
     // Xử lý kết quả redirect về từ Zalo OAuth callback (?zalo_oauth=connected|error)
@@ -1591,7 +1592,7 @@ export default function AdminSettingsPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted font-medium">Khóa chính (Primary Key):</span>
-                  <span className="font-mono text-xs font-bold text-accent">id = "default"</span>
+                  <span className="font-mono text-xs font-bold text-accent">id = &quot;default&quot;</span>
                 </div>
                 <div className="flex items-center justify-between border-t border-line/60 pt-2.5">
                   <span className="text-xs text-muted font-medium">Cập nhật lần cuối:</span>

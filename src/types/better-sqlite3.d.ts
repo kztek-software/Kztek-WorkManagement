@@ -6,7 +6,7 @@ declare module "better-sqlite3" {
   interface Database {
     prepare(source: string): any;
     exec(source: string): this;
-    transaction(fn: Function): any;
+    transaction(fn: (...args: unknown[]) => unknown): any;
     close(): this;
     [key: string]: any;
   }
